@@ -1795,7 +1795,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           );
           targetSuit = otherSuits[0];
         }
-        const targetPlayerIdx = SUITS.indexOf(targetSuit);
+        let targetPlayerIdx = SUITS.indexOf(targetSuit);
+        if (
+          action.targetPlayerIndex !== undefined &&
+          action.targetPlayerIndex !== controllingIndex &&
+          action.targetPlayerIndex >= 0 &&
+          action.targetPlayerIndex < state.players.length
+        ) {
+          targetPlayerIdx = action.targetPlayerIndex;
+          targetSuit = state.players[targetPlayerIdx]?.suit ?? targetSuit;
+        }
         const targetPlayer = state.players[targetPlayerIdx];
         const nextActive = getNextTurnIndex(controllingIndex, state.lastDirection, 1);
 

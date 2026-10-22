@@ -876,6 +876,7 @@ export function ColpoBassoArena({
     selectedCards.length === 1 &&
     (selectedCards[0].value === 11 ||
       selectedCards[0].value === 12 ||
+      selectedCards[0].eventKind === 'DIRECT_SIPS' ||
       selectedCards[0].eventKind === 'DUEL_HIGH' ||
       selectedCards[0].eventKind === 'DUEL_LOW');
 
@@ -1116,8 +1117,16 @@ export function ColpoBassoArena({
               {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
               {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
               {isTargetCandidate && (
-                <span className="text-[7px] text-purple-300 font-extrabold uppercase">
-                  {isSelectedTarget ? '🎯' : 'Tocca'}
+                <span className={`text-[7px] font-black uppercase ${isSipTargetCandidate ? 'text-amber-300' : 'text-purple-300'}`}>
+                  {isSipTargetCandidate
+                    ? '🎯 +1🃏'
+                    : selectedCards[0]?.eventKind === 'DIRECT_SIPS'
+                    ? isSelectedTarget
+                      ? `🍺 ${selectedCards[0]?.sipsAmount || 1}🍺`
+                      : '🍺 Tocca'
+                    : isSelectedTarget
+                    ? '🎯 Bersaglio'
+                    : '🎯 Tocca'}
                 </span>
               )}
             </div>
@@ -1213,14 +1222,17 @@ export function ColpoBassoArena({
           {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
           {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
           {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
-          {isSipTargetCandidate && (
-            <span className="text-[7px] text-amber-300 font-black uppercase animate-pulse">
-              🎯+1🃏
-            </span>
-          )}
-          {!isSipTargetCandidate && isTargetCandidate && (
-            <span className="text-[7px] text-purple-300 font-extrabold uppercase">
-              {isSelectedTarget ? '🎯' : 'Tocca'}
+          {isTargetCandidate && (
+            <span className={`text-[7px] font-black uppercase ${isSipTargetCandidate ? 'text-amber-300' : 'text-purple-300'}`}>
+              {isSipTargetCandidate
+                ? '🎯 +1🃏'
+                : selectedCards[0]?.eventKind === 'DIRECT_SIPS'
+                ? isSelectedTarget
+                  ? `🍺 ${selectedCards[0]?.sipsAmount || 1}🍺`
+                  : '🍺 Tocca'
+                : isSelectedTarget
+                ? '🎯 Bersaglio'
+                : '🎯 Tocca'}
             </span>
           )}
         </div>
@@ -1969,57 +1981,7 @@ export function ColpoBassoArena({
 
           {/* COLONNA 3 (DX): PULSANTI D'AZIONE ERGONOMICI SOTTO IL POLLICE DESTRO */}
           <div className="w-[110px] sm:w-[125px] shrink-0 h-[108px] sm:h-[114px] flex flex-col justify-end gap-1 select-none self-end mb-0.5 relative">
-            {/* Popover Selettore Bersaglio per Vendetta Sorsi */}
-            {showSipTargetPicker && availableSipCards > 0 && (
-              <div className="absolute bottom-full mb-2 right-0 z-50 flex flex-col gap-1 p-2 rounded-2xl bg-[#0e0622]/98 border-2 border-amber-400 shadow-[0_8px_32px_rgba(0,0,0,0.95)] backdrop-blur-xl animate-fadeIn w-[195px] sm:w-[220px]">
-                <div className="flex items-center justify-between border-b border-white/15 pb-1">
-                  <span className="text-[9px] font-black uppercase text-amber-300 flex items-center gap-1">
-                    <span>🎯</span>
-                    <span>Chi fa pescare? (+1🃏)</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowSipTargetPicker(false)}
-                    className="text-slate-400 hover:text-white text-xs font-bold px-1 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p className="text-[8px] text-amber-200/80 font-medium leading-none mt-0.5">
-                  Tocca qui o tocca il giocatore sul tavolo:
-                </p>
-                <div className="flex flex-col gap-1 pt-0.5">
-                  {state.players
-                    .filter((p) => p.id !== controllingPlayerIndex)
-                    .map((opp) => (
-                      <button
-                        key={opp.id}
-                        type="button"
-                        onClick={() => {
-                          dispatchAction({
-                            type: 'DEAL_SIP_PENALTY_CARD',
-                            targetPlayerIndex: opp.id,
-                          });
-                          setCardAnimation({
-                            id: `${Date.now()}-sip-draw`,
-                            type: 'DRAW',
-                            playerIndex: opp.id,
-                          });
-                          playCardDrawSound();
-                          setShowSipTargetPicker(false);
-                        }}
-                        className="px-2 py-1 rounded-xl bg-white/10 hover:bg-gradient-to-r hover:from-purple-600 hover:to-amber-500 border border-white/15 text-white text-[10px] font-black flex items-center justify-between cursor-pointer active:scale-95 transition"
-                      >
-                        <span className="flex items-center gap-1 min-w-0">
-                          <span className={SUIT_INFO[opp.suit].neonText}>{SUIT_INFO[opp.suit].symbol}</span>
-                          <span className="truncate max-w-[95px]">{opp.name.replace('Bot ', '').replace(' 🤖', '')}</span>
-                        </span>
-                        <span className="text-[9px] text-cyan-300 font-bold shrink-0">{opp.hand.length}🃏</span>
-                      </button>
-                    ))}
-                </div>
-              </div>
-            )}
+
 
             {/* Pillola rapida Sorso Tattico per sblocco immediato (se manca solo 1 sorso) */}
             {canVoluntarySip && neededForNext === 1 && availableSipCards === 0 && !needsOpponentPicker && (
@@ -2825,14 +2787,18 @@ export function ColpoBassoArena({
         }
       />
 
-      {/* SELETTORE BERSAGLIO CENTRALE AL CENTRO DELLO SCHERMO (es. Jack Spia carte, Regina Fardello, Duello 1v1) */}
+      {/* SELETTORE BERSAGLIO CENTRALE AL CENTRO DELLO SCHERMO (Jack Spia, Dare da Bere / Sorsi Diretti, Regina Fardello, Duello 1v1) */}
       {needsOpponentPicker && selectedCards.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 select-none animate-fadeIn pointer-events-auto">
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#220c42] via-[#15072c] to-[#090216] border-2 border-purple-400/90 shadow-[0_0_50px_rgba(168,85,247,0.7)] p-3.5 text-slate-100 flex flex-col items-center gap-2 relative">
             <div className="flex items-center gap-1.5 text-purple-300 font-black text-xs sm:text-sm uppercase tracking-wide">
-              <span className="text-base sm:text-lg">🎯</span>
+              <span className="text-base sm:text-lg">
+                {selectedCards[0]?.eventKind === 'DIRECT_SIPS' ? '🍺' : '🎯'}
+              </span>
               <span>
-                {selectedCards[0]?.value === 11
+                {selectedCards[0]?.eventKind === 'DIRECT_SIPS'
+                  ? `A CHI VUOI DARE DA BERE (${selectedCards[0]?.sipsAmount || 1}🍺)?`
+                  : selectedCards[0]?.value === 11
                   ? 'A CHI VUOI LEGGERE LE CARTE?'
                   : selectedCards[0]?.value === 12
                   ? 'A CHI ASSEGNI IL FARDELLO?'
@@ -2871,7 +2837,7 @@ export function ColpoBassoArena({
                       </span>
                       {isTarget && (
                         <span className="mt-1 px-1.5 py-0.2 rounded-full bg-white text-purple-950 text-[8px] font-black uppercase shadow">
-                          Bersaglio ✓
+                          {selectedCards[0]?.eventKind === 'DIRECT_SIPS' ? 'Bevi 🍺' : 'Bersaglio ✓'}
                         </span>
                       )}
                     </button>
@@ -2901,10 +2867,78 @@ export function ColpoBassoArena({
                 }}
                 className="w-2/3 py-2 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider shadow-lg border border-white active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span>🎯</span>
-                <span>CONFERMA E GIOCA</span>
+                <span>{selectedCards[0]?.eventKind === 'DIRECT_SIPS' ? '🍺' : '🎯'}</span>
+                <span>
+                  {selectedCards[0]?.eventKind === 'DIRECT_SIPS'
+                    ? `DAI ${selectedCards[0]?.sipsAmount || 1}🍺 E GIOCA`
+                    : 'CONFERMA E GIOCA'}
+                </span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SELETTORE BERSAGLIO CENTRALE PER VENDETTA DEI SORSI (+1🃏) */}
+      {showSipTargetPicker && availableSipCards > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 select-none animate-fadeIn pointer-events-auto">
+          <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#241203] via-[#150a01] to-[#080300] border-2 border-amber-400 shadow-[0_0_50px_rgba(245,158,11,0.65)] p-3.5 text-slate-100 flex flex-col items-center gap-2 relative">
+            <div className="flex items-center gap-1.5 text-amber-300 font-black text-xs sm:text-sm uppercase tracking-wide">
+              <span className="text-base sm:text-lg">🍺</span>
+              <span>VENDETTA DEI SORSI: A CHI ASSEGNI LA CARTA (+1🃏)?</span>
+            </div>
+            <p className="text-[10px] text-amber-200/80 font-bold text-center">
+              Hai bevuto abbastanza sorsi per vendicarti! Tocca un avversario qui sotto o sul tavolo:
+            </p>
+
+            {/* Griglia Avversari */}
+            <div className="grid grid-cols-3 gap-2 w-full mt-0.5">
+              {state.players
+                .filter((p) => p.id !== controllingPlayerIndex)
+                .map((opp) => {
+                  const sMeta = SUIT_INFO[opp.suit];
+                  const cleanName = opp.name.replace('Bot ', '').replace(' 🤖', '');
+                  return (
+                    <button
+                      key={opp.id}
+                      type="button"
+                      onClick={() => {
+                        dispatchAction({
+                          type: 'DEAL_SIP_PENALTY_CARD',
+                          targetPlayerIndex: opp.id,
+                        });
+                        setCardAnimation({
+                          id: `${Date.now()}-sip-draw`,
+                          type: 'DRAW',
+                          playerIndex: opp.id,
+                        });
+                        playCardDrawSound();
+                        setShowSipTargetPicker(false);
+                      }}
+                      className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-gradient-to-b hover:from-amber-500 hover:to-rose-600 hover:text-white border border-white/20 text-slate-200 transition-all cursor-pointer active:scale-95 shadow"
+                    >
+                      <span className={`text-base ${sMeta.neonText}`}>{sMeta.symbol}</span>
+                      <span className="text-[10.5px] font-black truncate max-w-[80px] mt-0.5">
+                        {cleanName}
+                      </span>
+                      <span className="text-[8.5px] text-cyan-300 font-bold mt-0.5">
+                        {opp.hand.length} carte 🃏
+                      </span>
+                      <span className="mt-1 px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[8px] font-black uppercase shadow">
+                        Dai +1🃏
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowSipTargetPicker(false)}
+              className="mt-1 py-1.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-slate-300 hover:text-white font-black text-xs uppercase transition cursor-pointer"
+            >
+              Annulla
+            </button>
           </div>
         </div>
       )}
