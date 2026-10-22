@@ -1234,7 +1234,7 @@ export function ColpoBassoArena({
         </div>
 
         {/* AVVERSARIO 2 (Nord ♣ - In alto al centro) */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center translate-y-1.5 sm:translate-y-2">
           {state.players[2] && renderOpponentSeat(state.players[2], 'north')}
         </div>
 
@@ -1344,7 +1344,7 @@ export function ColpoBassoArena({
             {idleTurnReminder && canLocalUserAct ? (
               <div
                 onClick={() => setIdleTurnReminder(false)}
-                className="mb-1 z-30 w-fit max-w-[85%] sm:max-w-[340px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_2px_12px_rgba(245,158,11,0.5)] border border-white/80 cursor-pointer select-none animate-pulse transition-all"
+                className="mb-0.5 translate-y-1.5 sm:translate-y-2 z-30 w-fit max-w-[85%] sm:max-w-[340px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_2px_12px_rgba(245,158,11,0.5)] border border-white/80 cursor-pointer select-none animate-pulse transition-all"
                 title="Tocca per chiudere l'avviso"
               >
                 <span className="text-[10px]">⏰</span>
@@ -1358,7 +1358,7 @@ export function ColpoBassoArena({
                 <span className="text-[8px] font-black ml-0.5 bg-black/20 rounded-full w-3.5 h-3.5 flex items-center justify-center shrink-0">✕</span>
               </div>
             ) : (
-              <div className="mb-1 z-20 pointer-events-none w-fit max-w-[85%] sm:max-w-[360px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm shadow-sm select-none transition-all">
+              <div className="mb-0.5 translate-y-1.5 sm:translate-y-2 z-20 pointer-events-none w-fit max-w-[85%] sm:max-w-[360px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm shadow-sm select-none transition-all">
                 {/* Badge di Stato Dinamico Discreto */}
                 {state.mode === 'ATTACK_CHAIN' ? (
                   <div className="flex items-center gap-1 text-[8px] font-black uppercase text-rose-300 tracking-wider shrink-0 animate-pulse">
