@@ -707,117 +707,123 @@ export function ColpoBassoArena({
 
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden">
-      {/* 1. FLOATING TOP CONTROLS (BARRA SUPERIORE RIMOSSA PER MASSIMO SPAZIO 2.5D) */}
+      {/* 1. TOP BAR UNIFICATA (Menu + Avversario Nord + Seme Attivo) */}
+      <header className="h-[32px] shrink-0 w-full flex items-center justify-between px-2 pt-0.5 z-30 select-none">
+        {/* Bottone Menu a Tendina (In alto a sinistra) */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowMenuDropdown((v) => !v)}
+            className="px-2 py-1 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition"
+            title="Menu Opzioni"
+          >
+            <Menu className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
+          </button>
 
-      {/* Bottone Menu a Tendina (In alto a sinistra) */}
-      <div className="absolute top-2 left-2 z-40">
-        <button
-          type="button"
-          onClick={() => setShowMenuDropdown((v) => !v)}
-          className="px-2.5 py-1.5 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow-xl flex items-center gap-1.5 cursor-pointer backdrop-blur-md active:scale-95 transition"
-          title="Menu Opzioni"
+          {/* Menu a Tendina a comparsa */}
+          {showMenuDropdown && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+                onClick={() => setShowMenuDropdown(false)}
+              />
+              <div className="absolute top-9 left-0 z-50 w-52 rounded-2xl bg-[#140b2a] border-2 border-white/20 shadow-2xl p-2 flex flex-col gap-1.5 animate-speech-pop">
+                {onBackToHome && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      if (
+                        state.mode === 'GAME_OVER' ||
+                        window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
+                      ) {
+                        onBackToHome();
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <Home className="w-4 h-4 text-amber-400" />
+                    <span>Torna alla Home</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    setShowLobbyModal(true);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
+                >
+                  <Users className="w-4 h-4 text-rose-400" />
+                  <span>{activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}</span>
+                </button>
+
+                {activeLobby && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      setShowQuickQrModal(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-cyan-400" />
+                    <span>Condividi QR Code</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    setShowRulesModal(true);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                  <span>Regole del Gioco</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    setShowLogs(true);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <History className="w-4 h-4 text-purple-400" />
+                  <span>Storico Mosse</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* AVVERSARIO 2 (Nord ♣ - In alto al centro) */}
+        <div className="flex items-center justify-center">
+          {state.players[2] && renderOpponentSeat(state.players[2], 'north')}
+        </div>
+
+        {/* Seme Attivo a Terra (In alto a destra, compatto e discreto) */}
+        <div
+          className={`px-2 py-0.5 rounded-full bg-[#140b2a]/90 border border-white/20 text-[10px] font-black flex items-center gap-1 shadow backdrop-blur-md ${
+            SUIT_INFO[state.topCard.suit].neonText
+          }`}
+          title={`Seme attivo a terra: ${SUIT_INFO[state.topCard.suit].name}`}
         >
-          <Menu className="w-4 h-4 text-cyan-400" />
-          <span className="text-[11px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
-        </button>
-
-        {/* Menu a Tendina a comparsa */}
-        {showMenuDropdown && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-              onClick={() => setShowMenuDropdown(false)}
-            />
-            <div className="absolute top-11 left-0 z-50 w-52 rounded-2xl bg-[#140b2a] border-2 border-white/20 shadow-2xl p-2 flex flex-col gap-1.5 animate-speech-pop">
-              {onBackToHome && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenuDropdown(false);
-                    if (
-                      state.mode === 'GAME_OVER' ||
-                      window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
-                    ) {
-                      onBackToHome();
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
-                >
-                  <Home className="w-4 h-4 text-amber-400" />
-                  <span>Torna alla Home</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenuDropdown(false);
-                  setShowLobbyModal(true);
-                }}
-                className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
-              >
-                <Users className="w-4 h-4 text-rose-400" />
-                <span>{activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}</span>
-              </button>
-
-              {activeLobby && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenuDropdown(false);
-                    setShowQuickQrModal(true);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4 text-cyan-400" />
-                  <span>Condividi QR Code</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenuDropdown(false);
-                  setShowRulesModal(true);
-                }}
-                className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4 text-emerald-400" />
-                <span>Regole del Gioco</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenuDropdown(false);
-                  setShowLogs(true);
-                }}
-                className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-              >
-                <History className="w-4 h-4 text-purple-400" />
-                <span>Storico Mosse</span>
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Seme Attivo a Terra (In alto a destra, compatto e discreto) */}
-      <div
-        className={`absolute top-2 right-2 z-40 px-2.5 py-1 rounded-full bg-[#140b2a]/90 border border-white/20 text-xs font-black flex items-center gap-1.5 shadow-lg backdrop-blur-md ${
-          SUIT_INFO[state.topCard.suit].neonText
-        }`}
-        title={`Seme attivo a terra: ${SUIT_INFO[state.topCard.suit].name}`}
-      >
-        <span className="text-sm leading-none">{SUIT_INFO[state.topCard.suit].symbol}</span>
-        <span className="text-[11px] font-black">{SUIT_INFO[state.topCard.suit].name}</span>
-      </div>
+          <span className="text-xs leading-none">{SUIT_INFO[state.topCard.suit].symbol}</span>
+          <span className="text-[10px] font-black">{SUIT_INFO[state.topCard.suit].name}</span>
+        </div>
+      </header>
 
       {/* Avviso Inattività 10 Secondi "TOCCA A TE!" Compatto e Discreto */}
       {idleTurnReminder && canLocalUserAct && (
         <div
           onClick={() => setIdleTurnReminder(false)}
-          className="absolute top-11 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white flex items-center gap-2 cursor-pointer select-none animate-bounce"
+          className="absolute top-9 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white flex items-center gap-2 cursor-pointer select-none animate-bounce"
           title="Tocca per chiudere"
         >
           <span className="text-xs">⏰</span>
@@ -832,7 +838,7 @@ export function ColpoBassoArena({
       )}
 
       {/* 2. TAVOLO CENTRALE IN PROSPETTIVA 2.5D (4 LATI, FELTRO INCLINATO) */}
-      <section className="relative px-1.5 py-1 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-hidden perspective-arena">
+      <section className="relative px-1.5 py-0.5 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-hidden perspective-arena">
         {/* Traiettoria d'Attacco Laser al Neon animata */}
         <AttackTrajectoryOverlay
           state={state}
@@ -840,20 +846,15 @@ export function ColpoBassoArena({
         />
 
         {/* LATO SINISTRO: AVVERSARIO 1 (Ovest ♦) */}
-        <div className="w-[84px] sm:w-[94px] shrink-0 self-center z-20 flex justify-center">
+        <div className="w-[76px] sm:w-[84px] shrink-0 self-center z-20 flex justify-center">
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
         </div>
 
-        {/* ZONA CENTRALE: AVVERSARIO 2 IN ALTO (Nord ♣) + TAVOLO CENTRALE FELTRO 3D */}
-        <div className="flex-1 min-h-0 h-full flex flex-col justify-between items-center gap-1 z-10">
-          {/* AVVERSARIO 2 (Nord ♣ - In alto al centro, con carte disposte a lato) */}
-          <div className="w-auto max-w-full shrink-0 flex items-center justify-center">
-            {state.players[2] && renderOpponentSeat(state.players[2], 'north')}
-          </div>
-
+        {/* ZONA CENTRALE: TAVOLO CENTRALE FELTRO 3D */}
+        <div className="flex-1 min-h-0 h-full flex items-center justify-center z-10 px-1">
           {/* FELTRO CENTRALE 2.5D: STATO + CARTA SLAM + MAZZO 3D + IN PALIO + FRECCE PROIETTATE */}
           <div
-            className={`table-3d-plane flex-1 min-h-[112px] w-full max-w-[500px] rounded-3xl bg-gradient-to-b from-[#140b2e] via-[#0d0620] to-[#080216] border transition-all flex flex-col items-center justify-between py-1.5 px-3 relative shadow-2xl ${
+            className={`table-3d-plane h-full max-h-[170px] w-full max-w-[460px] rounded-3xl bg-gradient-to-b from-[#140b2e] via-[#0d0620] to-[#080216] border transition-all flex flex-col items-center justify-between py-1 px-3 relative shadow-2xl ${
               state.mode === 'ATTACK_CHAIN'
                 ? `border-rose-500/70 shadow-[0_0_35px_rgba(244,63,94,0.25),inset_0_0_20px_rgba(244,63,94,0.15)] ${
                     state.currentSips >= 2 ? 'animate-table-shake' : ''
@@ -936,7 +937,7 @@ export function ColpoBassoArena({
                           : 'animate-fly-from-south'
                       }`}
                     >
-                      <PlayingCard card={cardAnimation.card || state.topCard} size="md" />
+                      <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
                     </div>
                   )}
 
@@ -997,7 +998,7 @@ export function ColpoBassoArena({
                 <div key={state.topCard.id} className="relative z-10 animate-card-slam">
                   <PlayingCard
                     card={state.topCard}
-                    size="md"
+                    size="sm"
                     onInspect={(c) => setInspectedCard({ card: c, isTopCard: true })}
                   />
                 </div>
@@ -1134,7 +1135,7 @@ export function ColpoBassoArena({
         {/* CONTENITORE 3 COLONNE (PROFILO SX | MANO CENTRO | AZIONI DX) */}
         <div className="flex items-end justify-between gap-1 sm:gap-2 w-full">
           {/* COLONNA 1 (SX): PROFILO GIOCATORE LOCALE COMPATTO */}
-          <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#120a22]/90 border border-white/15 w-[80px] sm:w-[88px] shrink-0 shadow-lg select-none mb-0.5">
+          <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#120a22]/90 border border-white/15 w-[76px] sm:w-[84px] h-[108px] sm:h-[114px] shrink-0 shadow-lg select-none mb-0.5">
             <div className="flex items-center gap-1 w-full justify-center">
               <PlayerAvatar
                 suit={displayedHandPlayer.suit}
@@ -1155,7 +1156,7 @@ export function ColpoBassoArena({
             </span>
 
             {/* Chip Contatori Colorate ad Alto Contrasto */}
-            <div className="flex items-center gap-1 mt-1 text-[9px] font-black w-full justify-center">
+            <div className="flex items-center gap-1 mt-0.5 text-[9px] font-black w-full justify-center">
               <span className="px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/40 text-cyan-200">
                 🃏{displayedHandPlayer.hand.length}
               </span>
@@ -1164,7 +1165,7 @@ export function ColpoBassoArena({
               </span>
             </div>
 
-            <div className="flex items-center gap-1 w-full justify-center pt-1">
+            <div className="flex items-center gap-1 w-full justify-center pt-0.5">
               {bonusCards.length > 0 && (
                 <button
                   type="button"
@@ -1194,7 +1195,7 @@ export function ColpoBassoArena({
 
           {/* COLONNA 2 (CENTRO): MANO DI CARTE PULITA E IN PRIMO PIANO */}
           <div
-            className={`flex-1 min-w-0 h-[124px] sm:h-[132px] relative flex items-end overflow-visible ${
+            className={`flex-1 min-w-0 h-[108px] sm:h-[114px] relative flex items-end overflow-visible ${
               canLocalUserAct ? 'z-50 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]' : 'z-30'
             }`}
           >
@@ -1344,7 +1345,7 @@ export function ColpoBassoArena({
           </div>
 
           {/* COLONNA 3 (DX): PULSANTI D'AZIONE ERGONOMICI SOTTO IL POLLICE DESTRO */}
-          <div className="w-[115px] sm:w-[130px] shrink-0 h-[124px] sm:h-[132px] flex flex-col justify-end gap-1 select-none self-end mb-0.5 relative">
+          <div className="w-[110px] sm:w-[125px] shrink-0 h-[108px] sm:h-[114px] flex flex-col justify-end gap-1 select-none self-end mb-0.5 relative">
             {/* Sleek Compact Target Selector Pill Anchored Above Action Column */}
             {needsOpponentPicker && (
               <div className="absolute -top-10 right-0 z-40 flex items-center gap-1 py-1 px-1.5 rounded-xl bg-[#140b2a]/95 border border-purple-400/60 shadow-[0_4px_20px_rgba(168,85,247,0.4)] backdrop-blur-md">

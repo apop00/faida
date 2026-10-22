@@ -33,10 +33,10 @@ export function PlayingCard({
   const effectiveSize = size;
 
   const sizeClasses = {
-    xs: 'w-[64px] h-[92px] rounded-xl p-1',
-    sm: 'w-[78px] h-[112px] sm:w-[84px] sm:h-[118px] rounded-2xl p-1.5',
-    md: 'w-[90px] h-[128px] rounded-2xl p-2',
-    lg: 'w-[106px] h-[150px] rounded-2xl p-2.5',
+    xs: 'w-[58px] h-[84px] rounded-lg p-1',
+    sm: 'w-[66px] h-[96px] sm:w-[70px] sm:h-[102px] rounded-xl p-1 sm:p-1.5',
+    md: 'w-[78px] h-[110px] sm:w-[82px] sm:h-[116px] rounded-2xl p-1.5',
+    lg: 'w-[96px] h-[136px] rounded-2xl p-2',
   }[effectiveSize];
 
   const centerSymbolSize = {

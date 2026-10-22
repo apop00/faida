@@ -66,10 +66,10 @@ export function SmartphoneFrame({ children }: { children: React.ReactNode }) {
               ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/60'
               : 'text-slate-400 hover:text-white'
           }`}
-          title="Vista smartphone orizzontale (stile UNO Mobile)"
+          title="Vista Galaxy S24 orizzontale (780x360 px)"
         >
           <Smartphone className="w-3.5 h-3.5 rotate-90" />
-          <span>Orizzontale (UNO)</span>
+          <span>Galaxy S24 (780×360)</span>
         </button>
 
         <button
@@ -109,12 +109,12 @@ export function SmartphoneFrame({ children }: { children: React.ReactNode }) {
         className={`w-full bg-[#06030f] flex flex-col relative z-10 transition-all duration-300 ${
           isFrameEnabled
             ? orientation === 'landscape'
-              ? 'max-w-[920px] h-dvh md:h-[min(510px,calc(100dvh-54px))] md:mb-1 md:rounded-[36px] md:border-[6px] md:border-[#22163a] md:shadow-[0_20px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(244,63,94,0.2)] overflow-hidden'
-              : 'max-w-[420px] h-dvh md:h-[min(820px,calc(100dvh-54px))] md:mb-1 md:rounded-[38px] md:border-[6px] md:border-[#22163a] md:shadow-[0_20px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(244,63,94,0.2)] overflow-hidden'
+              ? 'w-full md:w-[780px] h-dvh md:h-[360px] md:max-w-[780px] md:max-h-[360px] md:rounded-[28px] md:border-[4px] md:border-[#22163a] md:shadow-[0_20px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(244,63,94,0.2)] overflow-hidden shrink-0'
+              : 'w-full max-w-[360px] h-dvh md:h-[min(780px,calc(100dvh-54px))] md:mb-1 md:rounded-[36px] md:border-[6px] md:border-[#22163a] md:shadow-[0_20px_60px_rgba(0,0,0,0.95),0_0_35px_rgba(244,63,94,0.2)] overflow-hidden shrink-0'
             : 'max-w-none w-full h-dvh md:rounded-none md:border-0 overflow-hidden'
         }`}
       >
-        {isFrameEnabled && (
+        {isFrameEnabled && orientation === 'portrait' && (
           <div className="hidden md:flex items-center justify-between px-6 pt-1 pb-1 shrink-0 bg-black/50 border-b border-white/5 z-30 select-none">
             <span className="text-[11px] font-bold text-white tracking-tight">{currentTime}</span>
             <div className="w-16 h-3 bg-black rounded-full flex items-center justify-end px-2 border border-white/10">

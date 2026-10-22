@@ -320,7 +320,7 @@ export function HomeScreen({
       </main>
 
       {/* 3. STRISCIA INFERIORE: SHOWCASE CARTE SPECIALI (ALTEZZA CALIBRATA, SWIPE ORIZZONTALE) */}
-      <footer className="shrink-0 h-[92px] sm:h-[100px] p-1.5 sm:p-2 rounded-2xl bg-[#110924]/90 border border-white/10 flex items-center gap-2 overflow-hidden shadow-inner">
+      <footer className="shrink-0 h-[88px] sm:h-[92px] p-1.5 rounded-2xl bg-[#110924]/90 border border-white/10 flex items-center gap-2 overflow-hidden shadow-inner">
         {/* Etichetta Showcase a Sinistra */}
         <div className="w-[85px] sm:w-[105px] shrink-0 flex flex-col justify-center leading-tight border-r border-white/10 pr-2">
           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
