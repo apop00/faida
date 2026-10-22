@@ -855,7 +855,7 @@ export function ColpoBassoArena({
     const effectiveTargetId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
     const isSelectedTarget = isTargetCandidate && effectiveTargetId === player.id;
 
-    // A) NORTH SEAT: SLEEK HORIZONTAL CAPSULE (PERFECT FOR TOP BAR)
+    // A) NORTH SEAT: CONSISTENT POD (IDENTICAL TO WEST, EAST & SOUTH) + FANNED CARDS
     if (isNorth) {
       const visibleNorthCards = actualCardCount === 0 ? 0 : Math.min(actualCardCount, 5);
 
@@ -864,12 +864,12 @@ export function ColpoBassoArena({
           key={player.id}
           className="flex items-center gap-1.5 sm:gap-2 select-none"
         >
-          {/* Horizontal Pod */}
+          {/* North Opponent Pod (Identical design to West/East/South) */}
           <div
             onClick={() => {
               if (isTargetCandidate) setSelectedTargetOpponent(player.id);
             }}
-            className={`relative flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all select-none backdrop-blur-md shadow-md ${
+            className={`relative flex flex-col items-center justify-between p-1 sm:p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[104px] sm:w-[114px] ${
               isSelectedTarget
                 ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
                 : isTargetCandidate
@@ -880,66 +880,76 @@ export function ColpoBassoArena({
                 ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.5)]'
                 : isControlling
                 ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
-                : 'bg-[#120a22]/85 border-white/15'
+                : 'bg-[#140a26]/90 border-white/20'
             }`}
             title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
           >
-            {/* Delta Floating Badges */}
+            {/* Floating Animated Delta Badges */}
             {delta && (delta.sips > 0 || delta.cards > 0) && (
-              <div className="absolute -top-3 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
+              <div className="absolute -top-3.5 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
                 {delta.sips > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-600 border border-amber-300 text-white text-[8px] font-black shadow">
+                  <span className="px-1.5 py-0.5 rounded-full bg-rose-600 border border-amber-300 text-white text-[9px] font-black shadow">
                     +{delta.sips}🍺
                   </span>
                 )}
                 {delta.cards > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-cyan-500 border border-white text-slate-950 text-[8px] font-black shadow">
+                  <span className="px-1.5 py-0.5 rounded-full bg-cyan-500 border border-white text-slate-950 text-[9px] font-black shadow">
                     +{delta.cards}🃏
                   </span>
                 )}
               </div>
             )}
 
-            {/* Sorsi a Sinistra 🍺 */}
-            <div
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md shrink-0"
-              title={`${player.sipsDrunk} sorsi bevuti`}
-            >
-              <span className="text-xs leading-none">🍺</span>
-              <span className="text-xs sm:text-sm font-black leading-none">{player.sipsDrunk}</span>
-            </div>
-
-            {/* Nome + Status */}
-            <div className="flex items-center gap-1.5 leading-none px-1.5 min-w-0">
+            {/* Nome del giocatore in alto con simbolo seme (identico a Ovest/Est) */}
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[9px] sm:text-[10px] font-black text-white w-full justify-center leading-none mb-1">
               <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-              <span className="text-xs font-black text-white truncate max-w-[75px]">{cleanName}</span>
-              {isControlling && <span className="px-1 py-0.2 rounded bg-emerald-500/20 text-[8px] text-emerald-400 font-extrabold uppercase border border-emerald-400/40">TURNO</span>}
-              {isDefender && <span className="px-1 py-0.2 rounded bg-rose-500/20 text-[8px] text-rose-400 font-extrabold uppercase border border-rose-400/40 animate-pulse">DIFESA</span>}
-              {isAttacker && <span className="px-1 py-0.2 rounded bg-amber-500/20 text-[8px] text-amber-400 font-extrabold uppercase border border-amber-400/40">ATTACCO</span>}
+              <span className="truncate max-w-[65px]">{cleanName}</span>
+              {isControlling && <span className="text-[7px] sm:text-[8px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
+              {isDefender && <span className="text-[7px] sm:text-[8px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
+              {isAttacker && <span className="text-[7px] sm:text-[8px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
               {isTargetCandidate && (
-                <span className="text-[8px] text-purple-300 font-extrabold uppercase">
+                <span className="text-[7px] sm:text-[8px] text-purple-300 font-extrabold uppercase">
                   {isSelectedTarget ? '🎯' : 'Tocca'}
                 </span>
               )}
             </div>
 
-            {/* Conteggio Carte 🃏 */}
-            <div
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border-2 shadow-md shrink-0 ${
-                isSingle
-                  ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
-                  : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
-              }`}
-              title={`${actualCardCount} carte in mano`}
-            >
-              <span className="text-xs leading-none">🃏</span>
-              <span className="text-xs sm:text-sm font-black leading-none">{actualCardCount}</span>
+            {/* DUE GRANDI NUMERI: Sorsi a SINISTRA 🍺 | Carte a DESTRA 🃏 (identico a Ovest/Est) */}
+            <div className="grid grid-cols-2 gap-1 w-full">
+              {/* Sorsi a SINISTRA 🍺 */}
+              <div
+                className="flex flex-col items-center justify-center py-0.5 px-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md"
+                title={`${player.sipsDrunk} sorsi bevuti`}
+              >
+                <span className="text-[8px] font-bold text-amber-400/90 uppercase leading-none">Sorsi</span>
+                <span className="text-xs sm:text-sm font-black text-amber-300 leading-tight mt-0.5">
+                  🍺{player.sipsDrunk}
+                </span>
+              </div>
+
+              {/* Carte a DESTRA 🃏 */}
+              <div
+                className={`flex flex-col items-center justify-center py-0.5 px-1 rounded-xl border-2 shadow-md ${
+                  isSingle
+                    ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
+                    : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
+                }`}
+                title={`${actualCardCount} carte in mano`}
+              >
+                <span className="text-[8px] font-bold text-cyan-400/90 uppercase leading-none">Carte</span>
+                <span className="text-xs sm:text-sm font-black leading-tight mt-0.5">
+                  🃏{actualCardCount}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* North Cards fanned horizontally */}
+          {/* Fanned 3D Cards on the side for North */}
           {visibleNorthCards > 0 && (
-            <div className="flex items-center -space-x-2.5 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+            <div
+              className="flex items-center -space-x-2.5 select-none filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]"
+              title={`${player.name}: ${actualCardCount} carte sul tavolo`}
+            >
               {Array.from({ length: visibleNorthCards }).map((_, cIdx, arr) => {
                 const mid = (arr.length - 1) / 2;
                 const rot = (cIdx - mid) * 5;
@@ -952,10 +962,10 @@ export function ColpoBassoArena({
                       transform: `rotate(${rot}deg) translateY(${offsetY}px)`,
                       zIndex: cIdx + 1,
                     }}
-                    className={`relative w-[22px] h-[32px] rounded-md shrink-0 select-none transition-all duration-300 ${
+                    className={`relative w-[22px] h-[34px] sm:w-[24px] sm:h-[36px] rounded-lg shrink-0 select-none transition-all duration-300 ${
                       isSingle
-                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse'
-                        : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_8px_rgba(0,0,0,0.7)]'
+                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)] animate-pulse'
+                        : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border-2 border-cyan-400/80 shadow-[0_3px_10px_rgba(0,0,0,0.7)]'
                     }`}
                   >
                     <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
@@ -1137,7 +1147,7 @@ export function ColpoBassoArena({
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
-      <header className="h-[38px] sm:h-[42px] shrink-0 w-full flex items-center justify-between px-2 py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
+      <header className="h-[46px] sm:h-[50px] shrink-0 w-full flex items-center justify-between px-2 py-0.5 sm:py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
         {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
         <div className="flex items-center gap-1 sm:gap-1.5">
           <div className="relative">
