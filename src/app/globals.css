@@ -244,3 +244,22 @@ body {
 .animate-hand-fan {
   animation: handFanIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
+
+/* Table Flow Direction Animation */
+@keyframes rotateClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotateCounterClockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-rotate-clockwise {
+  animation: rotateClockwise 14s linear infinite;
+}
+
+.animate-rotate-counter-clockwise {
+  animation: rotateCounterClockwise 14s linear infinite;
+}

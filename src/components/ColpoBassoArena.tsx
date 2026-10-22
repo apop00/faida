@@ -1074,28 +1074,71 @@ export function ColpoBassoArena({
               </div>
             )}
 
-            {/* Mazzo di Pesca 3D (Pila fisica con ombre stratificate e tilt) */}
-            <button
-              type="button"
-              onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
-              disabled={!canLocalUserAct}
-              className={`flex flex-col items-center group transition active:scale-95 ${
-                canLocalUserAct ? 'cursor-pointer' : 'cursor-default opacity-85'
-              }`}
-              title={canLocalUserAct ? 'Tocca per pescare una carta dal mazzo' : 'Mazzo di pesca'}
-            >
-              <div className="w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-gradient-to-br from-[#27174d] via-[#14082c] to-[#0a0318] border-2 border-cyan-400/50 group-hover:border-cyan-300 deck-3d-shadow flex flex-col items-center justify-center relative overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
-                <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-400/40 mb-0.5">
-                  <span className="text-xs">🍺</span>
-                </div>
-                <span className="text-[8px] font-black uppercase text-cyan-300 tracking-wider">
-                  Pesca
+            {/* Animazione Giro del Tavolo (In trasparenza discreta sul feltro) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+              <div
+                className={`w-[190px] h-[190px] sm:w-[220px] sm:h-[220px] rounded-full border-2 border-dashed ${
+                  state.lastDirection === 'forward'
+                    ? 'border-cyan-400/40 text-cyan-300 animate-rotate-clockwise'
+                    : 'border-amber-400/40 text-amber-300 animate-rotate-counter-clockwise'
+                } opacity-25 flex items-center justify-center relative`}
+              >
+                {/* Frecce direzionali orbitanti lungo la circonferenza */}
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                  {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
+                </span>
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                  {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
+                </span>
+                <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                  {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
+                </span>
+                <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                  {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
                 </span>
               </div>
-              <span className="text-[8px] font-bold text-slate-400 mt-1">
-                {state.deck.length} carte
-              </span>
-            </button>
+            </div>
+
+            {/* Mazzo di Pesca 3D (Pila fisica di carte a faccia in giù con dorso Faida) */}
+            <div
+              role="button"
+              tabIndex={canLocalUserAct ? 0 : -1}
+              onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
+              className={`relative flex flex-col items-center group transition select-none z-10 ${
+                canLocalUserAct ? 'cursor-pointer active:scale-95' : 'cursor-default opacity-85'
+              }`}
+              title={canLocalUserAct ? `Mazzo (${state.deck.length} carte) - Tocca per pescare` : `Mazzo (${state.deck.length} carte)`}
+            >
+              {/* Spessore 3D a strati (fogli di cartoncino sfalsati per effetto mazzo reale) */}
+              <div className="absolute -bottom-1.5 -right-1.5 w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-slate-300/40 border border-slate-400/30 -rotate-3" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-slate-200 border border-slate-400/50 shadow-md rotate-1" />
+
+              {/* Carta in Cima al Mazzo (Dorso carta Faida con cornice bianca e finitura scura) */}
+              <div className="relative w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-white p-[2px] shadow-[0_6px_16px_rgba(0,0,0,0.6)] group-hover:-translate-y-1 transition-transform duration-200">
+                <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1c1038] via-[#100724] to-[#080214] border border-cyan-400/40 flex flex-col items-center justify-center relative overflow-hidden">
+                  {/* Pattern geometrico a rombi sottile sul dorso */}
+                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:6px_6px]" />
+
+                  {/* Emblema centrale Faida */}
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-cyan-400/20 to-purple-500/20 border border-cyan-300/50 flex items-center justify-center shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                    <span className="text-[10px] sm:text-xs">⚔️</span>
+                  </div>
+
+                  <span className="text-[6px] font-black uppercase tracking-widest text-cyan-200/70 mt-1">
+                    FAIDA
+                  </span>
+
+                  {/* Luce sweep diagonale */}
+                  <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-700" />
+                </div>
+              </div>
+
+              {/* Conteggio carte nel mazzo */}
+              <div className="mt-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/10 text-[8px] font-bold text-slate-300 flex items-center gap-1 shadow-sm">
+                <Layers className="w-2.5 h-2.5 text-cyan-400" />
+                <span>{state.deck.length}</span>
+              </div>
+            </div>
 
             {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
             <div
@@ -1568,8 +1611,33 @@ export function ColpoBassoArena({
                     return { title: 'GIOCA CARTA', subtitle: '' };
                   })();
 
+                  if (selectedCards.length === 0) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => dispatchAction({ type: 'DRAW_AND_PASS' })}
+                        className="w-full h-full p-2 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 hover:from-emerald-400 hover:to-teal-500 active:scale-95 border-2 border-emerald-300/50 text-white font-black shadow-xl shadow-emerald-950/70 flex flex-col items-center justify-center gap-1 cursor-pointer transition animate-pulse"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-white/20 border border-white/40 flex items-center justify-center shadow-inner">
+                          <Layers className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex flex-col items-center justify-center leading-tight text-center">
+                          <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider text-white">
+                            PESCA E PASSA
+                          </span>
+                          <span className="text-[9px] font-extrabold uppercase text-emerald-200 mt-0.5">
+                            +1 Carta & Chiudi Turno
+                          </span>
+                        </div>
+                        <span className="text-[8px] font-medium text-emerald-100/75 text-center leading-none mt-0.5">
+                          oppure tocca una carta
+                        </span>
+                      </button>
+                    );
+                  }
+
                   return (
-                    <>
+                    <div className="w-full h-full flex flex-col justify-between gap-1">
                       <button
                         type="button"
                         disabled={!selectionValidation.valid}
@@ -1602,19 +1670,14 @@ export function ColpoBassoArena({
                       <button
                         type="button"
                         onClick={() => dispatchAction({ type: 'DRAW_AND_PASS' })}
-                        className="w-full flex-1 py-1 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-95 border border-emerald-400/40 text-white font-black shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5 cursor-pointer transition"
+                        className="w-full h-7 px-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 active:scale-95 border border-emerald-400/40 text-white font-black shadow-sm flex items-center justify-center gap-1 cursor-pointer transition shrink-0"
                       >
-                        <Layers className="w-4 h-4 shrink-0 text-emerald-200" />
-                        <div className="flex flex-col items-center justify-center leading-tight text-center">
-                          <span className="text-[11px] sm:text-xs font-black uppercase tracking-wide text-white">
-                            PESCA
-                          </span>
-                          <span className="text-[8px] sm:text-[9px] font-extrabold uppercase text-emerald-200 leading-none mt-0.5">
-                            +1 Carta & Passa
-                          </span>
-                        </div>
+                        <Layers className="w-3.5 h-3.5 text-emerald-200" />
+                        <span className="text-[9px] font-extrabold uppercase text-white">
+                          Pesca invece (+1)
+                        </span>
                       </button>
-                    </>
+                    </div>
                   );
                 })()}
 
@@ -1657,8 +1720,33 @@ export function ColpoBassoArena({
                     };
                   })();
 
+                  if (selectedCards.length === 0) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => dispatchAction({ type: 'TAKE_SIPS' })}
+                        className="w-full h-full p-2 rounded-2xl bg-gradient-to-br from-rose-600 via-red-600 to-amber-600 hover:brightness-110 active:scale-95 border-2 border-amber-300 text-white font-black shadow-xl shadow-rose-950/70 flex flex-col items-center justify-center gap-1 cursor-pointer transition animate-pulse"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-amber-400/30 border border-amber-300/50 flex items-center justify-center shadow-inner">
+                          <Beer className="w-5 h-5 text-amber-300 animate-bounce" />
+                        </div>
+                        <div className="flex flex-col items-center justify-center leading-tight text-center">
+                          <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider text-white">
+                            INCASSA E BEVI
+                          </span>
+                          <span className="text-[10px] font-extrabold uppercase text-amber-200 mt-0.5">
+                            Bevi {state.currentSips}🍺 Sorsi
+                          </span>
+                        </div>
+                        <span className="text-[8px] font-medium text-amber-100/75 text-center leading-none mt-0.5">
+                          oppure tocca una difesa
+                        </span>
+                      </button>
+                    );
+                  }
+
                   return (
-                    <>
+                    <div className="w-full h-full flex flex-col justify-between gap-1">
                       <button
                         type="button"
                         disabled={!selectionValidation.valid}
@@ -1691,19 +1779,14 @@ export function ColpoBassoArena({
                       <button
                         type="button"
                         onClick={() => dispatchAction({ type: 'TAKE_SIPS' })}
-                        className="w-full flex-1 py-1 px-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:brightness-110 active:scale-95 border border-amber-400/50 text-white font-black shadow-lg shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-pointer transition"
+                        className="w-full h-7 px-2 rounded-lg bg-rose-600/90 hover:bg-rose-500 active:scale-95 border border-amber-400/40 text-white font-black shadow-sm flex items-center justify-center gap-1 cursor-pointer transition shrink-0"
                       >
-                        <Beer className="w-4 h-4 shrink-0 text-amber-300 animate-pulse" />
-                        <div className="flex flex-col items-center justify-center leading-tight text-center">
-                          <span className="text-[11px] sm:text-xs font-black uppercase tracking-wide text-white">
-                            INCASSA
-                          </span>
-                          <span className="text-[8px] sm:text-[9px] font-extrabold uppercase text-amber-200 leading-none mt-0.5">
-                            Bevi {state.currentSips}🍺
-                          </span>
-                        </div>
+                        <Beer className="w-3.5 h-3.5 text-amber-300" />
+                        <span className="text-[9px] font-extrabold uppercase text-amber-200">
+                          Incassa ({state.currentSips}🍺)
+                        </span>
                       </button>
-                    </>
+                    </div>
                   );
                 })()}
 
@@ -1752,8 +1835,33 @@ export function ColpoBassoArena({
                     return { title: 'PASSA', subtitle: 'Turno' };
                   })();
 
+                  if (selectedCards.length === 0) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
+                        className="w-full h-full p-2 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-rose-600 hover:brightness-110 active:scale-95 border-2 border-purple-300 text-white font-black shadow-xl shadow-purple-950/70 flex flex-col items-center justify-center gap-1 cursor-pointer transition animate-pulse"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-white/20 border border-white/40 flex items-center justify-center shadow-inner">
+                          <CornerDownRight className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex flex-col items-center justify-center leading-tight text-center">
+                          <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider text-white">
+                            {passLabels.title}
+                          </span>
+                          <span className="text-[10px] font-extrabold uppercase text-purple-200 mt-0.5">
+                            {passLabels.subtitle}
+                          </span>
+                        </div>
+                        <span className="text-[8px] font-medium text-purple-100/75 text-center leading-none mt-0.5">
+                          oppure tocca una risposta
+                        </span>
+                      </button>
+                    );
+                  }
+
                   return (
-                    <>
+                    <div className="w-full h-full flex flex-col justify-between gap-1">
                       <button
                         type="button"
                         disabled={!selectionValidation.valid}
@@ -1786,19 +1894,14 @@ export function ColpoBassoArena({
                       <button
                         type="button"
                         onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
-                        className="w-full flex-1 py-1 px-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:brightness-110 active:scale-95 border border-rose-400/40 text-white font-black shadow-lg shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-pointer transition"
+                        className="w-full h-7 px-2 rounded-lg bg-rose-600/90 hover:bg-rose-500 active:scale-95 border border-rose-400/40 text-white font-black shadow-sm flex items-center justify-center gap-1 cursor-pointer transition shrink-0"
                       >
-                        <CornerDownRight className="w-4 h-4 shrink-0 text-white" />
-                        <div className="flex flex-col items-center justify-center leading-tight text-center">
-                          <span className="text-[11px] sm:text-xs font-black uppercase tracking-wide text-white">
-                            {passLabels.title}
-                          </span>
-                          <span className="text-[8px] sm:text-[9px] font-extrabold uppercase text-rose-200 leading-none mt-0.5">
-                            {passLabels.subtitle}
-                          </span>
-                        </div>
+                        <CornerDownRight className="w-3.5 h-3.5 text-white" />
+                        <span className="text-[9px] font-extrabold uppercase text-rose-200">
+                          {passLabels.title} ({passLabels.subtitle})
+                        </span>
                       </button>
-                    </>
+                    </div>
                   );
                 })()}
               </>
