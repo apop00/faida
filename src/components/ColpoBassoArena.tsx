@@ -1123,7 +1123,7 @@ export function ColpoBassoArena({
   }
 
   return (
-    <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden">
+    <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       {/* 1. TOP BAR UNIFICATA (Menu + Avversario Nord + Seme Attivo) */}
       <header className="h-[38px] sm:h-[42px] shrink-0 w-full flex items-center justify-between px-2 py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
         {/* Bottone Menu a Tendina (In alto a sinistra) */}
