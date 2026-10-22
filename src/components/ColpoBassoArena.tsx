@@ -1279,7 +1279,7 @@ export function ColpoBassoArena({
                     : 'mr-1 sm:mr-1.5';
 
                 return (
-                  <div className="relative w-full h-full flex items-end overflow-visible">
+                  <div className="relative w-full h-full flex items-end justify-center overflow-visible">
                     <div
                       ref={handScrollRef}
                       onWheel={(e) => {
@@ -1290,46 +1290,48 @@ export function ColpoBassoArena({
                       className={
                         wrapHandCards
                           ? 'flex flex-wrap items-end justify-center gap-1 pt-3 pb-1 px-1 max-h-[125px] overflow-y-auto w-full'
-                          : 'flex items-end overflow-x-auto scroll-smooth touch-pan-x pt-4 pb-0.5 px-2 h-full w-full select-none'
+                          : 'overflow-x-auto scroll-smooth touch-pan-x pt-4 pb-0.5 px-2 h-full w-full select-none flex items-end'
                       }
                     >
-                      {handCards.map(({ card, playability }, cIdx) => {
-                        const isSelected = selectedCardIds.includes(card.id);
-                        const mid = (totalCards - 1) / 2;
-                        const baseAngle = totalCards > 1 ? Math.max(-6, Math.min(6, (cIdx - mid) * 1.5)) : 0;
-                        const baseOffsetY = totalCards > 1 ? Math.abs(cIdx - mid) * 0.8 : 0;
+                      <div className="flex items-end justify-center min-w-full w-max h-full">
+                        {handCards.map(({ card, playability }, cIdx) => {
+                          const isSelected = selectedCardIds.includes(card.id);
+                          const mid = (totalCards - 1) / 2;
+                          const baseAngle = totalCards > 1 ? Math.max(-6, Math.min(6, (cIdx - mid) * 1.5)) : 0;
+                          const baseOffsetY = totalCards > 1 ? Math.abs(cIdx - mid) * 0.8 : 0;
 
-                        return (
-                          <div
-                            key={card.id}
-                            style={{
-                              transform: isSelected
-                                ? 'translateY(-10px) scale(1.06) rotate(0deg)'
-                                : wrapHandCards
-                                ? 'none'
-                                : `rotate(${baseAngle}deg) translateY(${baseOffsetY}px)`,
-                              transformOrigin: 'bottom center',
-                              zIndex: isSelected ? 80 : canLocalUserAct ? cIdx + 30 : cIdx + 10,
-                              animationDelay: `${cIdx * 35}ms`,
-                            }}
-                            className={`shrink-0 transition-all duration-200 cursor-pointer animate-hand-fan ${
-                              !wrapHandCards
-                                ? `${overlapClass} last:mr-0 hover:-translate-y-2 hover:scale-105 hover:rotate-0 hover:z-70`
-                                : ''
-                            }`}
-                          >
-                            <PlayingCard
-                              card={card}
-                              playability={playability}
-                              selected={isSelected}
-                              size="xs"
-                              interactive={canLocalUserAct}
-                              onClick={() => handleCardTap(card.id)}
-                              onInspect={(c) => setInspectedCard({ card: c, isTopCard: false })}
-                            />
-                          </div>
-                        );
-                      })}
+                          return (
+                            <div
+                              key={card.id}
+                              style={{
+                                transform: isSelected
+                                  ? 'translateY(-10px) scale(1.06) rotate(0deg)'
+                                  : wrapHandCards
+                                  ? 'none'
+                                  : `rotate(${baseAngle}deg) translateY(${baseOffsetY}px)`,
+                                transformOrigin: 'bottom center',
+                                zIndex: isSelected ? 80 : canLocalUserAct ? cIdx + 30 : cIdx + 10,
+                                animationDelay: `${cIdx * 35}ms`,
+                              }}
+                              className={`shrink-0 transition-all duration-200 cursor-pointer animate-hand-fan ${
+                                !wrapHandCards
+                                  ? `${overlapClass} last:mr-0 hover:-translate-y-2 hover:scale-105 hover:rotate-0 hover:z-70`
+                                  : ''
+                              }`}
+                            >
+                              <PlayingCard
+                                card={card}
+                                playability={playability}
+                                selected={isSelected}
+                                size="xs"
+                                interactive={canLocalUserAct}
+                                onClick={() => handleCardTap(card.id)}
+                                onInspect={(c) => setInspectedCard({ card: c, isTopCard: false })}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 );
