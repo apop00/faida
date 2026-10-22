@@ -1218,24 +1218,6 @@ export function ColpoBassoArena({
         </div>
       </header>
 
-      {/* Avviso Inattività 10 Secondi "TOCCA A TE!" Compatto e Discreto */}
-      {idleTurnReminder && canLocalUserAct && (
-        <div
-          onClick={() => setIdleTurnReminder(false)}
-          className="absolute top-9 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white flex items-center gap-2 cursor-pointer select-none animate-bounce"
-          title="Tocca per chiudere"
-        >
-          <span className="text-xs">⏰</span>
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-950">
-            TOCCA A TE!
-          </span>
-          <span className="text-[9px] font-bold text-slate-900 truncate max-w-[150px]">
-            {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
-          </span>
-          <span className="text-[10px] font-black ml-1">✕</span>
-        </div>
-      )}
-
       {/* 2. TAVOLO CENTRALE IN PROSPETTIVA 2.5D (4 LATI, FELTRO INCLINATO) */}
       <section className="relative px-1.5 py-0.5 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-hidden perspective-arena">
         {/* Traiettoria d'Attacco Laser al Neon animata */}
@@ -1249,233 +1231,248 @@ export function ColpoBassoArena({
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
         </div>
 
-        {/* ZONA CENTRALE: TAVOLO APERTO SENZA IL PESANTE QUADRATO RIGIDO */}
+        {/* ZONA CENTRALE: TAVOLO CON FELTRO INCLINATO 3D */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-between z-10 px-1 py-0.5 relative">
-          {/* Pill Minimale di Stato + Ultima Mossa (Discreta, Compatta e Fluttuante) */}
-          <div className="w-fit max-w-[85%] mx-auto flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full bg-[#120824]/60 border border-white/10 backdrop-blur-md z-10 shadow-sm mt-0.5">
-            <span
-              className={`px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider text-[8px] shrink-0 border ${
-                state.mode === 'ATTACK_CHAIN'
-                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                  : state.mode === 'SPECIAL_EVENT'
-                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35'
-              }`}
-            >
-              {state.mode === 'ATTACK_CHAIN'
-                ? '🔥 Attacco'
-                : state.mode === 'SPECIAL_EVENT'
-                ? '⚡ Evento'
-                : '🟢 Tregua'}
-            </span>
-
-            <span className="text-slate-300 font-medium truncate text-[10px]">
-              {state.lastActionBanner
-                ? state.lastActionBanner.subtitle
-                : 'Inizia la mano'}
-            </span>
-          </div>
-
-          {/* Centro Tavolo Libero e Spazioso: Mazzo Pesca | Pila Scarto (Carta a terra) | Sorsi in Palio */}
-          <div className="w-full max-w-[420px] flex items-center justify-around my-auto py-0.5 z-10 relative">
-            {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
-            {cardAnimation && (
-              <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-                {cardAnimation.type === 'PLAY' && (
-                  <div
-                    key={cardAnimation.id}
-                    className={`shrink-0 shadow-2xl ${
-                      cardAnimation.playerIndex === 1
-                        ? 'animate-fly-from-west'
-                        : cardAnimation.playerIndex === 2
-                        ? 'animate-fly-from-north'
-                        : cardAnimation.playerIndex === 3
-                        ? 'animate-fly-from-east'
-                        : 'animate-fly-from-south'
-                    }`}
-                  >
-                    <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
-                  </div>
-                )}
-
-                {cardAnimation.type === 'DRAW' && (
-                  <div
-                    key={cardAnimation.id}
-                    className={`w-[52px] h-[74px] sm:w-[58px] sm:h-[82px] rounded-xl bg-white p-[2px] shadow-2xl shrink-0 z-30 ${
-                      cardAnimation.playerIndex === 1
-                        ? 'animate-fly-to-west'
-                        : cardAnimation.playerIndex === 2
-                        ? 'animate-fly-to-north'
-                        : cardAnimation.playerIndex === 3
-                        ? 'animate-fly-to-east'
-                        : 'animate-fly-to-south'
-                    }`}
-                  >
-                    <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400 flex flex-col items-center justify-center">
-                      <span className="text-xs">⚔️</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Effetto Speciale Grafico Fluttuante (Shockwave + Badge Animato) */}
-            {activeSpecialEffect && (
-              <div
-                key={activeSpecialEffect.id}
-                className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible"
-              >
-                {/* Shockwave expanding ring */}
-                <div
-                  className={`absolute w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 ${activeSpecialEffect.colorScheme.shockwave} animate-shockwave`}
-                />
-
-                {/* Badge Animato Centrale */}
-                <div
-                  className={`relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl ${activeSpecialEffect.colorScheme.bg} border-2 ${activeSpecialEffect.colorScheme.border} ${activeSpecialEffect.colorScheme.glow} backdrop-blur-md flex items-center gap-2 shadow-2xl animate-effect-blast max-w-[280px] sm:max-w-[320px]`}
-                >
-                  <span className="text-2xl sm:text-3xl animate-bounce shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                    {activeSpecialEffect.icon}
-                  </span>
-                  <div className="flex flex-col text-left min-w-0">
-                    <span
-                      className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${activeSpecialEffect.colorScheme.text} drop-shadow-md truncate`}
-                    >
-                      {activeSpecialEffect.title}
-                    </span>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-white/95 truncate leading-tight mt-0.5">
-                      {activeSpecialEffect.subtitle}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Animazione Giro del Tavolo (In trasparenza discreta sul feltro) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
-              <div
-                className={`w-[190px] h-[190px] sm:w-[220px] sm:h-[220px] rounded-full border-2 border-dashed ${
-                  state.lastDirection === 'forward'
-                    ? 'border-cyan-400/40 text-cyan-300 animate-rotate-clockwise'
-                    : 'border-amber-400/40 text-amber-300 animate-rotate-counter-clockwise'
-                } opacity-25 flex items-center justify-center relative`}
-              >
-                {/* Frecce direzionali orbitanti lungo la circonferenza */}
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
-                  {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
-                </span>
-                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
-                  {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
-                </span>
-                <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
-                  {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
-                </span>
-                <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
-                  {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
-                </span>
-              </div>
-            </div>
-
-            {/* Mazzo di Pesca 3D (Blocco fisico a strati di cartoncino - Stile UNO Mobile) */}
+          {/* Pill Minimale di Stato o Avviso Turno Integrato (Zero sovrapposizioni) */}
+          {idleTurnReminder && canLocalUserAct ? (
             <div
-              role="button"
-              tabIndex={canLocalUserAct ? 0 : -1}
-              onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
-              className={`relative flex flex-col items-center group select-none z-10 transition-transform duration-200 ${
-                isDeckDrawing ? 'animate-deck-squish' : ''
-              } ${
-                canLocalUserAct ? 'cursor-pointer active:scale-95' : 'cursor-default opacity-90'
-              }`}
-              title={canLocalUserAct ? `Mazzo (${state.deck.length} carte) - Tocca per pescare` : `Mazzo (${state.deck.length} carte)`}
+              onClick={() => setIdleTurnReminder(false)}
+              className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white cursor-pointer select-none animate-pulse z-30 mt-0.5"
+              title="Tocca per chiudere l'avviso"
             >
-              {/* Contenitore Blocco 3D */}
-              <div className="relative group-hover:-translate-y-1 transition-transform duration-200">
-                {/* Ombra di contatto sul feltro */}
-                <div className="absolute -bottom-2.5 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-black/80 blur-md pointer-events-none" />
-
-                {/* Spessore 3D - Bordo Inferiore e Laterale Destro (Blocco di fogli di carta bianchi come in UNO) */}
-                <div className="absolute -bottom-3 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#94a3b8] border-r-2 border-b-2 border-slate-600/90 shadow-sm" />
-                <div className="absolute -bottom-2 -right-1.5 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#cbd5e1] border-r-2 border-b-2 border-slate-400 shadow-sm flex flex-col justify-end overflow-hidden">
-                  {/* Tratteggio sottile dei fogli del mazzo */}
-                  <div className="w-full h-full opacity-30 bg-[repeating-linear-gradient(0deg,#64748b_0px,#64748b_1px,transparent_1px,transparent_3px)]" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#f8fafc] border-r-2 border-b-2 border-slate-300" />
-
-                {/* Faccia Superiore: Dorso Carta Faida con cornice bianca e finitura scura */}
-                <div className="relative w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-white p-[2.5px] shadow-[0_4px_12px_rgba(0,0,0,0.6)] border border-slate-300">
-                  <div className="w-full h-full rounded-[11px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400/60 flex flex-col items-center justify-center relative overflow-hidden">
-                    {/* Pattern geometrico a rombi sul dorso */}
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:6px_6px]" />
-
-                    {/* Emblema centrale Faida */}
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400/25 to-purple-600/25 border border-amber-300/60 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                      <span className="text-xs sm:text-sm">⚔️</span>
-                    </div>
-
-                    <span className="text-[7px] font-black uppercase tracking-widest text-amber-200/90 mt-1 drop-shadow">
-                      FAIDA
-                    </span>
-
-                    {/* Luce sweep diagonale al passaggio */}
-                    <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/15 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-700" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Pillola Conteggio Carte */}
-              <div className="mt-2 px-2 py-0.5 rounded-full bg-black/75 border border-white/20 text-[9px] font-black text-slate-200 flex items-center gap-1 shadow-md">
-                <Layers className="w-3 h-3 text-cyan-400" />
-                <span>{state.deck.length} carte</span>
-              </div>
-            </div>
-
-            {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
-            <div
-              className="relative flex flex-col items-center cursor-pointer group shrink-0"
-              onClick={() => setInspectedCard({ card: state.topCard, isTopCard: true })}
-              title="Tocca per ingrandire la carta a terra"
-            >
-              {/* Carte fantasma sottostanti per profondità 3D del mazzo di scarto */}
-              <div className="absolute inset-0 w-full h-full rounded-xl bg-[#1b1035] border border-white/10 rotate-[-5deg] scale-[0.97] opacity-60 pointer-events-none shadow-md" />
-              <div className="absolute inset-0 w-full h-full rounded-xl bg-[#231545] border border-white/15 rotate-[4deg] scale-[0.98] opacity-80 pointer-events-none shadow-md" />
-
-              {/* Carta in cima con animazione Slam */}
-              <div key={state.topCard.id} className="relative z-10 animate-card-slam">
-                <PlayingCard
-                  card={state.topCard}
-                  size="sm"
-                  onInspect={(c) => setInspectedCard({ card: c, isTopCard: true })}
-                />
-              </div>
-            </div>
-
-            {/* Sorsi in Palio + Indicatore Direzione */}
-            <div className="flex flex-col items-center min-w-[65px] gap-1">
-              <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
-                In Palio
+              <span className="text-xs">⏰</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950">
+                TOCCA A TE!
               </span>
-              <div
-                className={`px-2.5 py-1 rounded-full border font-black text-xs sm:text-sm flex items-center gap-1 shadow-sm ${
-                  state.currentSips > 0
-                    ? 'bg-rose-600/30 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse'
-                    : 'bg-white/5 border-white/10 text-slate-400'
+              <span className="text-[9px] font-bold text-slate-900 truncate max-w-[160px]">
+                {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
+              </span>
+              <span className="text-[10px] font-black ml-0.5 bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
+            </div>
+          ) : (
+            <div className="w-fit max-w-[85%] mx-auto flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full bg-[#120824]/60 border border-white/10 backdrop-blur-md z-10 shadow-sm mt-0.5">
+              <span
+                className={`px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider text-[8px] shrink-0 border ${
+                  state.mode === 'ATTACK_CHAIN'
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                    : state.mode === 'SPECIAL_EVENT'
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35'
                 }`}
               >
-                <span>🍺</span>
-                <span>{state.currentSips}</span>
+                {state.mode === 'ATTACK_CHAIN'
+                  ? '🔥 Attacco'
+                  : state.mode === 'SPECIAL_EVENT'
+                  ? '⚡ Evento'
+                  : '🟢 Tregua'}
+              </span>
+
+              <span className="text-slate-300 font-medium truncate text-[10px]">
+                {state.lastActionBanner
+                  ? state.lastActionBanner.subtitle
+                  : 'Inizia la mano'}
+              </span>
+            </div>
+          )}
+
+          {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
+          {cardAnimation && (
+            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+              {cardAnimation.type === 'PLAY' && (
+                <div
+                  key={cardAnimation.id}
+                  className={`shrink-0 shadow-2xl ${
+                    cardAnimation.playerIndex === 1
+                      ? 'animate-fly-from-west'
+                      : cardAnimation.playerIndex === 2
+                      ? 'animate-fly-from-north'
+                      : cardAnimation.playerIndex === 3
+                      ? 'animate-fly-from-east'
+                      : 'animate-fly-from-south'
+                  }`}
+                >
+                  <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
+                </div>
+              )}
+
+              {cardAnimation.type === 'DRAW' && (
+                <div
+                  key={cardAnimation.id}
+                  className={`w-[52px] h-[74px] sm:w-[58px] sm:h-[82px] rounded-xl bg-white p-[2px] shadow-2xl shrink-0 z-30 ${
+                    cardAnimation.playerIndex === 1
+                      ? 'animate-fly-to-west'
+                      : cardAnimation.playerIndex === 2
+                      ? 'animate-fly-to-north'
+                      : cardAnimation.playerIndex === 3
+                      ? 'animate-fly-to-east'
+                      : 'animate-fly-to-south'
+                  }`}
+                >
+                  <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400 flex flex-col items-center justify-center">
+                    <span className="text-xs">⚔️</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Effetto Speciale Grafico Fluttuante (Shockwave + Badge Animato) */}
+          {activeSpecialEffect && (
+            <div
+              key={activeSpecialEffect.id}
+              className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible"
+            >
+              {/* Shockwave expanding ring */}
+              <div
+                className={`absolute w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 ${activeSpecialEffect.colorScheme.shockwave} animate-shockwave`}
+              />
+
+              {/* Badge Animato Centrale */}
+              <div
+                className={`relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl ${activeSpecialEffect.colorScheme.bg} border-2 ${activeSpecialEffect.colorScheme.border} ${activeSpecialEffect.colorScheme.glow} backdrop-blur-md flex items-center gap-2 shadow-2xl animate-effect-blast max-w-[280px] sm:max-w-[320px]`}
+              >
+                <span className="text-2xl sm:text-3xl animate-bounce shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                  {activeSpecialEffect.icon}
+                </span>
+                <div className="flex flex-col text-left min-w-0">
+                  <span
+                    className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${activeSpecialEffect.colorScheme.text} drop-shadow-md truncate`}
+                  >
+                    {activeSpecialEffect.title}
+                  </span>
+                  <span className="text-[8px] sm:text-[9px] font-bold text-white/95 truncate leading-tight mt-0.5">
+                    {activeSpecialEffect.subtitle}
+                  </span>
+                </div>
               </div>
-              <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1 text-[8px] font-black text-slate-300">
-                {state.lastDirection === 'forward' ? (
-                  <>
-                    <RotateCw className="w-2.5 h-2.5 text-cyan-400" />
-                    <span>Orario</span>
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-2.5 h-2.5 text-amber-400" />
-                    <span>Inverso</span>
-                  </>
-                )}
+            </div>
+          )}
+
+          {/* TAVOLO DA GIOCO INCLINATO IN PROSPETTIVA 3D (FELTRO OVALE AL NEON) */}
+          <div className="w-full max-w-[420px] my-auto py-0.5 z-10 relative [perspective:800px]">
+            <div className="w-full flex items-center justify-around py-1.5 px-3 rounded-[32px] bg-gradient-to-b from-[#180d36]/70 via-[#100726]/85 to-[#070213]/90 border border-purple-500/25 shadow-[0_15px_35px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)] relative [transform:rotateX(26deg)] [transform-style:preserve-3d]">
+              {/* Animazione Giro del Tavolo (In trasparenza sul feltro inclinato) */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+                <div
+                  className={`w-[190px] h-[190px] sm:w-[220px] sm:h-[220px] rounded-full border-2 border-dashed ${
+                    state.lastDirection === 'forward'
+                      ? 'border-cyan-400/40 text-cyan-300 animate-rotate-clockwise'
+                      : 'border-amber-400/40 text-amber-300 animate-rotate-counter-clockwise'
+                  } opacity-25 flex items-center justify-center relative`}
+                >
+                  {/* Frecce direzionali orbitanti lungo la circonferenza */}
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                    {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
+                  </span>
+                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                    {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
+                  </span>
+                  <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                    {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
+                  </span>
+                  <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                    {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Mazzo di Pesca 3D (Blocco fisico a strati di cartoncino - Stile UNO Mobile) */}
+              <div
+                role="button"
+                tabIndex={canLocalUserAct ? 0 : -1}
+                onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
+                className={`relative flex flex-col items-center group select-none z-10 transition-transform duration-200 ${
+                  isDeckDrawing ? 'animate-deck-squish' : ''
+                } ${
+                  canLocalUserAct ? 'cursor-pointer active:scale-95' : 'cursor-default opacity-90'
+                }`}
+                title={canLocalUserAct ? `Mazzo (${state.deck.length} carte) - Tocca per pescare` : `Mazzo (${state.deck.length} carte)`}
+              >
+                {/* Contenitore Blocco 3D */}
+                <div className="relative group-hover:-translate-y-1 transition-transform duration-200">
+                  {/* Ombra di contatto sul feltro */}
+                  <div className="absolute -bottom-2.5 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-black/80 blur-md pointer-events-none" />
+
+                  {/* Spessore 3D - Bordo Inferiore e Laterale Destro */}
+                  <div className="absolute -bottom-3 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#94a3b8] border-r-2 border-b-2 border-slate-600/90 shadow-sm" />
+                  <div className="absolute -bottom-2 -right-1.5 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#cbd5e1] border-r-2 border-b-2 border-slate-400 shadow-sm flex flex-col justify-end overflow-hidden">
+                    <div className="w-full h-full opacity-30 bg-[repeating-linear-gradient(0deg,#64748b_0px,#64748b_1px,transparent_1px,transparent_3px)]" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#f8fafc] border-r-2 border-b-2 border-slate-300" />
+
+                  {/* Faccia Superiore: Dorso Carta Faida con cornice bianca e finitura scura */}
+                  <div className="relative w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-white p-[2.5px] shadow-[0_4px_12px_rgba(0,0,0,0.6)] border border-slate-300">
+                    <div className="w-full h-full rounded-[11px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400/60 flex flex-col items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:6px_6px]" />
+
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400/25 to-purple-600/25 border border-amber-300/60 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                        <span className="text-xs sm:text-sm">⚔️</span>
+                      </div>
+
+                      <span className="text-[7px] font-black uppercase tracking-widest text-amber-200/90 mt-1 drop-shadow">
+                        FAIDA
+                      </span>
+
+                      <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/15 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-700" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pillola Conteggio Carte */}
+                <div className="mt-2 px-2 py-0.5 rounded-full bg-black/75 border border-white/20 text-[9px] font-black text-slate-200 flex items-center gap-1 shadow-md">
+                  <Layers className="w-3 h-3 text-cyan-400" />
+                  <span>{state.deck.length} carte</span>
+                </div>
+              </div>
+
+              {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
+              <div
+                className="relative flex flex-col items-center cursor-pointer group shrink-0"
+                onClick={() => setInspectedCard({ card: state.topCard, isTopCard: true })}
+                title="Tocca per ingrandire la carta a terra"
+              >
+                {/* Carte fantasma sottostanti per profondità 3D del mazzo di scarto */}
+                <div className="absolute inset-0 w-full h-full rounded-xl bg-[#1b1035] border border-white/10 rotate-[-5deg] scale-[0.97] opacity-60 pointer-events-none shadow-md" />
+                <div className="absolute inset-0 w-full h-full rounded-xl bg-[#231545] border border-white/15 rotate-[4deg] scale-[0.98] opacity-80 pointer-events-none shadow-md" />
+
+                {/* Carta in cima con animazione Slam */}
+                <div key={state.topCard.id} className="relative z-10 animate-card-slam">
+                  <PlayingCard
+                    card={state.topCard}
+                    size="sm"
+                    onInspect={(c) => setInspectedCard({ card: c, isTopCard: true })}
+                  />
+                </div>
+              </div>
+
+              {/* Sorsi in Palio + Indicatore Direzione */}
+              <div className="flex flex-col items-center min-w-[65px] gap-1">
+                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                  In Palio
+                </span>
+                <div
+                  className={`px-2.5 py-1 rounded-full border font-black text-xs sm:text-sm flex items-center gap-1 shadow-sm ${
+                    state.currentSips > 0
+                      ? 'bg-rose-600/30 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse'
+                      : 'bg-white/5 border-white/10 text-slate-400'
+                  }`}
+                >
+                  <span>🍺</span>
+                  <span>{state.currentSips}</span>
+                </div>
+                <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1 text-[8px] font-black text-slate-300">
+                  {state.lastDirection === 'forward' ? (
+                    <>
+                      <RotateCw className="w-2.5 h-2.5 text-cyan-400" />
+                      <span>Orario</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-2.5 h-2.5 text-amber-400" />
+                      <span>Inverso</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
