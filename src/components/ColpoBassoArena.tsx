@@ -1309,7 +1309,7 @@ export function ColpoBassoArena({
 
           {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
           {cardAnimation && (
-            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center translate-y-2 sm:translate-y-2.5">
               {cardAnimation.type === 'PLAY' && (
                 <div
                   key={cardAnimation.id}
@@ -1352,7 +1352,7 @@ export function ColpoBassoArena({
           {activeSpecialEffect && (
             <div
               key={activeSpecialEffect.id}
-              className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible"
+              className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible translate-y-2 sm:translate-y-2.5"
             >
               {/* Shockwave expanding ring */}
               <div
@@ -1381,7 +1381,7 @@ export function ColpoBassoArena({
           )}
 
           {/* TAVOLO DA GIOCO MOLTO INCLINATO IN PROSPETTIVA 3D (FELTRO OVALE AL NEON) */}
-          <div className="w-full max-w-[430px] my-0 py-0 z-10 relative [perspective:650px]">
+          <div className="w-full max-w-[430px] my-0 py-0 z-10 relative [perspective:650px] translate-y-2 sm:translate-y-2.5">
             <div className="w-full flex items-center justify-around py-1 px-3 sm:px-4 rounded-[38px] bg-gradient-to-b from-[#1d0f3d]/70 via-[#100726]/85 to-[#070213]/95 border border-purple-500/30 shadow-[0_20px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.1)] relative [transform:rotateX(46deg)] [transform-style:preserve-3d]">
               {/* Animazione Giro del Tavolo (Inclinato ed ellittico per recuperare massimo spazio verticale) */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0 scale-x-[1.4] scale-y-[0.62] [transform-style:preserve-3d]">
