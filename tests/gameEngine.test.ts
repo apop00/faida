@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeAIMove,
+  createDeck,
   createInitialGameState,
   gameReducer,
   getCardPlayability,
@@ -9,7 +10,7 @@ import {
   getTargetBonusCards,
   validateCardSelection,
 } from '@/lib/gameEngine';
-import { Card, GameState } from '@/types/game';
+import { Card, CustomDeckConfig, DEFAULT_DECK_CONFIG, GameState } from '@/types/game';
 
 function card(suit: Card['suit'], value: number, suffix = ''): Card {
   const labels: Record<number, string> = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
@@ -747,6 +748,52 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
 
     expect(afterMirrorResponse.mode).toBe('NEUTRAL_FLOW');
     expect(afterMirrorResponse.activePlayerIndex).toBe(1); // Player 0 is skipped, Player 1 plays!
+  });
+
+  it('Custom Deck Configuration: createDeck filtra correttamente carte ed eventi in base alle impostazioni', () => {
+    // 1. Mazzo standard con DEFAULT_DECK_CONFIG (92 carte totali)
+    const defaultDeck = createDeck(DEFAULT_DECK_CONFIG);
+    expect(defaultDeck).toHaveLength(92);
+
+    // 2. Solo carte standard (52 carte: 36 numeri + 16 figure), tutti gli eventi disattivati
+    const noEventsConfig: CustomDeckConfig = {
+      ...DEFAULT_DECK_CONFIG,
+      includeStop: false,
+      includeSkip: false,
+      includeReverse: false,
+      includeDirectSips: false,
+      includeMirror: false,
+      includeDuel: false,
+      includeSuperDuel: false,
+      includeTaxRich: false,
+      includeDrawSwap: false,
+    };
+    const noEventsDeck = createDeck(noEventsConfig);
+    expect(noEventsDeck).toHaveLength(52);
+    expect(noEventsDeck.every((c) => !c.eventKind)).toBe(true);
+
+    // 3. Disattivazione Figure (A, J, Q, K escluse = -16 carte)
+    const noFiguresConfig: CustomDeckConfig = {
+      ...DEFAULT_DECK_CONFIG,
+      includeAces: false,
+      includeJacks: false,
+      includeQueens: false,
+      includeKings: false,
+    };
+    const noFiguresDeck = createDeck(noFiguresConfig);
+    expect(noFiguresDeck).toHaveLength(92 - 16);
+    expect(noFiguresDeck.some((c) => c.value === 1 || c.value === 11 || c.value === 12 || c.value === 13)).toBe(false);
+
+    // 4. Setup iniziale senza carte STOP: i 4 giocatori ricevono 8 carte dal mazzo pool senza crash
+    const noStopState = createInitialGameState(
+      ['P1', 'P2', 'P3', 'P4'],
+      [false, true, true, true],
+      { ...DEFAULT_DECK_CONFIG, includeStop: false }
+    );
+    expect(noStopState.players.every((p) => p.hand.length === 8)).toBe(true);
+    // Nessun giocatore deve avere carte STOP
+    const allHandsCards = noStopState.players.flatMap((p) => p.hand);
+    expect(allHandsCards.some((c) => c.eventKind === 'STOP_SUIT')).toBe(false);
   });
 });
 

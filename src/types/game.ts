@@ -43,6 +43,40 @@ export type Player = {
   defensesSucceeded?: number;
 };
 
+export type CustomDeckConfig = {
+  // Figure di Potere (Standard Aces & Face cards)
+  includeAces?: boolean; // Asso: Cascata di Semi (4 carte)
+  includeJacks?: boolean; // Fante: Spionaggio Tattico (4 carte)
+  includeQueens?: boolean; // Regina: Fardello +2 e Contro-Regina (4 carte)
+  includeKings?: boolean; // Re: Brindisi Imperiale & Regicidio (4 carte)
+  // Carte Evento (Event Cards)
+  includeDirectSips?: boolean; // Sorsi Diretti 1-5🍺 (11 carte)
+  includeReverse?: boolean; // Cambio Giro 🔄 (4 carte)
+  includeStop?: boolean; // Stop Paracolpi 🚫 (4 nel mazzo + 4 iniziali)
+  includeSkip?: boolean; // Salta Turno ⏭️ (4 carte)
+  includeMirror?: boolean; // Specchio Riflettente 🪞 (2 carte)
+  includeDuel?: boolean; // Duello 1v1 Alta/Bassa ⚔️ (4 carte)
+  includeSuperDuel?: boolean; // Super Duello Tutti 💥 (2 carte)
+  includeTaxRich?: boolean; // Tassa sui Ricchi 📉 (1 carta)
+  includeDrawSwap?: boolean; // Scambio e Pescate 🫱 ♥♦+2 ♣♠+2 🃏+1 (4 carte)
+};
+
+export const DEFAULT_DECK_CONFIG: Required<CustomDeckConfig> = {
+  includeAces: true,
+  includeJacks: true,
+  includeQueens: true,
+  includeKings: true,
+  includeDirectSips: true,
+  includeReverse: true,
+  includeStop: true,
+  includeSkip: true,
+  includeMirror: true,
+  includeDuel: true,
+  includeSuperDuel: true,
+  includeTaxRich: true,
+  includeDrawSwap: true,
+};
+
 export type LobbySlot = {
   slotIndex: number;
   suit: Suit;
@@ -63,6 +97,7 @@ export type LobbyRoom = {
   updatedAt: string;
   slots: LobbySlot[];
   gameState: GameState | null;
+  deckConfig?: CustomDeckConfig;
 };
 
 export type SpecialEventState =
@@ -218,6 +253,7 @@ export type GameAction =
       playerNames?: string[];
       aiFlags?: boolean[];
       customState?: Partial<GameState>;
+      deckConfig?: CustomDeckConfig;
     }
   | { type: 'SYNC_STATE'; nextState: GameState }
   | { type: 'PLAY_CARDS'; cardIds: string[]; targetPlayerIndex?: number }

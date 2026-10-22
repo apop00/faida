@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       hostClientId: body.hostClientId,
       isPublic: body.isPublic ?? true,
       preset: (body.preset as MatchPreset) || '1P_3PC',
+      deckConfig: body.deckConfig,
     });
 
     return NextResponse.json({ room });

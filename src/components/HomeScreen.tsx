@@ -13,6 +13,7 @@ import {
   Layers,
   Play,
   QrCode,
+  SlidersHorizontal,
   Sparkles,
   Swords,
   Users,
@@ -21,13 +22,14 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { Card, MatchPreset } from '@/types/game';
+import { Card, CustomDeckConfig, DEFAULT_DECK_CONFIG, MatchPreset } from '@/types/game';
 import { SUITS, SUIT_INFO } from '@/lib/gameEngine';
 import { backgroundMusic } from '@/lib/backgroundMusic';
 import { sfxManager } from '@/lib/audioEffects';
 import { RulesModal } from './RulesModal';
 import { PlayingCard } from './PlayingCard';
 import { CardDetailModal } from './CardDetailModal';
+import { DeckSettingsModal } from './DeckSettingsModal';
 
 interface HomeScreenProps {
   onStartQuickGame: (nickname: string) => void;
@@ -35,7 +37,8 @@ interface HomeScreenProps {
   onStartLocalPreset: (
     preset: MatchPreset,
     names: string[],
-    flags: boolean[]
+    flags: boolean[],
+    deckConfig?: CustomDeckConfig
   ) => void;
 }
 
@@ -128,6 +131,8 @@ export function HomeScreen({
     true,
     true,
   ]);
+  const [deckConfig, setDeckConfig] = useState<CustomDeckConfig>(DEFAULT_DECK_CONFIG);
+  const [showDeckSettingsModal, setShowDeckSettingsModal] = useState(false);
 
   // Load saved nickname from localStorage on mount
   useEffect(() => {
@@ -163,7 +168,7 @@ export function HomeScreen({
 
   const handleConfirmLocalStart = () => {
     setShowLocalModal(false);
-    onStartLocalPreset(selectedPreset, localNames, localAiFlags);
+    onStartLocalPreset(selectedPreset, localNames, localAiFlags, deckConfig);
   };
 
   return (
@@ -533,6 +538,24 @@ export function HomeScreen({
               </div>
             </div>
 
+            {/* Mazzo & Regole Carte */}
+            <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10 shrink-0 my-1">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+                <div>
+                  <div className="text-xs font-black text-white">Mazzo & Carte Partita</div>
+                  <div className="text-[9px] text-slate-400">Personalizza quali carte ed eventi includere</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeckSettingsModal(true)}
+                className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-black uppercase hover:bg-amber-500/30 transition cursor-pointer"
+              >
+                ⚙️ Configura
+              </button>
+            </div>
+
             {/* Footer Modale: Bottone Avvia Partita */}
             <div className="pt-2 border-t border-white/10 shrink-0">
               <button
@@ -560,6 +583,14 @@ export function HomeScreen({
           onClose={() => setInspectedCard(null)}
         />
       )}
+
+      {/* MODALE PERSONALIZZAZIONE MAZZO */}
+      <DeckSettingsModal
+        isOpen={showDeckSettingsModal}
+        onClose={() => setShowDeckSettingsModal(false)}
+        config={deckConfig}
+        onSaveConfig={(newConfig) => setDeckConfig(newConfig)}
+      />
     </div>
   );
 }

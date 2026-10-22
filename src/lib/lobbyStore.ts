@@ -7,6 +7,7 @@ import {
   SUIT_INFO,
 } from '@/lib/gameEngine';
 import {
+  CustomDeckConfig,
   GameAction,
   LobbyRoom,
   LobbySlot,
@@ -108,6 +109,7 @@ class LobbyStore {
     hostClientId: string;
     isPublic: boolean;
     preset: MatchPreset;
+    deckConfig?: CustomDeckConfig;
   }): LobbyRoom {
     this.loadFromDisk();
     let code = generateCode();
@@ -152,6 +154,7 @@ class LobbyStore {
       updatedAt: now,
       slots,
       gameState: null,
+      deckConfig: params.deckConfig,
     };
 
     this.rooms.set(code, room);
@@ -227,6 +230,7 @@ class LobbyStore {
     name?: string;
     preset?: MatchPreset;
     isPublic?: boolean;
+    deckConfig?: CustomDeckConfig;
   }): LobbyRoom {
     this.loadFromDisk();
     const room = this.rooms.get(params.code.trim().toUpperCase());
@@ -234,6 +238,10 @@ class LobbyStore {
 
     if (params.isPublic !== undefined) {
       room.isPublic = params.isPublic;
+    }
+
+    if (params.deckConfig !== undefined) {
+      room.deckConfig = params.deckConfig;
     }
 
     if (params.preset) {
@@ -251,7 +259,7 @@ class LobbyStore {
         }
       });
     } else {
-      const slot = room.slots[params.slotIndex];
+      const slot = room.slots[params.slotIndex ?? 0];
       if (slot) {
         if (params.isAI !== undefined) {
           slot.isAI = params.isAI;
@@ -287,7 +295,7 @@ class LobbyStore {
     });
     const aiFlags = room.slots.map((s) => s.isAI);
 
-    const initial = createInitialGameState(names, aiFlags);
+    const initial = createInitialGameState(names, aiFlags, room.deckConfig);
     initial.players = initial.players.map((p, idx) => ({
       ...p,
       clientPlayerId: room.slots[idx]?.clientPlayerId || undefined,

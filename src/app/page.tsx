@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { HomeScreen } from '@/components/HomeScreen';
 import { ColpoBassoArena } from '@/components/ColpoBassoArena';
-import { MatchPreset } from '@/types/game';
+import { CustomDeckConfig, MatchPreset } from '@/types/game';
 
 export default function HomePage() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'arena'>('home');
@@ -11,6 +11,7 @@ export default function HomePage() {
     preset?: MatchPreset;
     playerNames?: string[];
     aiFlags?: boolean[];
+    deckConfig?: CustomDeckConfig;
     initialOpenLobbyTab?: 'quick' | 'create' | 'join' | null;
   }>({});
 
@@ -30,6 +31,7 @@ export default function HomePage() {
         initialPreset={arenaProps.preset}
         initialPlayerNames={arenaProps.playerNames}
         initialAiFlags={arenaProps.aiFlags}
+        initialDeckConfig={arenaProps.deckConfig}
         initialOpenLobbyTab={arenaProps.initialOpenLobbyTab}
         onBackToHome={() => setCurrentScreen('home')}
       />
@@ -68,11 +70,12 @@ export default function HomePage() {
         });
         setCurrentScreen('arena');
       }}
-      onStartLocalPreset={(preset, names, flags) => {
+      onStartLocalPreset={(preset, names, flags, deckConfig) => {
         setArenaProps({
           preset,
           playerNames: names,
           aiFlags: flags,
+          deckConfig,
           initialOpenLobbyTab: null,
         });
         setCurrentScreen('arena');

@@ -12,7 +12,7 @@ import {
   SUIT_INFO,
   validateCardSelection,
 } from '@/lib/gameEngine';
-import { Card, GameAction, LobbyRoom, MatchPreset, Player } from '@/types/game';
+import { Card, CustomDeckConfig, GameAction, LobbyRoom, MatchPreset, Player } from '@/types/game';
 import { PlayingCard } from './PlayingCard';
 import { TargetBonusModal } from './TargetBonusModal';
 import { VictoryModal } from './VictoryModal';
@@ -339,6 +339,7 @@ export interface ColpoBassoArenaProps {
   initialPreset?: MatchPreset;
   initialPlayerNames?: string[];
   initialAiFlags?: boolean[];
+  initialDeckConfig?: CustomDeckConfig;
   initialLobbyRoom?: LobbyRoom | null;
   initialOpenLobbyTab?: 'quick' | 'create' | 'join' | null;
   onBackToHome?: () => void;
@@ -348,6 +349,7 @@ export function ColpoBassoArena({
   initialPreset = '1P_3PC',
   initialPlayerNames = DEFAULT_NAMES_1P_3PC,
   initialAiFlags = DEFAULT_FLAGS_1P_3PC,
+  initialDeckConfig,
   initialLobbyRoom = null,
   initialOpenLobbyTab = null,
   onBackToHome,
@@ -357,9 +359,16 @@ export function ColpoBassoArena({
   const [aiFlags, setAiFlags] = useState<boolean[]>(initialAiFlags);
   const [clientPlayerId, setClientPlayerId] = useState<string>('local_player');
   const [activeLobby, setActiveLobby] = useState<LobbyRoom | null>(initialLobbyRoom);
+  const [deckConfig, setDeckConfig] = useState<CustomDeckConfig | undefined>(
+    initialDeckConfig || initialLobbyRoom?.deckConfig
+  );
 
   const [state, dispatchLocal] = useReducer(gameReducer, undefined, () =>
-    createInitialGameState(initialPlayerNames, initialAiFlags)
+    createInitialGameState(
+      initialPlayerNames,
+      initialAiFlags,
+      initialDeckConfig || initialLobbyRoom?.deckConfig
+    )
   );
 
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
@@ -832,16 +841,21 @@ export function ColpoBassoArena({
   const handleStartLocalPreset = (
     preset: MatchPreset,
     names: string[],
-    flags: boolean[]
+    flags: boolean[],
+    customDeckConfig?: CustomDeckConfig
   ) => {
     setActiveLobby(null);
     setCurrentPreset(preset);
     setPlayerNames(names);
     setAiFlags(flags);
+    if (customDeckConfig) {
+      setDeckConfig(customDeckConfig);
+    }
     dispatchLocal({
       type: 'INIT_GAME',
       playerNames: names,
       aiFlags: flags,
+      deckConfig: customDeckConfig || deckConfig,
     });
     setSelectedCardIds([]);
   };
@@ -2527,7 +2541,7 @@ export function ColpoBassoArena({
                   }
                 });
             } else {
-              handleStartLocalPreset(currentPreset, playerNames, aiFlags);
+              handleStartLocalPreset(currentPreset, playerNames, aiFlags, deckConfig);
             }
           }}
         />

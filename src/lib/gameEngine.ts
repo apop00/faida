@@ -3,6 +3,8 @@ import {
   ActiveDuelState,
   Card,
   CardPlayability,
+  CustomDeckConfig,
+  DEFAULT_DECK_CONFIG,
   Direction,
   GameAction,
   GameLogEntry,
@@ -124,12 +126,18 @@ export function getNextTurnIndex(
  * - 1 Neri +2 Carte Event Card
  * - 1 Tutti +1 Carta Event Card
  */
-export function createDeck(): Card[] {
+export function createDeck(config?: CustomDeckConfig): Card[] {
+  const cfg = { ...DEFAULT_DECK_CONFIG, ...config };
   const deck: Card[] = [];
 
-  // 1. 52 Standard Cards
+  // 1. 52 Standard Cards (2..10 always, Face cards configurable)
   for (const suit of SUITS) {
     for (let value = 1; value <= 13; value++) {
+      if (value === 1 && !cfg.includeAces) continue;
+      if (value === 11 && !cfg.includeJacks) continue;
+      if (value === 12 && !cfg.includeQueens) continue;
+      if (value === 13 && !cfg.includeKings) continue;
+
       deck.push({
         id: `${suit}-${value}`,
         suit,
@@ -140,195 +148,207 @@ export function createDeck(): Card[] {
   }
 
   // 2. 11 Direct Sip Event Cards (played on opponent's suit on table)
-  // 4x 1 Sorso
-  for (let i = 0; i < 4; i++) {
+  if (cfg.includeDirectSips) {
+    // 4x 1 Sorso
+    for (let i = 0; i < 4; i++) {
+      deck.push({
+        id: `event-sip1-${i + 1}`,
+        suit: SUITS[i],
+        value: 0,
+        label: '1🍺',
+        eventKind: 'DIRECT_SIPS',
+        sipsAmount: 1,
+      });
+    }
+    // 4x 2 Sorsi
+    for (let i = 0; i < 4; i++) {
+      deck.push({
+        id: `event-sip2-${i + 1}`,
+        suit: SUITS[i],
+        value: 0,
+        label: '2🍺',
+        eventKind: 'DIRECT_SIPS',
+        sipsAmount: 2,
+      });
+    }
+    // 2x 3 Sorsi
+    for (let i = 0; i < 2; i++) {
+      deck.push({
+        id: `event-sip3-${i + 1}`,
+        suit: SUITS[i],
+        value: 0,
+        label: '3🍺',
+        eventKind: 'DIRECT_SIPS',
+        sipsAmount: 3,
+      });
+    }
+    // 1x 5 Sorsi
     deck.push({
-      id: `event-sip1-${i + 1}`,
-      suit: SUITS[i],
+      id: `event-sip5-1`,
+      suit: 'spades',
       value: 0,
-      label: '1🍺',
+      label: '5🍺',
       eventKind: 'DIRECT_SIPS',
-      sipsAmount: 1,
+      sipsAmount: 5,
     });
   }
-  // 4x 2 Sorsi
-  for (let i = 0; i < 4; i++) {
-    deck.push({
-      id: `event-sip2-${i + 1}`,
-      suit: SUITS[i],
-      value: 0,
-      label: '2🍺',
-      eventKind: 'DIRECT_SIPS',
-      sipsAmount: 2,
-    });
-  }
-  // 2x 3 Sorsi
-  for (let i = 0; i < 2; i++) {
-    deck.push({
-      id: `event-sip3-${i + 1}`,
-      suit: SUITS[i],
-      value: 0,
-      label: '3🍺',
-      eventKind: 'DIRECT_SIPS',
-      sipsAmount: 3,
-    });
-  }
-  // 1x 5 Sorsi
-  deck.push({
-    id: `event-sip5-1`,
-    suit: 'spades',
-    value: 0,
-    label: '5🍺',
-    eventKind: 'DIRECT_SIPS',
-    sipsAmount: 5,
-  });
 
   // 3. 4x Cambio Giro with Suits
-  for (const suit of SUITS) {
-    deck.push({
-      id: `event-reverse-${suit}`,
-      suit,
-      value: 0,
-      label: '🔄',
-      eventKind: 'REVERSE_SUIT',
-    });
+  if (cfg.includeReverse) {
+    for (const suit of SUITS) {
+      deck.push({
+        id: `event-reverse-${suit}`,
+        suit,
+        value: 0,
+        label: '🔄',
+        eventKind: 'REVERSE_SUIT',
+      });
+    }
   }
 
   // 4. 8x Stop with Suits (4 given 1 per player in initial hand + 4 in the draw deck - solo paracolpi/difesa)
-  for (const suit of SUITS) {
-    deck.push({
-      id: `event-stop-${suit}`,
-      suit,
-      value: 0,
-      label: '🚫',
-      eventKind: 'STOP_SUIT',
-    });
-    deck.push({
-      id: `event-stop-deck-${suit}`,
-      suit,
-      value: 0,
-      label: '🚫',
-      eventKind: 'STOP_SUIT',
-    });
+  if (cfg.includeStop) {
+    for (const suit of SUITS) {
+      deck.push({
+        id: `event-stop-${suit}`,
+        suit,
+        value: 0,
+        label: '🚫',
+        eventKind: 'STOP_SUIT',
+      });
+      deck.push({
+        id: `event-stop-deck-${suit}`,
+        suit,
+        value: 0,
+        label: '🚫',
+        eventKind: 'STOP_SUIT',
+      });
+    }
   }
 
   // 4b. 4x Salta Turno (1 per seme: ♥, ♦, ♣, ♠) - fa saltare il turno al prossimo, solo Specchio risponde
-  for (const suit of SUITS) {
+  if (cfg.includeSkip) {
+    for (const suit of SUITS) {
+      deck.push({
+        id: `event-skip-${suit}`,
+        suit,
+        value: 0,
+        label: '⏭️',
+        eventKind: 'SKIP_TURN',
+      });
+    }
+  }
+
+  // 5. 1x Scambio 1 Carta a Destra + Pescate di Fazione
+  if (cfg.includeDrawSwap) {
     deck.push({
-      id: `event-skip-${suit}`,
-      suit,
+      id: 'event-pass-right',
+      suit: 'hearts',
       value: 0,
-      label: '⏭️',
-      eventKind: 'SKIP_TURN',
+      label: '🫱',
+      eventKind: 'PASS_RIGHT',
+    });
+    deck.push({
+      id: 'event-red-draw-2',
+      suit: 'hearts',
+      value: 0,
+      label: '♥♦+2',
+      eventKind: 'RED_DRAW_2',
+    });
+    deck.push({
+      id: 'event-black-draw-2',
+      suit: 'spades',
+      value: 0,
+      label: '♣♠+2',
+      eventKind: 'BLACK_DRAW_2',
+    });
+    deck.push({
+      id: 'event-all-draw-1',
+      suit: 'clubs',
+      value: 0,
+      label: '🃏+1',
+      eventKind: 'ALL_DRAW_1',
     });
   }
 
-  // 5. 1x Scambio 1 Carta a Destra
-  deck.push({
-    id: 'event-pass-right',
-    suit: 'hearts',
-    value: 0,
-    label: '🫱',
-    eventKind: 'PASS_RIGHT',
-  });
-
-  // 6. 1x Rossi pescano 2 carte
-  deck.push({
-    id: 'event-red-draw-2',
-    suit: 'hearts',
-    value: 0,
-    label: '♥♦+2',
-    eventKind: 'RED_DRAW_2',
-  });
-
-  // 7. 1x Neri pescano 2 carte
-  deck.push({
-    id: 'event-black-draw-2',
-    suit: 'spades',
-    value: 0,
-    label: '♣♠+2',
-    eventKind: 'BLACK_DRAW_2',
-  });
-
-  // 8. 1x Tutti pescano 1 carta
-  deck.push({
-    id: 'event-all-draw-1',
-    suit: 'clubs',
-    value: 0,
-    label: '🃏+1',
-    eventKind: 'ALL_DRAW_1',
-  });
-
   // 9. 2x Specchio (riflette attacchi e Sorsi Diretti)
-  deck.push({
-    id: 'event-mirror-1',
-    suit: 'diamonds',
-    value: 0,
-    label: '🪞',
-    eventKind: 'MIRROR',
-  });
-  deck.push({
-    id: 'event-mirror-2',
-    suit: 'clubs',
-    value: 0,
-    label: '🪞',
-    eventKind: 'MIRROR',
-  });
+  if (cfg.includeMirror) {
+    deck.push({
+      id: 'event-mirror-1',
+      suit: 'diamonds',
+      value: 0,
+      label: '🪞',
+      eventKind: 'MIRROR',
+    });
+    deck.push({
+      id: 'event-mirror-2',
+      suit: 'clubs',
+      value: 0,
+      label: '🪞',
+      eventKind: 'MIRROR',
+    });
+  }
 
   // 10. 1x Tassa sui Ricchi (chi ha meno carte pesca +2 e beve 1 sorso)
-  deck.push({
-    id: 'event-tax-rich',
-    suit: 'diamonds',
-    value: 0,
-    label: '📉',
-    eventKind: 'TAX_RICH',
-  });
+  if (cfg.includeTaxRich) {
+    deck.push({
+      id: 'event-tax-rich',
+      suit: 'diamonds',
+      value: 0,
+      label: '📉',
+      eventKind: 'TAX_RICH',
+    });
+  }
 
   // 11. 4x Duello 1v1 (2x Carta Alta, 2x Carta Bassa - solo carte da 2 a 10)
-  deck.push({
-    id: 'event-duel-high-1',
-    suit: 'hearts',
-    value: 0,
-    label: '⚔️▲',
-    eventKind: 'DUEL_HIGH',
-  });
-  deck.push({
-    id: 'event-duel-high-2',
-    suit: 'spades',
-    value: 0,
-    label: '⚔️▲',
-    eventKind: 'DUEL_HIGH',
-  });
-  deck.push({
-    id: 'event-duel-low-1',
-    suit: 'diamonds',
-    value: 0,
-    label: '⚔️▼',
-    eventKind: 'DUEL_LOW',
-  });
-  deck.push({
-    id: 'event-duel-low-2',
-    suit: 'clubs',
-    value: 0,
-    label: '⚔️▼',
-    eventKind: 'DUEL_LOW',
-  });
+  if (cfg.includeDuel) {
+    deck.push({
+      id: 'event-duel-high-1',
+      suit: 'hearts',
+      value: 0,
+      label: '⚔️▲',
+      eventKind: 'DUEL_HIGH',
+    });
+    deck.push({
+      id: 'event-duel-high-2',
+      suit: 'spades',
+      value: 0,
+      label: '⚔️▲',
+      eventKind: 'DUEL_HIGH',
+    });
+    deck.push({
+      id: 'event-duel-low-1',
+      suit: 'diamonds',
+      value: 0,
+      label: '⚔️▼',
+      eventKind: 'DUEL_LOW',
+    });
+    deck.push({
+      id: 'event-duel-low-2',
+      suit: 'clubs',
+      value: 0,
+      label: '⚔️▼',
+      eventKind: 'DUEL_LOW',
+    });
+  }
 
   // 12. 2x Super Duello con Tutti (1x Carta Alta, 1x Carta Bassa - solo carte da 2 a 10)
-  deck.push({
-    id: 'event-super-duel-high',
-    suit: 'hearts',
-    value: 0,
-    label: '💥▲',
-    eventKind: 'SUPER_DUEL_HIGH',
-  });
-  deck.push({
-    id: 'event-super-duel-low',
-    suit: 'spades',
-    value: 0,
-    label: '💥▼',
-    eventKind: 'SUPER_DUEL_LOW',
-  });
+  if (cfg.includeSuperDuel) {
+    deck.push({
+      id: 'event-super-duel-high',
+      suit: 'hearts',
+      value: 0,
+      label: '💥▲',
+      eventKind: 'SUPER_DUEL_HIGH',
+    });
+    deck.push({
+      id: 'event-super-duel-low',
+      suit: 'spades',
+      value: 0,
+      label: '💥▼',
+      eventKind: 'SUPER_DUEL_LOW',
+    });
+  }
 
   return deck;
 }
@@ -490,9 +510,11 @@ export function resolveDuelVerdict(
 
 export function createInitialGameState(
   playerNames: string[] = ['Giocatore 1', 'Giocatore 2', 'Giocatore 3', 'Giocatore 4'],
-  aiFlags: boolean[] = [false, false, false, false]
+  aiFlags: boolean[] = [false, false, false, false],
+  deckConfig?: CustomDeckConfig
 ): GameState {
-  const allCards = createDeck();
+  const cfg = { ...DEFAULT_DECK_CONFIG, ...deckConfig };
+  const allCards = createDeck(deckConfig);
   const initialStopIds = new Set(SUITS.map((s) => `event-stop-${s}`));
   const deckStopIds = new Set(SUITS.map((s) => `event-stop-deck-${s}`));
   const initialStopsBySuit = new Map<Suit, Card>();
@@ -511,15 +533,21 @@ export function createInitialGameState(
 
   const shuffledPool = shuffleDeck(poolCards);
 
-  // Each player starts with 8 cards: 1 guaranteed STOP card + 7 random cards from pool
+  // Each player starts with 8 cards:
+  // If Stop is enabled: 1 guaranteed STOP card + 7 random cards from pool
+  // If Stop is disabled: 8 random cards from pool
+  const hasGuaranteedStops = cfg.includeStop && initialStopsBySuit.size === 4;
+  const poolCardsPerPlayer = hasGuaranteedStops ? 7 : 8;
+
   const players: Player[] = SUITS.map((suit, index) => {
-    const guaranteedStop = initialStopsBySuit.get(suit)!;
-    const sevenRandom = shuffledPool.slice(index * 7, (index + 1) * 7);
+    const guaranteedStop = hasGuaranteedStops ? initialStopsBySuit.get(suit) : null;
+    const dealtCards = shuffledPool.slice(index * poolCardsPerPlayer, (index + 1) * poolCardsPerPlayer);
+    const hand = guaranteedStop ? [guaranteedStop, ...dealtCards] : dealtCards;
     return {
       id: index,
       name: playerNames[index] || `Giocatore ${index + 1}`,
       suit,
-      hand: shuffleDeck([guaranteedStop, ...sevenRandom]),
+      hand: shuffleDeck(hand),
       sipsDrunk: 0,
       isAI: Boolean(aiFlags[index]),
       attacksLaunched: 0,
@@ -527,11 +555,11 @@ export function createInitialGameState(
     };
   });
 
-  const afterHands = shuffledPool.slice(28);
+  const afterHands = shuffledPool.slice(poolCardsPerPlayer * 4);
   // Ensure initial TopCard is always a standard card (1..13)
   const targetIdxInPool = afterHands.findIndex((c) => !c.eventKind && c.value >= 1 && c.value <= 13);
   const resolvedIdx = targetIdxInPool >= 0 ? targetIdxInPool : 0;
-  const targetCard = afterHands[resolvedIdx];
+  const targetCard = afterHands[resolvedIdx] || allCards[0];
   const remainingDeck = shuffleDeck([
     ...afterHands.filter((_, idx) => idx !== resolvedIdx),
     ...deckStops,
@@ -1228,7 +1256,7 @@ function checkGameOver(state: GameState): GameState {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'INIT_GAME': {
-      const fresh = createInitialGameState(action.playerNames, action.aiFlags);
+      const fresh = createInitialGameState(action.playerNames, action.aiFlags, action.deckConfig);
       if (action.customState) {
         return { ...fresh, ...action.customState };
       }

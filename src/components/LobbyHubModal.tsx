@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { LobbyRoom, MatchPreset } from '@/types/game';
+import { CustomDeckConfig, DEFAULT_DECK_CONFIG, LobbyRoom, MatchPreset } from '@/types/game';
 import { SUITS, SUIT_INFO } from '@/lib/gameEngine';
 import { QrCodeModal } from './QrCodeModal';
 import { QrScannerModal } from './QrScannerModal';
+import { DeckSettingsModal } from './DeckSettingsModal';
 import {
   Bot,
+  ChevronRight,
   Flame,
   Globe,
   KeyRound,
@@ -15,6 +17,7 @@ import {
   QrCode,
   RefreshCw,
   ScanLine,
+  SlidersHorizontal,
   User,
   Users,
   X,
@@ -29,7 +32,12 @@ interface LobbyHubModalProps {
   clientPlayerId: string;
   activeLobby: LobbyRoom | null;
   initialTab?: 'quick' | 'create' | 'join';
-  onStartLocalPreset: (preset: MatchPreset, names: string[], aiFlags: boolean[]) => void;
+  onStartLocalPreset: (
+    preset: MatchPreset,
+    names: string[],
+    aiFlags: boolean[],
+    deckConfig?: CustomDeckConfig
+  ) => void;
   onLobbyJoinedOrUpdated: (room: LobbyRoom) => void;
   onLeaveLobby: () => void;
 }
@@ -101,6 +109,16 @@ export function LobbyHubModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showScannerModal, setShowScannerModal] = useState(false);
+  const [deckConfig, setDeckConfig] = useState<CustomDeckConfig>(
+    activeLobby?.deckConfig || DEFAULT_DECK_CONFIG
+  );
+  const [showDeckSettingsModal, setShowDeckSettingsModal] = useState(false);
+
+  useEffect(() => {
+    if (activeLobby?.deckConfig) {
+      setDeckConfig(activeLobby.deckConfig);
+    }
+  }, [activeLobby]);
 
   useEffect(() => {
     if (initialTab) {
@@ -164,6 +182,7 @@ export function LobbyHubModal({
           hostClientId: clientPlayerId,
           isPublic,
           preset: selectedPreset,
+          deckConfig,
         }),
       });
       const data = await res.json();
@@ -173,6 +192,25 @@ export function LobbyHubModal({
       setErrorMsg(err instanceof Error ? err.message : 'Errore creazione lobby');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateLobbyDeckConfig = async (newConfig: CustomDeckConfig) => {
+    setDeckConfig(newConfig);
+    if (!activeLobby) return;
+    try {
+      const res = await fetch(`/api/lobbies/${activeLobby.code}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'configure',
+          deckConfig: newConfig,
+        }),
+      });
+      const data = await res.json();
+      if (data.room) onLobbyJoinedOrUpdated(data.room);
+    } catch {
+      // Ignore
     }
   };
 
@@ -420,10 +458,35 @@ export function LobbyHubModal({
               })}
             </div>
 
+            {/* Pulsante Impostazioni Mazzo e Regole Carte */}
+            <button
+              type="button"
+              onClick={() => setShowDeckSettingsModal(true)}
+              className="w-full p-2.5 rounded-2xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-400/40 hover:border-purple-300 text-left flex items-center justify-between cursor-pointer transition shadow"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-400/40 flex items-center justify-center shrink-0">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-purple-300" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-white flex items-center gap-1.5">
+                    <span>Regole e Carte nel Mazzo</span>
+                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/50 uppercase">
+                      Personalizza
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    Scegli quali carte speciali ed eventi attivare o escludere
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+
             <button
               type="button"
               onClick={() => {
-                onStartLocalPreset(selectedPreset, localNames, localAiFlags);
+                onStartLocalPreset(selectedPreset, localNames, localAiFlags, deckConfig);
                 onClose();
               }}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-fuchsia-600 to-amber-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 cursor-pointer"
@@ -531,6 +594,36 @@ export function LobbyHubModal({
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Impostazioni Mazzo e Regole Carte */}
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                      Regole Mazzo e Carte della Partita
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeckSettingsModal(true)}
+                      className="w-full p-2.5 rounded-2xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-400/40 hover:border-purple-300 text-left flex items-center justify-between cursor-pointer transition shadow"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-400/40 flex items-center justify-center shrink-0">
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-purple-300" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-black text-white flex items-center gap-1.5">
+                            <span>Personalizza Carte & Effetti</span>
+                            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/50 uppercase">
+                              Mazzo Personalizzabile
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            Attiva o disattiva Asso, Re, Stop, Sorsi, Duelli, ecc.
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
                   </div>
                 </div>
 
@@ -649,6 +742,28 @@ export function LobbyHubModal({
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Deck settings row */}
+                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <div className="text-xs font-black text-white">Regole Mazzo & Carte</div>
+                      <div className="text-[10px] text-slate-400">
+                        {activeLobby.hostClientId === clientPlayerId
+                          ? 'Personalizza carte ed eventi attivi'
+                          : "Configurazione mazzo impostata dall'Host"}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeckSettingsModal(true)}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-black uppercase hover:bg-amber-500/30 transition-colors cursor-pointer"
+                  >
+                    {activeLobby.hostClientId === clientPlayerId ? '⚙️ Modifica' : '👁️ Visualizza'}
+                  </button>
                 </div>
 
                 <div className="flex gap-2 pt-1">
@@ -801,6 +916,19 @@ export function LobbyHubModal({
           setJoinCodeInput(scannedCode);
           handleJoinByCode(scannedCode);
         }}
+      />
+
+      <DeckSettingsModal
+        isOpen={showDeckSettingsModal}
+        onClose={() => setShowDeckSettingsModal(false)}
+        config={deckConfig}
+        onSaveConfig={(newConfig) => {
+          setDeckConfig(newConfig);
+          if (activeLobby && activeLobby.hostClientId === clientPlayerId) {
+            handleUpdateLobbyDeckConfig(newConfig);
+          }
+        }}
+        readOnly={Boolean(activeLobby && activeLobby.hostClientId !== clientPlayerId)}
       />
     </div>
   );

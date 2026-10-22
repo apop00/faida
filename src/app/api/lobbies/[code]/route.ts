@@ -34,6 +34,7 @@ export async function POST(
         name: body.name,
         preset: body.preset,
         isPublic: body.isPublic,
+        deckConfig: body.deckConfig,
       });
       return NextResponse.json({ room });
     }
