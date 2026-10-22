@@ -1020,12 +1020,19 @@ export function ColpoBassoArena({
       return (
         <div
           key={player.id}
-          className="flex items-center gap-1.5 sm:gap-2 select-none"
+          onClick={handleSeatClick}
+          className={`flex items-center gap-1.5 sm:gap-2 select-none ${
+            isTargetCandidate ? 'cursor-pointer hover:scale-105 transition-all' : ''
+          }`}
+          title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
         >
           {/* Fanned 3D Cards on the LEFT for North (UNO Party Style) */}
           {visibleNorthCards > 0 && (
             <div
-              className="flex items-center -space-x-2 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+              onClick={handleSeatClick}
+              className={`flex items-center -space-x-2 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)] ${
+                isTargetCandidate ? 'cursor-pointer' : ''
+              }`}
               title={`${player.name}: ${actualCardCount} carte sul tavolo`}
             >
               {Array.from({ length: visibleNorthCards }).map((_, cIdx, arr) => {
@@ -1040,7 +1047,11 @@ export function ColpoBassoArena({
                       zIndex: cIdx + 1,
                     }}
                     className={`relative w-[22px] h-[32px] sm:w-[24px] sm:h-[36px] rounded-lg shrink-0 select-none transition-all duration-300 ${
-                      isSingle
+                      isTargetCandidate
+                        ? isSelectedTarget
+                          ? 'border-2 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.9)] scale-105'
+                          : 'border-2 border-purple-400/70 hover:border-purple-300'
+                        : isSingle
                         ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-1 ring-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse'
                         : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_6px_rgba(0,0,0,0.7)]'
                     }`}
@@ -1249,8 +1260,11 @@ export function ColpoBassoArena({
     const cardsArcElement = actualCardCount > 0 ? (
       <div
         key={`cards-${player.id}`}
-        className="flex items-center -space-x-3 select-none filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)] mt-0.5"
-        title={`${player.name}: ${actualCardCount} carte sul tavolo`}
+        onClick={handleSeatClick}
+        className={`flex items-center -space-x-3 select-none filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)] mt-0.5 ${
+          isTargetCandidate ? 'cursor-pointer hover:scale-105 transition-all' : ''
+        }`}
+        title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : `${player.name}: ${actualCardCount} carte sul tavolo`}
       >
         {Array.from({ length: visibleCardsCount }).map((_, cIdx, arr) => {
           const mid = (arr.length - 1) / 2;
@@ -1276,7 +1290,11 @@ export function ColpoBassoArena({
                 zIndex: orientation === 'east' ? arr.length - cIdx : cIdx + 1,
               }}
               className={`relative w-[24px] h-[35px] sm:w-[26px] sm:h-[38px] rounded-lg shrink-0 select-none transition-all duration-300 ${
-                isSingle
+                isTargetCandidate
+                  ? isSelectedTarget
+                    ? 'border-2 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.9)] scale-105'
+                    : 'border-2 border-purple-400/70 hover:border-purple-300'
+                  : isSingle
                   ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.9)] animate-pulse'
                   : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border-2 border-cyan-400/80 shadow-[0_4px_12px_rgba(0,0,0,0.7)]'
               }`}
@@ -1306,7 +1324,11 @@ export function ColpoBassoArena({
     return (
       <div
         key={player.id}
-        className="flex flex-col items-center gap-1 select-none"
+        onClick={handleSeatClick}
+        className={`flex flex-col items-center gap-1 select-none ${
+          isTargetCandidate ? 'cursor-pointer hover:scale-105 transition-all' : ''
+        }`}
+        title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
       >
         {podElement}
         {cardsArcElement}
@@ -2016,36 +2038,6 @@ export function ColpoBassoArena({
               </div>
             )}
 
-            {/* Sleek Compact Target Selector Pill Anchored Above Action Column */}
-            {needsOpponentPicker && (
-              <div className="absolute -top-10 right-0 z-40 flex items-center gap-1 py-1 px-1.5 rounded-xl bg-[#140b2a]/95 border border-purple-400/60 shadow-[0_4px_20px_rgba(168,85,247,0.4)] backdrop-blur-md">
-                <span className="text-[10px] font-black text-purple-300 px-0.5">🎯</span>
-                <div className="flex items-center gap-1">
-                  {state.players
-                    .filter((p) => p.id !== controllingPlayerIndex)
-                    .map((opp) => {
-                      const isTarget = (selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4) === opp.id;
-                      const cleanName = opp.name.replace('Bot ', '').replace(' 🤖', '');
-                      return (
-                        <button
-                          key={opp.id}
-                          type="button"
-                          onClick={() => setSelectedTargetOpponent(opp.id)}
-                          className={`px-1.5 py-0.5 rounded-lg text-[9px] font-black border transition cursor-pointer flex items-center gap-0.5 ${
-                            isTarget
-                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white shadow-sm scale-105'
-                              : 'bg-white/10 text-slate-300 border-white/15 hover:bg-white/20'
-                          }`}
-                          title={`Bersaglia ${cleanName}`}
-                        >
-                          <span className={SUIT_INFO[opp.suit].neonText}>{SUIT_INFO[opp.suit].symbol}</span>
-                          <span className="max-w-[42px] truncate">{cleanName}</span>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
 
             {!canLocalUserAct ? (
               <div className="h-full rounded-2xl bg-gradient-to-b from-[#140b26]/90 to-[#0c061a]/95 border border-purple-500/30 p-2 flex flex-col items-center justify-center text-center gap-1.5 shadow-inner">
@@ -2832,6 +2824,90 @@ export function ColpoBassoArena({
           })
         }
       />
+
+      {/* SELETTORE BERSAGLIO CENTRALE AL CENTRO DELLO SCHERMO (es. Jack Spia carte, Regina Fardello, Duello 1v1) */}
+      {needsOpponentPicker && selectedCards.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 select-none animate-fadeIn pointer-events-auto">
+          <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#220c42] via-[#15072c] to-[#090216] border-2 border-purple-400/90 shadow-[0_0_50px_rgba(168,85,247,0.7)] p-3.5 text-slate-100 flex flex-col items-center gap-2 relative">
+            <div className="flex items-center gap-1.5 text-purple-300 font-black text-xs sm:text-sm uppercase tracking-wide">
+              <span className="text-base sm:text-lg">🎯</span>
+              <span>
+                {selectedCards[0]?.value === 11
+                  ? 'A CHI VUOI LEGGERE LE CARTE?'
+                  : selectedCards[0]?.value === 12
+                  ? 'A CHI ASSEGNI IL FARDELLO?'
+                  : 'CHI VUOI SFIDARE A DUELLO?'}
+              </span>
+            </div>
+            <p className="text-[10px] text-purple-200/80 font-bold text-center">
+              Tocca un avversario qui sotto oppure direttamente sul tavolo:
+            </p>
+
+            {/* Griglia Avversari */}
+            <div className="grid grid-cols-3 gap-2 w-full mt-0.5">
+              {state.players
+                .filter((p) => p.id !== controllingPlayerIndex)
+                .map((opp) => {
+                  const isTarget = (selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4) === opp.id;
+                  const sMeta = SUIT_INFO[opp.suit];
+                  const cleanName = opp.name.replace('Bot ', '').replace(' 🤖', '');
+                  return (
+                    <button
+                      key={opp.id}
+                      type="button"
+                      onClick={() => setSelectedTargetOpponent(opp.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer ${
+                        isTarget
+                          ? 'bg-gradient-to-b from-purple-600 to-pink-600 text-white border-white ring-2 ring-purple-300 shadow-[0_0_18px_rgba(236,72,153,0.85)] scale-105'
+                          : 'bg-white/10 text-slate-200 border-white/20 hover:bg-white/20 hover:border-purple-400/50'
+                      }`}
+                    >
+                      <span className={`text-base ${sMeta.neonText}`}>{sMeta.symbol}</span>
+                      <span className="text-[10.5px] font-black truncate max-w-[80px] mt-0.5">
+                        {cleanName}
+                      </span>
+                      <span className="text-[8.5px] text-cyan-300 font-bold mt-0.5">
+                        {opp.hand.length} carte 🃏
+                      </span>
+                      {isTarget && (
+                        <span className="mt-1 px-1.5 py-0.2 rounded-full bg-white text-purple-950 text-[8px] font-black uppercase shadow">
+                          Bersaglio ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
+
+            {/* Pulsanti Conferma / Annulla */}
+            <div className="flex items-center gap-2 w-full mt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedCardIds([])}
+                className="w-1/3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-slate-300 hover:text-white font-black text-xs uppercase transition cursor-pointer"
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const effId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
+                  dispatchAction({
+                    type: 'PLAY_CARDS',
+                    cardIds: selectedCardIds,
+                    targetPlayerIndex: effId,
+                  });
+                  setSelectedCardIds([]);
+                }}
+                className="w-2/3 py-2 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider shadow-lg border border-white active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>🎯</span>
+                <span>CONFERMA E GIOCA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODALE SPIONAGGIO FANTE (JACK SPY MODAL) - Sempre visibile al centro per l'utente umano */}
       {state.mode === 'SPECIAL_EVENT' &&
