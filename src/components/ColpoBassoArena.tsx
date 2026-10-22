@@ -889,7 +889,41 @@ export function ColpoBassoArena({
           key={player.id}
           className="flex items-center gap-1 sm:gap-1.5 select-none"
         >
-          {/* North Opponent Pod (Horizontal layout with distinct Sorsi & Carte boxes) */}
+          {/* Fanned 3D Cards on the LEFT for North (UNO Party Style) */}
+          {visibleNorthCards > 0 && (
+            <div
+              className="flex items-center -space-x-2 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+              title={`${player.name}: ${actualCardCount} carte sul tavolo`}
+            >
+              {Array.from({ length: visibleNorthCards }).map((_, cIdx, arr) => {
+                const mid = (arr.length - 1) / 2;
+                const rot = (cIdx - mid) * 4;
+
+                return (
+                  <div
+                    key={cIdx}
+                    style={{
+                      transform: `rotate(${rot}deg)`,
+                      zIndex: cIdx + 1,
+                    }}
+                    className={`relative w-[18px] h-[26px] sm:w-[20px] sm:h-[28px] rounded-md shrink-0 select-none transition-all duration-300 ${
+                      isSingle
+                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border border-amber-300 ring-1 ring-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse'
+                        : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_6px_rgba(0,0,0,0.7)]'
+                    }`}
+                  >
+                    <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
+                      <span className={`text-[7px] font-black ${isSingle ? 'text-amber-300' : suitMeta.neonText}`}>
+                        {isSingle ? '⚡' : suitMeta.symbol}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* North Opponent Pod on the RIGHT */}
           <div
             onClick={() => {
               if (isTargetCandidate) setSelectedTargetOpponent(player.id);
@@ -961,40 +995,6 @@ export function ColpoBassoArena({
               <span className="text-[11px] sm:text-xs font-black leading-none">🃏{actualCardCount}</span>
             </div>
           </div>
-
-          {/* Fanned 3D Cards on the side for North */}
-          {visibleNorthCards > 0 && (
-            <div
-              className="flex items-center -space-x-2 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-              title={`${player.name}: ${actualCardCount} carte sul tavolo`}
-            >
-              {Array.from({ length: visibleNorthCards }).map((_, cIdx, arr) => {
-                const mid = (arr.length - 1) / 2;
-                const rot = (cIdx - mid) * 4;
-
-                return (
-                  <div
-                    key={cIdx}
-                    style={{
-                      transform: `rotate(${rot}deg)`,
-                      zIndex: cIdx + 1,
-                    }}
-                    className={`relative w-[18px] h-[26px] sm:w-[20px] sm:h-[28px] rounded-md shrink-0 select-none transition-all duration-300 ${
-                      isSingle
-                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border border-amber-300 ring-1 ring-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse'
-                        : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_6px_rgba(0,0,0,0.7)]'
-                    }`}
-                  >
-                    <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
-                      <span className={`text-[7px] font-black ${isSingle ? 'text-amber-300' : suitMeta.neonText}`}>
-                        {isSingle ? '⚡' : suitMeta.symbol}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       );
     }
@@ -1257,49 +1257,49 @@ export function ColpoBassoArena({
         </div>
 
         {/* ZONA CENTRALE: TAVOLO CON FELTRO INCLINATO 3D */}
-        <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center gap-1 sm:gap-1.5 z-10 px-1 py-0.5 relative">
-          {/* Pill Minimale di Stato o Avviso Turno Integrato (Zero sovrapposizioni, compatto e centrato) */}
+        <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center gap-0.5 sm:gap-1 z-10 px-1 py-0.5 relative">
+          {/* Box Notifica Partita Compatto (Ultra-sleek, occupa minimo spazio verticale e zero ingombro) */}
           {idleTurnReminder && canLocalUserAct ? (
             <div
               onClick={() => setIdleTurnReminder(false)}
-              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-0.5 sm:mt-1 mb-0.5 translate-y-1.5 sm:translate-y-2 transition-all"
+              className="w-fit max-w-[85%] sm:max-w-[380px] mx-auto flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_2px_12px_rgba(245,158,11,0.5)] border border-white/80 cursor-pointer select-none animate-pulse z-20 mb-0.5 transition-all"
               title="Tocca per chiudere l'avviso"
             >
-              <span className="text-xs">⏰</span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950">
+              <span className="text-[10px]">⏰</span>
+              <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-slate-950 shrink-0">
                 TOCCA A TE!
               </span>
-              <div className="w-[1px] h-3 bg-slate-950/30 shrink-0" />
-              <span className="text-[9px] font-bold text-slate-900 truncate max-w-[170px]">
+              <span className="text-slate-950/40 text-[8px] shrink-0">•</span>
+              <span className="text-[8px] sm:text-[9px] font-bold text-slate-900 truncate leading-none">
                 {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
               </span>
-              <span className="text-[10px] font-black ml-0.5 bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
+              <span className="text-[8px] font-black ml-0.5 bg-black/20 rounded-full w-3.5 h-3.5 flex items-center justify-center shrink-0">✕</span>
             </div>
           ) : (
-            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-0.5 sm:mt-1 mb-0.5 translate-y-1.5 sm:translate-y-2 transition-all">
-              {/* Badge di Stato Dinamico */}
+            <div className="w-fit max-w-[85%] sm:max-w-[420px] mx-auto flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#120824]/85 border border-purple-500/30 backdrop-blur-md shadow-md z-10 mb-0.5 transition-all">
+              {/* Badge di Stato Dinamico Ultra-Compatto */}
               {state.mode === 'ATTACK_CHAIN' ? (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/25 border border-rose-400/60 text-rose-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse shrink-0">
-                  <span>🔥</span>
+                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase text-rose-300 tracking-wider shrink-0 animate-pulse">
+                  <span className="text-[10px]">🔥</span>
                   <span>Attacco ({state.currentSips}🍺)</span>
                 </div>
               ) : state.mode === 'SPECIAL_EVENT' ? (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/25 border border-purple-400/50 text-purple-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(168,85,247,0.35)] shrink-0">
-                  <span>⚡</span>
+                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase text-purple-300 tracking-wider shrink-0">
+                  <span className="text-[10px]">⚡</span>
                   <span>Evento</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.3)] shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase text-emerald-400 tracking-wider shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
                   <span>Tregua</span>
                 </div>
               )}
 
-              {/* Separatore sottile */}
-              <div className="w-[1px] h-3 bg-white/15 shrink-0" />
+              {/* Separatore minimale */}
+              <span className="text-white/20 text-[8px] shrink-0">•</span>
 
-              {/* Testo Mossa con contrasto brillante e leggibile */}
-              <span className="text-white/90 font-bold truncate text-[10px] sm:text-[11px] tracking-wide leading-tight">
+              {/* Testo Mossa con contrasto brillante e compatto */}
+              <span className="text-white/90 font-medium truncate text-[9px] sm:text-[10px] tracking-tight leading-none min-w-0">
                 {state.lastActionBanner
                   ? state.lastActionBanner.subtitle
                   : 'Inizia la mano: collega seme o numero!'}
