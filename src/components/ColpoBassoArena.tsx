@@ -28,6 +28,8 @@ import { CardDetailModal } from './CardDetailModal';
 import { AttackTrajectoryOverlay } from './AttackTrajectoryOverlay';
 import { PlayerAvatar } from './PlayerAvatar';
 import { CheersAnimationOverlay, CheersData } from './CheersAnimationOverlay';
+import { ReflexMiniGameModal } from './ReflexMiniGameModal';
+import { QuickGuideModal } from './QuickGuideModal';
 import {
   playCardDrawSound,
   playCardPlaySound,
@@ -39,6 +41,12 @@ import {
   sfxManager,
 } from '@/lib/audioEffects';
 import { backgroundMusic } from '@/lib/backgroundMusic';
+import {
+  hapticManager,
+  isHapticEnabled,
+  toggleHaptic,
+  triggerHapticFeedback,
+} from '@/lib/hapticFeedback';
 import {
   ArrowLeftRight,
   Beer,
@@ -60,6 +68,7 @@ import {
   RotateCcw,
   RotateCw,
   ShieldAlert,
+  Smartphone,
   Sparkles,
   Swords,
   Users,
@@ -382,6 +391,7 @@ export function ColpoBassoArena({
   const [isDeckDrawing, setIsDeckDrawing] = useState(false);
   const [showBonusModal, setShowBonusModal] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showQuickGuideModal, setShowQuickGuideModal] = useState(false);
   const [showLobbyModal, setShowLobbyModal] = useState(false);
   const [showQuickQrModal, setShowQuickQrModal] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
@@ -392,6 +402,7 @@ export function ColpoBassoArena({
   const [isMounted, setIsMounted] = useState(false);
   const [isMusicOn, setIsMusicOn] = useState(false);
   const [isSfxOn, setIsSfxOn] = useState(true);
+  const [isHapticOn, setIsHapticOn] = useState(true);
 
   useEffect(() => {
     setIsMusicOn(backgroundMusic.isMusicEnabled());
@@ -401,9 +412,13 @@ export function ColpoBassoArena({
     setIsSfxOn(sfxManager.isSfxEnabled());
     const unsubSfx = sfxManager.subscribe((enabled) => setIsSfxOn(enabled));
 
+    setIsHapticOn(hapticManager.isHapticEnabled());
+    const unsubHaptic = hapticManager.subscribe((enabled) => setIsHapticOn(enabled));
+
     return () => {
       unsubMusic();
       unsubSfx();
+      unsubHaptic();
     };
   }, []);
 
@@ -802,6 +817,14 @@ export function ColpoBassoArena({
 
     const becameActive = canLocalUserAct && (!prevCanAct || prevControlling !== controllingPlayerIndex);
     if (becameActive && !state.activeDuel) {
+      if (state.mode === 'ATTACK_CHAIN') {
+        // Colpo secco quando subisci un attacco o qualcuno ti contrattacca!
+        triggerHapticFeedback('attack');
+      } else {
+        // Feedback tattile leggero quando tocca a te giocare!
+        triggerHapticFeedback('turn');
+      }
+
       const p = state.players[controllingPlayerIndex];
       if (p) {
         setTurnAlert({
@@ -1555,6 +1578,12 @@ export function ColpoBassoArena({
                   <Layers className="w-3 h-3 text-cyan-400" />
                   <span>{state.deck.length} carte</span>
                 </div>
+
+                {displayedHandPlayer.hand.length === 0 && canLocalUserAct && (
+                  <div className="mt-1 px-2 py-0.5 rounded-full bg-rose-600 border border-white text-[8px] font-black text-white animate-bounce shadow-lg">
+                    DEVI PESCARE! 🃏
+                  </div>
+                )}
               </div>
 
               {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
@@ -2441,6 +2470,24 @@ export function ColpoBassoArena({
               </button>
             )}
 
+            {/* Mini-Guida Illustrata 20s Come si Gioca */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenuDropdown(false);
+                setShowQuickGuideModal(true);
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-400/40 text-left text-xs font-bold text-amber-200 flex items-center justify-between transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Come si Gioca (Guida Veloce)</span>
+              </div>
+              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 shrink-0 shadow-sm">
+                20 sec
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -2450,7 +2497,7 @@ export function ColpoBassoArena({
               className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
             >
               <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">Regole del Gioco</span>
+              <span className="truncate">Regole Complete</span>
             </button>
 
             {/* Toggle Musica nel Menu */}
@@ -2504,6 +2551,29 @@ export function ColpoBassoArena({
                 }`}
               >
                 {isSfxOn ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* Toggle Vibrazione Smartphone Aptica */}
+            <button
+              type="button"
+              onClick={() => {
+                toggleHaptic();
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Smartphone className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Vibrazione Smartphone</span>
+              </div>
+              <span
+                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                  isHapticOn
+                    ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50'
+                    : 'bg-white/10 text-slate-400'
+                }`}
+              >
+                {isHapticOn ? 'ON' : 'OFF'}
               </span>
             </button>
 
@@ -2716,6 +2786,31 @@ export function ColpoBassoArena({
       <CheersAnimationOverlay
         cheers={activeCheers}
         onDismiss={() => setActiveCheers(null)}
+      />
+
+      {/* Mini-gioco lampo "Riflessi da Tavolo" (TABLE_REFLEX ⚡🎯) */}
+      <ReflexMiniGameModal
+        reflex={state.activeReflex || null}
+        clientPlayerIndex={
+          activeLobby
+            ? activeLobby.slots.findIndex((s) => s.clientPlayerId === clientPlayerId)
+            : state.players.findIndex((p) => !p.isAI)
+        }
+        onTap={(playerIndex, tapTimeMs) =>
+          dispatchAction({
+            type: 'TAP_REFLEX_TARGET',
+            playerIndex,
+            tapTimeMs,
+          })
+        }
+        onTimeout={() => dispatchAction({ type: 'RESOLVE_REFLEX_TIMEOUT' })}
+        onDismiss={() => dispatchAction({ type: 'DISMISS_REFLEX' })}
+      />
+
+      {/* Mini-Guida Illustrata 20s "Come si Gioca" */}
+      <QuickGuideModal
+        isOpen={showQuickGuideModal}
+        onClose={() => setShowQuickGuideModal(false)}
       />
 
       <DrinkAlertModal

@@ -122,6 +122,8 @@ export function CardDetailModal({
                       ? '⚔️'
                       : card.eventKind === 'SUPER_DUEL_HIGH' || card.eventKind === 'SUPER_DUEL_LOW'
                       ? '💥'
+                      : card.eventKind === 'TABLE_REFLEX'
+                      ? '⚡'
                       : card.eventKind === 'PASS_RIGHT'
                       ? '🫱'
                       : card.eventKind === 'RED_DRAW_2'

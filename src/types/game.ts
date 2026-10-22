@@ -20,7 +20,8 @@ export type EventCardKind =
   | 'DUEL_HIGH' // 2x Duello 1v1 Carta Alta (2-10: chi fa il numero più basso beve 2🍺)
   | 'DUEL_LOW' // 2x Duello 1v1 Carta Bassa (2-10: chi fa il numero più alto beve 2🍺)
   | 'SUPER_DUEL_HIGH' // 1x Super Duello Tutti Carta Alta (2-10: il più basso beve 2🍺)
-  | 'SUPER_DUEL_LOW'; // 1x Super Duello Tutti Carta Bassa (2-10: il più alto beve 2🍺)
+  | 'SUPER_DUEL_LOW' // 1x Super Duello Tutti Carta Bassa (2-10: il più alto beve 2🍺)
+  | 'TABLE_REFLEX'; // 4x Riflessi da Tavolo (Mini-gioco lampo 2 sec: l'ultimo beve 1🍺 e pesca 1🃏)
 
 export type Card = {
   id: string;
@@ -60,6 +61,7 @@ export type CustomDeckConfig = {
   includeSuperDuel?: boolean; // Super Duello Tutti 💥 (2 carte)
   includeTaxRich?: boolean; // Tassa sui Ricchi 📉 (1 carta)
   includeDrawSwap?: boolean; // Scambio e Pescate 🫱 ♥♦+2 ♣♠+2 🃏+1 (4 carte)
+  includeReflex?: boolean; // Mini-gioco lampo "Riflessi da Tavolo" ⚡🎯 (4 carte)
   // Regole Sorsi & Vendetta dell'Assetato
   sipRewardThreshold?: 'none' | 5 | 10; // Ogni 5 o 10 sorsi ricevuti fai pescare 1 carta a chi vuoi
   allowVoluntarySip?: boolean; // Permette di bere 1 sorso volontario a inizio turno per sbloccare la carica
@@ -79,6 +81,7 @@ export const DEFAULT_DECK_CONFIG: Required<CustomDeckConfig> = {
   includeSuperDuel: true,
   includeTaxRich: true,
   includeDrawSwap: true,
+  includeReflex: true,
   sipRewardThreshold: 5,
   allowVoluntarySip: true,
 };
@@ -173,6 +176,7 @@ export type CardPlayability = {
     | 'EVENT_DUEL_LOW'
     | 'EVENT_SUPER_DUEL_HIGH'
     | 'EVENT_SUPER_DUEL_LOW'
+    | 'EVENT_TABLE_REFLEX'
     | 'DEFENSE_COUNTER' // -1
     | 'DEFENSE_DEVIATE' // +1
     | 'DEFENSE_SHOCK' // same value
@@ -188,6 +192,27 @@ export type CardPlayability = {
     | 'SPY_DIRECT_ATTACK';
   badgeLabel?: string;
   sipsPreview?: number;
+};
+
+export type ReflexParticipant = {
+  playerIndex: number;
+  playerName: string;
+  isAI: boolean;
+  tapped: boolean;
+  tapTimeMs?: number;
+};
+
+export type ActiveReflexState = {
+  initiatorIndex: number;
+  playedCard: Card;
+  createdAt: number;
+  durationMs: number; // 2000 ms
+  participants: ReflexParticipant[];
+  phase: 'COUNTDOWN' | 'ACTIVE' | 'RESOLVED';
+  loserIndex?: number | null;
+  loserIndices?: number[];
+  targetCoords?: { top: number; left: number };
+  timeoutResolved?: boolean;
 };
 
 export type GameLogEntry = {
@@ -243,6 +268,7 @@ export type GameState = {
   lastDirection: Direction;
   specialEvent: SpecialEventState | null;
   activeDuel?: ActiveDuelState | null;
+  activeReflex?: ActiveReflexState | null;
   winnerIndex: number | null;
   lastActionBanner: {
     title: string;
@@ -272,5 +298,8 @@ export type GameAction =
   | { type: 'SELECT_QUEEN_REDIRECT'; targetPlayerIndex: number }
   | { type: 'COMMIT_DUEL_CARD'; cardId?: string }
   | { type: 'DISMISS_DUEL' }
+  | { type: 'TAP_REFLEX_TARGET'; playerIndex: number; tapTimeMs: number }
+  | { type: 'RESOLVE_REFLEX_TIMEOUT' }
+  | { type: 'DISMISS_REFLEX' }
   | { type: 'DEAL_SIP_PENALTY_CARD'; targetPlayerIndex: number }
   | { type: 'DRINK_VOLUNTARY_SIP' };

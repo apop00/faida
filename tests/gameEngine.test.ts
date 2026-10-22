@@ -25,7 +25,7 @@ function card(suit: Card['suit'], value: number, suffix = ''): Card {
 }
 
 describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
-  it('Setup Iniziale: 92 cards (52 standard + 40 event), 8 per player with 1 guaranteed STOP each + 4 STOP in deck', () => {
+  it('Setup Iniziale: 96 cards (52 standard + 44 event), 8 per player with 1 guaranteed STOP each + 4 STOP in deck', () => {
     const state = createInitialGameState(['Marco', 'Luca', 'Sara', 'Giulia']);
     expect(state.players).toHaveLength(4);
     expect(state.players[0].suit).toBe('hearts');
@@ -42,7 +42,7 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     expect(state.topCard.id).toBe(state.targetCard.id);
     expect(state.targetCard.eventKind).toBeUndefined();
     expect(state.players[state.activePlayerIndex].suit).toBe(state.targetCard.suit);
-    expect(state.deck).toHaveLength(92 - 32 - 1);
+    expect(state.deck).toHaveLength(96 - 32 - 1);
     expect(state.deck.filter((c) => c.eventKind === 'STOP_SUIT')).toHaveLength(4);
   });
 
@@ -753,9 +753,9 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
   });
 
   it('Custom Deck Configuration: createDeck filtra correttamente carte ed eventi in base alle impostazioni', () => {
-    // 1. Mazzo standard con DEFAULT_DECK_CONFIG (92 carte totali)
+    // 1. Mazzo standard con DEFAULT_DECK_CONFIG (96 carte totali)
     const defaultDeck = createDeck(DEFAULT_DECK_CONFIG);
-    expect(defaultDeck).toHaveLength(92);
+    expect(defaultDeck).toHaveLength(96);
 
     // 2. Solo carte standard (52 carte: 36 numeri + 16 figure), tutti gli eventi disattivati
     const noEventsConfig: CustomDeckConfig = {
@@ -769,6 +769,7 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
       includeSuperDuel: false,
       includeTaxRich: false,
       includeDrawSwap: false,
+      includeReflex: false,
     };
     const noEventsDeck = createDeck(noEventsConfig);
     expect(noEventsDeck).toHaveLength(52);
@@ -783,7 +784,7 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
       includeKings: false,
     };
     const noFiguresDeck = createDeck(noFiguresConfig);
-    expect(noFiguresDeck).toHaveLength(92 - 16);
+    expect(noFiguresDeck).toHaveLength(96 - 16);
     expect(noFiguresDeck.some((c) => c.value === 1 || c.value === 11 || c.value === 12 || c.value === 13)).toBe(false);
 
     // 4. Setup iniziale senza carte STOP: i 4 giocatori ricevono 8 carte dal mazzo pool senza crash
@@ -897,6 +898,64 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     const botMove = computeAIMove(botState);
     expect(botMove).toBeDefined();
     expect(botMove?.type).toBe('DEAL_SIP_PENALTY_CARD');
+  });
+
+  it('Mini-gioco lampo "Riflessi da Tavolo" (TABLE_REFLEX): attivazione, tap, penitenza sorso+carta e regola Colpo Finale', () => {
+    const reflexCard: Card = {
+      id: 'event-reflex-hearts',
+      suit: 'hearts',
+      value: 0,
+      label: '⚡🎯',
+      eventKind: 'TABLE_REFLEX',
+    };
+
+    const state = createInitialGameState();
+    state.players[0].hand = [reflexCard, card('hearts', 5)];
+    state.activePlayerIndex = 0;
+
+    // 1. Giocabile sempre (attivabile quando vuoi)
+    const playability = getCardPlayability(state, 0, reflexCard);
+    expect(playability.playable).toBe(true);
+    expect(playability.actionType).toBe('EVENT_TABLE_REFLEX');
+
+    // 2. Calando la carta si attiva activeReflex con 4 partecipanti
+    const afterPlay = gameReducer(state, {
+      type: 'PLAY_CARDS',
+      cardIds: [reflexCard.id],
+    });
+
+    expect(afterPlay.activeReflex).toBeDefined();
+    expect(afterPlay.activeReflex?.phase).toBe('ACTIVE');
+    expect(afterPlay.activeReflex?.participants).toHaveLength(4);
+    expect(afterPlay.players[0].hand).toHaveLength(1); // ha ancora il 5 di cuori
+
+    // 3. I giocatori toccano il bersaglio: il più lento subisce 1 sorso e pesca 1 carta
+    // Player 0 tocca a 400ms, Player 1 a 600ms, Player 2 a 850ms, Player 3 a 1800ms (il più lento)
+    let reflexRun = gameReducer(afterPlay, { type: 'TAP_REFLEX_TARGET', playerIndex: 0, tapTimeMs: 400 });
+    reflexRun = gameReducer(reflexRun, { type: 'TAP_REFLEX_TARGET', playerIndex: 1, tapTimeMs: 600 });
+    reflexRun = gameReducer(reflexRun, { type: 'TAP_REFLEX_TARGET', playerIndex: 2, tapTimeMs: 850 });
+    reflexRun = gameReducer(reflexRun, { type: 'TAP_REFLEX_TARGET', playerIndex: 3, tapTimeMs: 1800 });
+
+    expect(reflexRun.activeReflex?.phase).toBe('RESOLVED');
+    expect(reflexRun.activeReflex?.loserIndex).toBe(3);
+    expect(reflexRun.players[3].sipsDrunk).toBe(1); // 1 sorso al perdente
+    expect(reflexRun.players[3].hand.length).toBe(state.players[3].hand.length + 1); // +1 carta penalità
+    expect(reflexRun.lastDrinkEvent?.sips).toBe(1);
+
+    // 4. Regola "Colpo Finale": Giocare TABLE_REFLEX come ultima carta NON fa vincere la partita!
+    const emptyHandState = createInitialGameState();
+    emptyHandState.players[0].hand = [reflexCard]; // Solo questa carta in mano
+    emptyHandState.activePlayerIndex = 0;
+
+    const afterPlayLast = gameReducer(emptyHandState, {
+      type: 'PLAY_CARDS',
+      cardIds: [reflexCard.id],
+    });
+
+    // La mano è a 0 carte ma NON è Game Over perché non puoi vincere con una carta evento!
+    expect(afterPlayLast.players[0].hand).toHaveLength(0);
+    expect(afterPlayLast.mode).not.toBe('GAME_OVER');
+    expect(afterPlayLast.winnerIndex).toBeNull();
   });
 });
 

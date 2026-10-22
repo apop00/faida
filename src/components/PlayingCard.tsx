@@ -95,6 +95,9 @@ export function PlayingCard({
       case 'SPECIAL_CASCADE_SUIT':
         return 'bg-emerald-500 text-slate-950 border-2 border-white font-black shadow-[0_2px_12px_rgba(52,211,153,0.7)]';
 
+      case 'EVENT_TABLE_REFLEX':
+        return 'bg-yellow-400 text-slate-950 border-2 border-white font-black shadow-[0_2px_14px_rgba(250,204,21,0.85)] animate-pulse';
+
       default:
         return 'bg-indigo-600 text-white border-2 border-white font-black shadow-[0_2px_12px_rgba(99,102,241,0.6)]';
     }
@@ -172,6 +175,11 @@ export function PlayingCard({
           return {
             centerText: '💥▼',
             accent: 'text-purple-300',
+          };
+        case 'TABLE_REFLEX':
+          return {
+            centerText: '⚡🎯',
+            accent: 'text-yellow-300',
           };
       }
     }

@@ -1,6 +1,7 @@
 import {
   ActiveDuelParticipant,
   ActiveDuelState,
+  ActiveReflexState,
   Card,
   CardPlayability,
   CustomDeckConfig,
@@ -10,6 +11,7 @@ import {
   GameLogEntry,
   GameState,
   Player,
+  ReflexParticipant,
   Suit,
 } from '@/types/game';
 
@@ -348,6 +350,19 @@ export function createDeck(config?: CustomDeckConfig): Card[] {
       label: '💥▼',
       eventKind: 'SUPER_DUEL_LOW',
     });
+  }
+
+  // 13. 4x Riflessi da Tavolo (1 per seme: ♥, ♦, ♣, ♠) - Mini-gioco lampo 2s
+  if (cfg.includeReflex) {
+    for (const suit of SUITS) {
+      deck.push({
+        id: `event-reflex-${suit}`,
+        suit,
+        value: 0,
+        label: '⚡🎯',
+        eventKind: 'TABLE_REFLEX',
+      });
+    }
   }
 
   return deck;
@@ -693,8 +708,18 @@ export function getCardPlayability(
   // 1. NEUTRAL FLOW
   if (state.mode === 'NEUTRAL_FLOW') {
     // --- EVENT CARDS IN NEUTRAL FLOW ---
-    // Regola "Colpo Finale": Non puoi vincere scartando una carta Evento come ultima carta!
     if (card.eventKind) {
+      // Mini-gioco lampo "Riflessi da Tavolo" (⚡🎯): giocabile quando vuoi!
+      // Se rimani senza carte quando tocca a te dovrai pescare (non puoi chiudere con un evento).
+      if (card.eventKind === 'TABLE_REFLEX') {
+        return {
+          playable: true,
+          actionType: 'EVENT_TABLE_REFLEX',
+          badgeLabel: isLastCard ? 'Riflessi Lampo! ⚡🎯 (Pescherai dopo)' : 'Riflessi Lampo! ⚡🎯',
+        };
+      }
+
+      // Regola "Colpo Finale": Non puoi vincere scartando una carta Evento come ultima carta!
       if (isLastCard) {
         return { playable: false };
       }
@@ -970,6 +995,15 @@ export function getCardPlayability(
         actionType: 'DEFENSE_MIRROR',
         badgeLabel: `Specchio x2 (${reflectedSips}🍺)`,
         sipsPreview: reflectedSips,
+      };
+    }
+
+    // Mini-gioco lampo "Riflessi da Tavolo" (⚡🎯): attivabile quando vuoi, anche sotto attacco!
+    if (card.eventKind === 'TABLE_REFLEX') {
+      return {
+        playable: true,
+        actionType: 'EVENT_TABLE_REFLEX',
+        badgeLabel: 'Riflessi Lampo! ⚡🎯',
       };
     }
 
@@ -1261,6 +1295,15 @@ export function validateCardSelection(
 function checkGameOver(state: GameState): GameState {
   const emptyPlayer = state.players.find((p) => p.hand.length === 0);
   if (emptyPlayer) {
+    // Regola "Colpo Finale": Non si può vincere la partita chiudendo con carte evento o figure (A, J, Q, K)!
+    // Si può vincere solo chiudendo con carte numeriche neutre (2-10) o difese valide.
+    const isTopEvent = Boolean(state.topCard.eventKind) || state.topCard.value === 0;
+    const isTopFigure = state.topCard.value === 1 || state.topCard.value > 10;
+    if (isTopEvent || isTopFigure) {
+      // Non vince! Quando tocca a questo giocatore, dovrà pescare dal mazzo
+      return state;
+    }
+
     return {
       ...state,
       mode: 'GAME_OVER',
@@ -1302,6 +1345,183 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         activeDuel: null,
+      };
+    }
+
+    case 'DISMISS_REFLEX': {
+      return {
+        ...state,
+        activeReflex: null,
+      };
+    }
+
+    case 'TAP_REFLEX_TARGET': {
+      if (!state.activeReflex || state.activeReflex.phase === 'RESOLVED') return state;
+      const ar = state.activeReflex;
+      const pIdx = action.playerIndex;
+      const tapTime = Math.min(ar.durationMs, Math.max(1, action.tapTimeMs));
+
+      const updatedParticipants = ar.participants.map((pt) =>
+        pt.playerIndex === pIdx
+          ? { ...pt, tapped: true, tapTimeMs: tapTime }
+          : pt
+      );
+
+      // Check if all players have tapped
+      const allTapped = updatedParticipants.every((pt) => pt.tapped);
+      if (!allTapped) {
+        return {
+          ...state,
+          activeReflex: {
+            ...ar,
+            participants: updatedParticipants,
+          },
+        };
+      }
+
+      // If all tapped, resolve who is the slowest!
+      const sorted = [...updatedParticipants].sort(
+        (a, b) => (b.tapTimeMs || 0) - (a.tapTimeMs || 0)
+      );
+      const loserPt = sorted[0];
+      const loserIdx = loserPt.playerIndex;
+      const loserPlayer = state.players[loserIdx];
+
+      // Loser drinks 1 sorso AND draws 1 penalty card from deck!
+      const { drawn, newDeck, newDiscardPile } = drawCardsFromDeck(
+        state.deck,
+        state.discardPile,
+        1
+      );
+
+      const nextPlayers = state.players.map((p, idx) =>
+        idx === loserIdx
+          ? {
+              ...p,
+              hand: [...p.hand, ...drawn],
+              sipsDrunk: p.sipsDrunk + 1,
+            }
+          : p
+      );
+
+      const nextActive = getNextTurnIndex(ar.initiatorIndex, state.lastDirection, 1);
+
+      return {
+        ...state,
+        deck: newDeck,
+        discardPile: newDiscardPile,
+        players: nextPlayers,
+        activePlayerIndex: nextActive,
+        lastDrinkEvent: {
+          drinkerIndex: loserIdx,
+          drinkerName: loserPlayer.name,
+          drinkerSuit: loserPlayer.suit,
+          senderIndex: ar.initiatorIndex,
+          senderName: state.players[ar.initiatorIndex].name,
+          senderSuit: state.players[ar.initiatorIndex].suit,
+          sips: 1,
+          reason: 'Ultimo in Riflessi da Tavolo! ⚡',
+          cardLabel: '⚡🎯',
+          cardSuit: state.topCard.suit,
+        },
+        activeReflex: {
+          ...ar,
+          participants: updatedParticipants,
+          phase: 'RESOLVED',
+          loserIndex: loserIdx,
+        },
+        lastActionBanner: {
+          title: `RIFLESSI: ${loserPlayer.name.toUpperCase()} È IL PIÙ LENTO (${loserPt.tapTimeMs}ms)!`,
+          subtitle: `${loserPlayer.name} beve 1🍺 e pesca 1🃏 penitenza! Tocca a ${state.players[nextActive].name}.`,
+          tone: 'drink',
+        },
+        logs: [
+          makeLog(
+            `⚡ Riflessi da Tavolo conclusi: ${loserPlayer.name} è stato il più lento (${loserPt.tapTimeMs}ms) e subisce 1 sorso e 1 carta penalità!`,
+            'drink'
+          ),
+          ...state.logs,
+        ],
+      };
+    }
+
+    case 'RESOLVE_REFLEX_TIMEOUT': {
+      if (!state.activeReflex || state.activeReflex.phase === 'RESOLVED') return state;
+      const ar = state.activeReflex;
+
+      // Find who didn't tap in time, or the slowest
+      const untapped = ar.participants.filter((pt) => !pt.tapped);
+      let loserIdx: number;
+      let loserPt: ReflexParticipant;
+
+      if (untapped.length > 0) {
+        loserPt = untapped[0];
+        loserIdx = loserPt.playerIndex;
+      } else {
+        const sorted = [...ar.participants].sort(
+          (a, b) => (b.tapTimeMs || 0) - (a.tapTimeMs || 0)
+        );
+        loserPt = sorted[0];
+        loserIdx = loserPt.playerIndex;
+      }
+
+      const loserPlayer = state.players[loserIdx];
+
+      // Loser drinks 1 sorso AND draws 1 card from deck
+      const { drawn, newDeck, newDiscardPile } = drawCardsFromDeck(
+        state.deck,
+        state.discardPile,
+        1
+      );
+
+      const nextPlayers = state.players.map((p, idx) =>
+        idx === loserIdx
+          ? {
+              ...p,
+              hand: [...p.hand, ...drawn],
+              sipsDrunk: p.sipsDrunk + 1,
+            }
+          : p
+      );
+
+      const nextActive = getNextTurnIndex(ar.initiatorIndex, state.lastDirection, 1);
+
+      return {
+        ...state,
+        deck: newDeck,
+        discardPile: newDiscardPile,
+        players: nextPlayers,
+        activePlayerIndex: nextActive,
+        lastDrinkEvent: {
+          drinkerIndex: loserIdx,
+          drinkerName: loserPlayer.name,
+          drinkerSuit: loserPlayer.suit,
+          senderIndex: ar.initiatorIndex,
+          senderName: state.players[ar.initiatorIndex].name,
+          senderSuit: state.players[ar.initiatorIndex].suit,
+          sips: 1,
+          reason: 'Tempo scaduto in Riflessi da Tavolo! ⚡',
+          cardLabel: '⚡🎯',
+          cardSuit: state.topCard.suit,
+        },
+        activeReflex: {
+          ...ar,
+          phase: 'RESOLVED',
+          loserIndex: loserIdx,
+          timeoutResolved: true,
+        },
+        lastActionBanner: {
+          title: `RIFLESSI TEMPO SCADUTO: ${loserPlayer.name.toUpperCase()} BEVE E PESCA!`,
+          subtitle: `${loserPlayer.name} non ha toccato in tempo il bersaglio: beve 1🍺 e pesca 1🃏!`,
+          tone: 'drink',
+        },
+        logs: [
+          makeLog(
+            `⚡ Tempo scaduto per Riflessi da Tavolo! ${loserPlayer.name} non ha premuto entro 2 secondi e beve 1 sorso + pesca 1 carta!`,
+            'drink'
+          ),
+          ...state.logs,
+        ],
       };
     }
 
@@ -2325,6 +2545,58 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               makeLog(
                 `💥 ${superTitle}! ${summaryCards} → ${isTie ? `${tiedNames} pareggiano e bevono` : `${primaryLoserPlayer.name} perde e beve`} 2 sorsi!`,
                 'drink'
+              ),
+              ...state.logs,
+            ],
+          };
+
+          return checkGameOver(nextState);
+        }
+
+        // E10: Riflessi da Tavolo (TABLE_REFLEX -> Mini-gioco lampo 2 sec, chi tocca per ultimo beve 1 sorso e pesca 1 carta)
+        if (playInfo.actionType === 'EVENT_TABLE_REFLEX') {
+          const initiatorHandWithoutCard = player.hand.filter((c) => !action.cardIds.includes(c.id));
+
+          const participants: ReflexParticipant[] = state.players.map((p) => ({
+            playerIndex: p.id,
+            playerName: p.name,
+            isAI: Boolean(p.isAI),
+            tapped: false,
+          }));
+
+          const activeReflex: ActiveReflexState = {
+            initiatorIndex: controllingIndex,
+            playedCard: primaryCard,
+            createdAt: Date.now(),
+            durationMs: 2000,
+            participants,
+            phase: 'ACTIVE',
+            targetCoords: {
+              top: 35 + Math.floor(Math.random() * 30),
+              left: 25 + Math.floor(Math.random() * 50),
+            },
+          };
+
+          const updatedPlayers = state.players.map((p, idx) =>
+            idx === controllingIndex ? { ...p, hand: initiatorHandWithoutCard } : p
+          );
+
+          const nextState: GameState = {
+            ...state,
+            discardPile: [...state.discardPile, state.topCard],
+            topCard: { ...primaryCard, suit: state.topCard.suit },
+            players: updatedPlayers,
+            activeReflex,
+            timer: 7,
+            lastActionBanner: {
+              title: `⚡ RIFLESSI DA TAVOLO! ⚡`,
+              subtitle: `${player.name} ha scatenato la sfida di riflessi! TOCCA IL BERSAGLIO ENTRO 2 SECONDI!`,
+              tone: 'special',
+            },
+            logs: [
+              makeLog(
+                `⚡🎯 ${player.name} gioca Riflessi da Tavolo! Tutti i giocatori devono toccare il bersaglio entro 2 secondi!`,
+                'special'
               ),
               ...state.logs,
             ],

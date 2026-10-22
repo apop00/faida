@@ -142,6 +142,20 @@ export function getCardDetails(card: Card, playerSuit?: Suit): CardDetailInfo {
           funFact: 'Chi pesca un 10 si mette le mani nei capelli.',
         };
 
+      case 'TABLE_REFLEX':
+        return {
+          title: 'RIFLESSI DA TAVOLO (⚡🎯)',
+          category: 'EVENTO',
+          categoryColor: 'bg-yellow-400 text-slate-950 font-black',
+          tagline: 'Tocca lo schermo entro 2 secondi o bevi e pesca!',
+          effect:
+            "Attivabile quando vuoi! Tutti i giocatori al tavolo devono toccare il bersaglio sullo schermo entro 2 secondi. L'ultimo a toccarlo (o chi non ci riesce in tempo) beve 1 sorso e pesca 1 carta di penalità!",
+          defenseInfo: 'Sii fulmineo: tocca il bersaglio prima degli avversari per metterti in salvo!',
+          sipsInfo: '1🍺 + 1🃏 per il più lento',
+          colpoFinaleValid: false,
+          funFact: 'Se rimani senza carte quando tocca a te dovrai pescare, perché non puoi finire la partita con questa carta!',
+        };
+
       case 'PASS_RIGHT':
         return {
           title: 'SCAMBIO A DESTRA (🫱)',

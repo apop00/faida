@@ -241,6 +241,21 @@ const CARD_DEFINITIONS: CardDefinition[] = [
       'Sfruttare la carta ricevuta per sferrare un contrattacco al prossimo turno.',
     icon: '🫱',
   },
+  {
+    key: 'includeReflex',
+    category: 'event',
+    title: 'Riflessi da Tavolo (⚡🎯)',
+    count: 4,
+    countLabel: '4 carte (1 per seme: ♥, ♦, ♣, ♠)',
+    badgeLabel: 'RIFLESSI LAMPO ⚡',
+    badgeColor: 'bg-yellow-500/25 border-yellow-400 text-yellow-200',
+    sampleCard: { id: 'event-reflex-hearts', suit: 'hearts', value: 0, label: '⚡🎯', eventKind: 'TABLE_REFLEX' },
+    effect:
+      "Mini-gioco lampo a sorpresa! Tutti i giocatori devono toccare il bersaglio sullo schermo entro 2 secondi. L'ultimo a cliccare (o chi non ci riesce in tempo) beve 1 sorso e pesca 1 carta di penalità! Giocabile quando vuoi.",
+    counterplay:
+      'Avere riflessi fulminei e toccare il bersaglio prima degli avversari.',
+    icon: '⚡',
+  },
 ];
 
 export function DeckSettingsModal({
