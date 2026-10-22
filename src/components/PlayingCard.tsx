@@ -296,7 +296,7 @@ export function PlayingCard({
             {card.label}
           </span>
           {showSuitInCorner && (
-            <span className={`text-xs sm:text-sm ${suitMeta.neonText}`}>
+            <span className={`${effectiveSize === '2xs' ? 'text-[9px]' : 'text-xs sm:text-sm'} ${suitMeta.neonText}`}>
               {suitMeta.symbol}
             </span>
           )}
@@ -313,7 +313,7 @@ export function PlayingCard({
             </span>
             {/* Subtle suit symbol inside the oval for regular cards */}
             {!card.eventKind && (
-              <span className={`text-xs sm:text-sm ${suitMeta.neonText} leading-none mt-0.5 rotate-12 opacity-90`}>
+              <span className={`${effectiveSize === '2xs' ? 'text-[9px]' : 'text-xs sm:text-sm'} ${suitMeta.neonText} leading-none mt-0.5 rotate-12 opacity-90`}>
                 {suitMeta.symbol}
               </span>
             )}
@@ -326,7 +326,7 @@ export function PlayingCard({
             {card.label}
           </span>
           {showSuitInCorner && (
-            <span className={`text-[11px] sm:text-xs ${suitMeta.neonText}`}>
+            <span className={`${effectiveSize === '2xs' ? 'text-[9px]' : 'text-[11px] sm:text-xs'} ${suitMeta.neonText}`}>
               {suitMeta.symbol}
             </span>
           )}
