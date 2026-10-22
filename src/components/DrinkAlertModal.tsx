@@ -25,7 +25,8 @@ interface DrinkAlertModalProps {
 
 export function DrinkAlertModal({ alert, onDismiss }: DrinkAlertModalProps) {
   useEffect(() => {
-    if (alert) {
+    // Only play simple drink sound for minor sips (< 3); 3+ sips are celebrated with the Cheers Cin-Cin fanfare!
+    if (alert && alert.sips < 3) {
       playDrinkSound();
     }
   }, [alert]);

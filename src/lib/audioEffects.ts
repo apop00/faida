@@ -416,3 +416,142 @@ export function playSpecialCardSound(type: SpecialSoundType) {
   }
 }
 
+export type CheersTier = 'DUO' | 'HEAVY' | 'MEGA' | 'EPIC';
+
+/**
+ * Realistic "Cin-Cin!" toast sound effect synthesized via Web Audio API.
+ * Combines high-Q resonant glass ring tones, heavy mug body impact thuds,
+ * and effervescent fizzy beer foam noise bursts tailored to each tier.
+ */
+export function playCheersSound(tier: CheersTier = 'HEAVY') {
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    // Helper for synthetic effervescent beer foam fizz
+    const playFizz = (startTime: number, duration: number, gainVal: number) => {
+      try {
+        const bufferSize = Math.max(256, Math.floor(ctx.sampleRate * duration));
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(3200, startTime);
+        filter.Q.setValueAtTime(2.2, startTime);
+
+        const fizzGain = ctx.createGain();
+        fizzGain.gain.setValueAtTime(gainVal, startTime);
+        fizzGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        whiteNoise.connect(filter);
+        filter.connect(fizzGain);
+        fizzGain.connect(ctx.destination);
+
+        whiteNoise.start(startTime);
+        whiteNoise.stop(startTime + duration);
+      } catch {
+        // Fallback
+      }
+    };
+
+    // Helper for resonant beer mug clink (pure glass ping + harmonic overtone + mug base thud)
+    const playClink = (startTime: number, freq: number, intensity: number, decayTime: number = 0.45) => {
+      // 1. Crystal-clear glass ring
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, startTime);
+      gain1.gain.setValueAtTime(intensity, startTime);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + decayTime);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(startTime);
+      osc1.stop(startTime + decayTime + 0.05);
+
+      // 2. High harmonic overtone (ringing shimmer)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq * 1.48, startTime);
+      gain2.gain.setValueAtTime(intensity * 0.45, startTime);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + decayTime * 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(startTime);
+      osc2.stop(startTime + decayTime * 0.65 + 0.05);
+
+      // 3. Thick glass mug base resonance (low-end clunk)
+      const oscThud = ctx.createOscillator();
+      const gainThud = ctx.createGain();
+      oscThud.type = 'triangle';
+      oscThud.frequency.setValueAtTime(360, startTime);
+      oscThud.frequency.exponentialRampToValueAtTime(130, startTime + 0.07);
+      gainThud.gain.setValueAtTime(intensity * 0.65, startTime);
+      gainThud.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.08);
+      oscThud.connect(gainThud);
+      gainThud.connect(ctx.destination);
+      oscThud.start(startTime);
+      oscThud.stop(startTime + 0.09);
+    };
+
+    switch (tier) {
+      case 'DUO': {
+        // Playful double clink: "Cin... Cin!" with sparkling fizz
+        playClink(now, 2600, 0.22, 0.45);
+        playFizz(now + 0.02, 0.28, 0.09);
+        playClink(now + 0.13, 2950, 0.24, 0.55);
+        playFizz(now + 0.14, 0.38, 0.12);
+        break;
+      }
+      case 'HEAVY': {
+        // Solid, punchy 3-4 sips mug collision with energetic foam splash
+        playClink(now, 2350, 0.28, 0.52);
+        playFizz(now + 0.02, 0.45, 0.15);
+        break;
+      }
+      case 'MEGA': {
+        // Powerful resonant 5-9 sips clink + secondary reverberation + heavy foam fountain
+        playClink(now, 2150, 0.32, 0.65);
+        playFizz(now + 0.01, 0.55, 0.19);
+        playClink(now + 0.09, 2750, 0.26, 0.6);
+        break;
+      }
+      case 'EPIC': {
+        // Legendary 10+ sips toast: Heavy double clink + triumphant brass fanfare + massive foam explosion
+        playClink(now, 2050, 0.36, 0.85);
+        playClink(now + 0.1, 2800, 0.32, 0.75);
+        playFizz(now + 0.02, 0.75, 0.24);
+
+        // Celebratory triumphant fanfare (C5, E5, G5, C6)
+        const fanfareNotes = [523.25, 659.25, 783.99, 1046.5];
+        fanfareNotes.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + 0.12 + idx * 0.06);
+          gain.gain.setValueAtTime(0.14, now + 0.12 + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12 + idx * 0.06 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + 0.12 + idx * 0.06);
+          osc.stop(now + 0.12 + idx * 0.06 + 0.4);
+        });
+        break;
+      }
+    }
+  } catch {
+    // Graceful fallback
+  }
+}
+

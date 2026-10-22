@@ -27,12 +27,15 @@ import { TurnAlertModal, TurnAlertData } from './TurnAlertModal';
 import { CardDetailModal } from './CardDetailModal';
 import { AttackTrajectoryOverlay } from './AttackTrajectoryOverlay';
 import { PlayerAvatar } from './PlayerAvatar';
+import { CheersAnimationOverlay, CheersData } from './CheersAnimationOverlay';
 import {
   playCardDrawSound,
   playCardPlaySound,
+  playCheersSound,
   playSpecialCardSound,
   playTurnSound,
   SpecialSoundType,
+  CheersTier,
   sfxManager,
 } from '@/lib/audioEffects';
 import { backgroundMusic } from '@/lib/backgroundMusic';
@@ -408,6 +411,7 @@ export function ColpoBassoArena({
     Record<number, { sips: number; cards: number }>
   >({});
   const [drinkAlert, setDrinkAlert] = useState<DrinkAlertData | null>(null);
+  const [activeCheers, setActiveCheers] = useState<CheersData | null>(null);
   const [turnAlert, setTurnAlert] = useState<TurnAlertData | null>(null);
   const [inspectedCard, setInspectedCard] = useState<{
     card: Card;
@@ -491,6 +495,8 @@ export function ColpoBassoArena({
         }
       }
 
+      const drinkingPlayers: Array<{ name: string; sips: number; suit?: string }> = [];
+
       currentStats.forEach((curr, idx) => {
         const prev = prevPlayerStatsRef.current?.[idx];
         if (!prev) return;
@@ -505,6 +511,14 @@ export function ColpoBassoArena({
             cards: dCards > 0 ? dCards : 0,
           };
           hasAnyDelta = true;
+        }
+
+        if (dSips > 0) {
+          drinkingPlayers.push({
+            name: state.players[idx].name,
+            sips: dSips,
+            suit: state.players[idx].suit,
+          });
         }
 
         // Trigger DrinkAlertModal if a human player has to drink!
@@ -545,6 +559,54 @@ export function ColpoBassoArena({
           });
         }
       });
+
+      // Animazione "Brindisi" (Cheers! 🍻) con boccali animati al centro del tavolo
+      if (drinkingPlayers.length > 0 && state.mode !== 'GAME_OVER') {
+        const totalSips = drinkingPlayers.reduce((acc, p) => acc + p.sips, 0);
+        const maxSips = Math.max(...drinkingPlayers.map((p) => p.sips));
+
+        let cheersTier: CheersTier | null = null;
+        let title = '';
+        let subtitle = '';
+
+        if (drinkingPlayers.length >= 2) {
+          // Tier 1: 2+ giocatori devono bere insieme
+          cheersTier = 'DUO';
+          title = 'BRINDISI INSIEME! 🍻';
+          if (drinkingPlayers.length === 2) {
+            subtitle = `${drinkingPlayers[0].name} e ${drinkingPlayers[1].name} bevono insieme!`;
+          } else {
+            subtitle = `Tutti a bere insieme! (${totalSips} sorsi totali)`;
+          }
+        } else if (maxSips >= 10) {
+          // Tier 4: 10+ sorsi
+          cheersTier = 'EPIC';
+          title = 'CHIODONE LEGGENDARIO! 👑💀🍻';
+          subtitle = `${drinkingPlayers[0].name} affronta l'abisso: ${maxSips} sorsi colossali!`;
+        } else if (maxSips >= 5) {
+          // Tier 3: 5+ sorsi
+          cheersTier = 'MEGA';
+          title = 'MEGA BRINDISI! 🍻🔥';
+          subtitle = `${drinkingPlayers[0].name} tracanna ${maxSips} sorsi pesanti!`;
+        } else if (maxSips >= 3) {
+          // Tier 2: 3+ sorsi
+          cheersTier = 'HEAVY';
+          title = 'BRINDISI PESANTE! 🍺💥';
+          subtitle = `${drinkingPlayers[0].name} incassa ${maxSips} sorsi!`;
+        }
+
+        if (cheersTier) {
+          setActiveCheers({
+            id: 'cheers_' + Date.now(),
+            tier: cheersTier,
+            title,
+            subtitle,
+            totalSips,
+            drinkers: drinkingPlayers,
+          });
+          playCheersSound(cheersTier);
+        }
+      }
 
       if (hasAnyDelta) {
         setPlayerDeltas((prev) => ({ ...prev, ...newDeltas }));
@@ -2649,6 +2711,12 @@ export function ColpoBassoArena({
             </div>
           </div>
         )}
+
+      {/* Animazione "Brindisi" (Cheers! 🍻) con boccali clink e schiuma volante al centro del tavolo */}
+      <CheersAnimationOverlay
+        cheers={activeCheers}
+        onDismiss={() => setActiveCheers(null)}
+      />
 
       <DrinkAlertModal
         alert={drinkAlert}
