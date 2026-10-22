@@ -1167,151 +1167,15 @@ export function ColpoBassoArena({
       <header className="h-[34px] sm:h-[36px] shrink-0 w-full flex items-center justify-between px-2 py-0.5 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
         {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowMenuDropdown((v) => !v)}
-              className="px-2 py-1 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition"
-              title="Menu Opzioni"
-            >
-              <Menu className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
-            </button>
-
-            {/* Menu a Tendina a comparsa */}
-            {showMenuDropdown && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-                  onClick={() => setShowMenuDropdown(false)}
-                />
-                <div className="absolute top-9 left-0 z-50 w-52 rounded-2xl bg-[#140b2a] border-2 border-white/20 shadow-2xl p-2 flex flex-col gap-1.5 animate-speech-pop">
-                  {onBackToHome && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenuDropdown(false);
-                        if (
-                          state.mode === 'GAME_OVER' ||
-                          window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
-                        ) {
-                          onBackToHome();
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
-                    >
-                      <Home className="w-4 h-4 text-amber-400" />
-                      <span>Torna alla Home</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenuDropdown(false);
-                      setShowLobbyModal(true);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <Users className="w-4 h-4 text-rose-400" />
-                    <span>{activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}</span>
-                  </button>
-
-                  {activeLobby && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenuDropdown(false);
-                        setShowQuickQrModal(true);
-                      }}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
-                    >
-                      <QrCode className="w-4 h-4 text-cyan-400" />
-                      <span>Condividi QR Code</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenuDropdown(false);
-                      setShowRulesModal(true);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <BookOpen className="w-4 h-4 text-emerald-400" />
-                    <span>Regole del Gioco</span>
-                  </button>
-
-                  {/* Toggle Musica nel Menu */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      backgroundMusic.toggleMusic();
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {isMusicOn ? (
-                        <Volume2 className="w-4 h-4 text-purple-400" />
-                      ) : (
-                        <VolumeX className="w-4 h-4 text-slate-400" />
-                      )}
-                      <span>Musica di Sottofondo</span>
-                    </div>
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        isMusicOn
-                          ? 'bg-purple-500/30 text-purple-200 border border-purple-400/50'
-                          : 'bg-white/10 text-slate-400'
-                      }`}
-                    >
-                      {isMusicOn ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-
-                  {/* Toggle Effetti Sonori nel Menu */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      sfxManager.toggleSfx();
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {isSfxOn ? (
-                        <Bell className="w-4 h-4 text-cyan-400" />
-                      ) : (
-                        <BellOff className="w-4 h-4 text-slate-400" />
-                      )}
-                      <span>Effetti Sonori</span>
-                    </div>
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        isSfxOn
-                          ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/50'
-                          : 'bg-white/10 text-slate-400'
-                      }`}
-                    >
-                      {isSfxOn ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenuDropdown(false);
-                      setShowLogs(true);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <History className="w-4 h-4 text-purple-400" />
-                    <span>Storico Mosse</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowMenuDropdown((v) => !v)}
+            className="px-2 py-1 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition"
+            title="Menu Opzioni"
+          >
+            <Menu className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
+          </button>
 
           {/* Pulsante Rapido Musica in Header */}
           <button
@@ -2298,6 +2162,155 @@ export function ColpoBassoArena({
           </div>
         </div>
       </footer>
+
+      {/* MENU OPZIONI DI GIOCO (Root level overlay per evitare qualsiasi compenetrazione o clipping) */}
+      {showMenuDropdown && (
+        <>
+          <div
+            className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setShowMenuDropdown(false)}
+          />
+          <div className="fixed top-10 left-2 sm:left-4 z-[75] w-56 sm:w-64 max-h-[calc(100dvh-50px)] overflow-y-auto no-scrollbar rounded-2xl bg-[#140b2a]/98 border border-purple-500/40 shadow-[0_12px_45px_rgba(0,0,0,0.9)] p-2 flex flex-col gap-1 backdrop-blur-xl animate-fadeIn">
+            <div className="flex items-center justify-between px-2 py-1 border-b border-white/10 mb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">
+                Opzioni Partita
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowMenuDropdown(false)}
+                className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center text-[10px] font-black cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {onBackToHome && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenuDropdown(false);
+                  if (
+                    state.mode === 'GAME_OVER' ||
+                    window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
+                  ) {
+                    onBackToHome();
+                  }
+                }}
+                className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
+              >
+                <Home className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Torna alla Home</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenuDropdown(false);
+                setShowLobbyModal(true);
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
+            >
+              <Users className="w-4 h-4 text-rose-400 shrink-0" />
+              <span className="truncate">
+                {activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}
+              </span>
+            </button>
+
+            {activeLobby && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenuDropdown(false);
+                  setShowQuickQrModal(true);
+                }}
+                className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
+              >
+                <QrCode className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="truncate">Condividi QR Code</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenuDropdown(false);
+                setShowRulesModal(true);
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="truncate">Regole del Gioco</span>
+            </button>
+
+            {/* Toggle Musica nel Menu */}
+            <button
+              type="button"
+              onClick={() => {
+                backgroundMusic.toggleMusic();
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {isMusicOn ? (
+                  <Volume2 className="w-4 h-4 text-purple-400 shrink-0" />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-slate-400 shrink-0" />
+                )}
+                <span className="truncate">Musica di Sottofondo</span>
+              </div>
+              <span
+                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                  isMusicOn
+                    ? 'bg-purple-500/30 text-purple-200 border border-purple-400/50'
+                    : 'bg-white/10 text-slate-400'
+                }`}
+              >
+                {isMusicOn ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* Toggle Effetti Sonori nel Menu */}
+            <button
+              type="button"
+              onClick={() => {
+                sfxManager.toggleSfx();
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {isSfxOn ? (
+                  <Bell className="w-4 h-4 text-cyan-400 shrink-0" />
+                ) : (
+                  <BellOff className="w-4 h-4 text-slate-400 shrink-0" />
+                )}
+                <span className="truncate">Effetti Sonori</span>
+              </div>
+              <span
+                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                  isSfxOn
+                    ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/50'
+                    : 'bg-white/10 text-slate-400'
+                }`}
+              >
+                {isSfxOn ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMenuDropdown(false);
+                setShowLogs(true);
+              }}
+              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+            >
+              <History className="w-4 h-4 text-purple-400 shrink-0" />
+              <span className="truncate">Storico Mosse</span>
+            </button>
+          </div>
+        </>
+      )}
 
       {/* MODALS */}
       {showBonusModal && bonusCards.length > 0 && (
