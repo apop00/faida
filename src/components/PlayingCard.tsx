@@ -10,7 +10,7 @@ interface PlayingCardProps {
   playability?: CardPlayability;
   selected?: boolean;
   isBonusCandidate?: boolean;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: '2xs' | 'xs' | 'sm' | 'md' | 'lg';
   onClick?: () => void;
   onInspect?: (card: Card) => void;
   interactive?: boolean;
@@ -33,6 +33,7 @@ export function PlayingCard({
   const effectiveSize = size;
 
   const sizeClasses = {
+    '2xs': 'w-[46px] h-[66px] rounded-lg p-0.5',
     xs: 'w-[60px] h-[86px] rounded-xl p-1',
     sm: 'w-[66px] h-[96px] sm:w-[70px] sm:h-[102px] rounded-xl p-1 sm:p-1.5',
     md: 'w-[78px] h-[110px] sm:w-[82px] sm:h-[116px] rounded-2xl p-1.5',
@@ -40,6 +41,7 @@ export function PlayingCard({
   }[effectiveSize];
 
   const centerSymbolSize = {
+    '2xs': 'text-lg sm:text-xl',
     xs: 'text-2xl sm:text-[26px]',
     sm: 'text-3xl sm:text-4xl',
     md: 'text-4xl',
@@ -47,6 +49,7 @@ export function PlayingCard({
   }[effectiveSize];
 
   const cornerLabelSize = {
+    '2xs': 'text-[9px] sm:text-[10px]',
     xs: 'text-xs sm:text-[13px]',
     sm: 'text-sm sm:text-base',
     md: 'text-base sm:text-lg',
@@ -231,7 +234,7 @@ export function PlayingCard({
   }[card.suit];
 
   return (
-    <div className={`relative select-none touch-pan-x ${effectiveSize === 'xs' ? 'pt-2.5' : 'pt-3.5'}`}>
+    <div className={`relative select-none touch-pan-x ${effectiveSize === '2xs' ? 'pt-0' : effectiveSize === 'xs' ? 'pt-2.5' : 'pt-3.5'}`}>
       {/* Clean Action Pill floating directly above the card */}
       {interactive && isPlayable && playability?.badgeLabel && (
         <div
@@ -274,7 +277,7 @@ export function PlayingCard({
         }`}
       >
         {/* Info / Ingrandisci Icon in top-right */}
-        {onInspect && effectiveSize !== 'xs' && (
+        {onInspect && effectiveSize !== 'xs' && effectiveSize !== '2xs' && (
           <div
             onClick={(e) => {
               e.stopPropagation();
