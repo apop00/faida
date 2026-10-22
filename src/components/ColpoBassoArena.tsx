@@ -869,7 +869,7 @@ export function ColpoBassoArena({
             onClick={() => {
               if (isTargetCandidate) setSelectedTargetOpponent(player.id);
             }}
-            className={`relative flex flex-col items-center justify-between p-1 sm:p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[104px] sm:w-[114px] ${
+            className={`relative flex flex-col items-center justify-between p-1 sm:p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[104px] sm:w-[114px] mt-1 sm:mt-1.5 ${
               isSelectedTarget
                 ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
                 : isTargetCandidate
@@ -1145,9 +1145,9 @@ export function ColpoBassoArena({
   }
 
   return (
-    <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+    <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[max(0.2rem,env(safe-area-inset-top))]">
       {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
-      <header className="h-[46px] sm:h-[50px] shrink-0 w-full flex items-center justify-between px-2 py-0.5 sm:py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
+      <header className="shrink-0 w-full flex items-center justify-between px-2 pt-1.5 sm:pt-2 pb-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
         {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
         <div className="flex items-center gap-1 sm:gap-1.5">
           <div className="relative">
@@ -1330,7 +1330,7 @@ export function ColpoBassoArena({
           {idleTurnReminder && canLocalUserAct ? (
             <div
               onClick={() => setIdleTurnReminder(false)}
-              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-2 sm:mt-2.5 mb-1"
+              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-4 sm:mt-5 mb-1"
               title="Tocca per chiudere l'avviso"
             >
               <span className="text-xs">⏰</span>
@@ -1344,7 +1344,7 @@ export function ColpoBassoArena({
               <span className="text-[10px] font-black ml-0.5 bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
             </div>
           ) : (
-            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-2 sm:mt-2.5 mb-1 transition-all">
+            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-4 sm:mt-5 mb-1 transition-all">
               {/* Badge di Stato Dinamico */}
               {state.mode === 'ATTACK_CHAIN' ? (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/25 border border-rose-400/60 text-rose-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse shrink-0">
