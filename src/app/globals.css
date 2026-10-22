@@ -40,6 +40,7 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
+  touch-action: pan-x !important;
 }
 
 /* Animations for Card Slam, Laser Trajectory, Light Sweep, and Reactions */

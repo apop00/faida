@@ -536,7 +536,7 @@ export function ColpoBassoArena({
     setSelectedCardIds([]);
   };
 
-  // Helper to render a clean, compact Opponent Capsule with Sorsi on Left, Avatar in Center, Cards on Right
+  // Helper to render an Opponent Seat with Pod + Visible 3D Cards on Table (UNO Mobile Style)
   const renderOpponentSeat = (player: Player, orientation: 'west' | 'north' | 'east' = 'north') => {
     const idx = player.id;
     const suitMeta = SUIT_INFO[player.suit];
@@ -547,19 +547,21 @@ export function ColpoBassoArena({
     const cleanName = player.name.replace('Bot ', '').replace(' 🤖', '');
     const actualCardCount = player.hand.length;
     const isNorth = orientation === 'north';
+    const isSingle = actualCardCount === 1;
 
     const isTargetCandidate = needsOpponentPicker;
     const effectiveTargetId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
     const isSelectedTarget = isTargetCandidate && effectiveTargetId === player.id;
 
-    return (
+    // 1. Clean, readable Avatar Pod
+    const podElement = (
       <div
-        key={player.id}
+        key={`pod-${player.id}`}
         onClick={() => {
           if (isTargetCandidate) setSelectedTargetOpponent(player.id);
         }}
         className={`relative flex flex-col items-center justify-between p-1 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg ${
-          isNorth ? 'w-auto max-w-[130px]' : 'w-full max-w-[94px]'
+          isNorth ? 'w-[104px] sm:w-[114px]' : 'w-[82px] sm:w-[88px]'
         } ${
           isSelectedTarget
             ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
@@ -594,7 +596,7 @@ export function ColpoBassoArena({
         {/* Nome del giocatore in alto con simbolo seme */}
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/50 border border-white/15 text-[9px] font-black text-white w-full justify-center leading-none mb-1">
           <span className={`text-[10px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-          <span className="truncate max-w-[55px]">{cleanName}</span>
+          <span className="truncate max-w-[48px]">{cleanName}</span>
           {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
           {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
           {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
@@ -609,11 +611,11 @@ export function ColpoBassoArena({
         <div className="flex items-center justify-between gap-1 w-full px-0.5">
           {/* Numero a SINISTRA per i sorsi bevuti 🍺 */}
           <div
-            className="flex flex-col items-center justify-center px-1 py-0.5 rounded-lg bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm min-w-[24px]"
+            className="flex flex-col items-center justify-center px-1 py-0.5 rounded-lg bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm min-w-[22px]"
             title={`${player.sipsDrunk} sorsi bevuti`}
           >
             <span className="text-[8px] leading-none">🍺</span>
-            <span className="text-[11px] sm:text-xs font-black text-amber-300 leading-tight mt-0.5">
+            <span className="text-[10px] sm:text-[11px] font-black text-amber-300 leading-tight mt-0.5">
               {player.sipsDrunk}
             </span>
           </div>
@@ -632,35 +634,107 @@ export function ColpoBassoArena({
 
           {/* Numero a DESTRA per le carte in mano 🃏 */}
           <div
-            className={`flex flex-col items-center justify-center px-1 py-0.5 rounded-lg border shadow-sm min-w-[24px] ${
-              actualCardCount === 1
+            className={`flex flex-col items-center justify-center px-1 py-0.5 rounded-lg border shadow-sm min-w-[22px] ${
+              isSingle
                 ? 'bg-rose-600/40 border-rose-400 text-white ring-1 ring-rose-400 animate-pulse'
                 : 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200'
             }`}
             title={`${actualCardCount} carte in mano`}
           >
             <span className="text-[8px] leading-none">🃏</span>
-            <span className="text-[11px] sm:text-xs font-black text-cyan-300 leading-tight mt-0.5">
+            <span className="text-[10px] sm:text-[11px] font-black text-cyan-300 leading-tight mt-0.5">
               {actualCardCount}
             </span>
           </div>
         </div>
+      </div>
+    );
 
-        {/* Mini ventaglio di carte coperte visibili sul tavolo (Stile UNO Party Mania!) */}
-        <div className="flex items-center justify-center -space-x-2 mt-1 pointer-events-none select-none">
-          {Array.from({ length: Math.min(Math.max(actualCardCount, 1), 4) }).map((_, i, arr) => {
-            const rot = (i - (arr.length - 1) / 2) * 12;
-            return (
-              <div
-                key={i}
-                style={{ transform: `rotate(${rot}deg)` }}
-                className="w-[16px] h-[22px] rounded bg-gradient-to-br from-[#2a1354] via-[#160a2c] to-[#090214] border border-cyan-400/50 shadow-sm flex items-center justify-center shrink-0"
-              >
-                <span className="text-[6px] text-cyan-300 font-black opacity-80">🂠</span>
+    // 2. Visible 3D Standing Hand of Cards on Table Felt (UNO Mobile Style)
+    const visibleCardsCount = actualCardCount === 0 ? 0 : Math.min(Math.max(actualCardCount, 1), 5);
+
+    const cardsElement = actualCardCount > 0 ? (
+      <div
+        key={`cards-${player.id}`}
+        className={`flex items-center select-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)] ${
+          orientation === 'north'
+            ? '-space-x-3 sm:-space-x-3.5'
+            : '-space-x-3.5 sm:-space-x-4'
+        }`}
+        title={`${player.name}: ${actualCardCount} carte sul tavolo`}
+      >
+        {Array.from({ length: visibleCardsCount }).map((_, cIdx, arr) => {
+          const mid = (arr.length - 1) / 2;
+          let rot = 0;
+          let offsetY = 0;
+
+          if (orientation === 'west') {
+            rot = -6 + (cIdx * 5);
+            offsetY = Math.abs(cIdx - mid) * 1.5;
+          } else if (orientation === 'east') {
+            rot = 6 - (cIdx * 5);
+            offsetY = Math.abs(cIdx - mid) * 1.5;
+          } else {
+            rot = (cIdx - mid) * 6;
+            offsetY = Math.abs(cIdx - mid) * 1.2;
+          }
+
+          return (
+            <div
+              key={cIdx}
+              style={{
+                transform: `rotate(${rot}deg) translateY(${offsetY}px)`,
+                zIndex: orientation === 'east' ? arr.length - cIdx : cIdx + 1,
+              }}
+              className={`relative w-[28px] h-[40px] sm:w-[32px] sm:h-[46px] rounded-lg shrink-0 select-none transition-all duration-300 ${
+                isSingle
+                  ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.9)] animate-pulse'
+                  : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border-2 border-cyan-400/80 shadow-[0_4px_12px_rgba(0,0,0,0.7)]'
+              }`}
+            >
+              {/* Card Back Internal Frame & Cyber Glyph */}
+              <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
+                <span
+                  className={`text-[10px] font-black ${
+                    isSingle ? 'text-amber-300' : suitMeta.neonText
+                  }`}
+                >
+                  {isSingle ? '⚡' : suitMeta.symbol}
+                </span>
+                {isSingle && (
+                  <span className="text-[6px] font-black text-rose-300 uppercase tracking-tighter leading-none mt-0.5 animate-bounce">
+                    1!
+                  </span>
+                )}
               </div>
-            );
-          })}
-        </div>
+
+              {/* Glossy sheen */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none rounded-lg" />
+            </div>
+          );
+        })}
+      </div>
+    ) : null;
+
+    // Return combined seat with cards facing towards the center table
+    return (
+      <div
+        key={player.id}
+        className={`flex items-center gap-1.5 select-none ${
+          orientation === 'west' ? 'flex-row' : orientation === 'east' ? 'flex-row' : 'flex-row sm:gap-2'
+        }`}
+      >
+        {orientation === 'east' ? (
+          <>
+            {cardsElement}
+            {podElement}
+          </>
+        ) : (
+          <>
+            {podElement}
+            {cardsElement}
+          </>
+        )}
       </div>
     );
   };
@@ -814,7 +888,7 @@ export function ColpoBassoArena({
         />
 
         {/* LATO SINISTRO: AVVERSARIO 1 (Ovest ♦) */}
-        <div className="w-[96px] sm:w-[104px] shrink-0 self-center z-20 flex justify-center">
+        <div className="shrink-0 self-center z-20 flex justify-center">
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
         </div>
 
@@ -964,7 +1038,7 @@ export function ColpoBassoArena({
         </div>
 
         {/* LATO DESTRO: AVVERSARIO 3 (Est ♠) */}
-        <div className="w-[96px] sm:w-[104px] shrink-0 self-center z-20 flex justify-center">
+        <div className="shrink-0 self-center z-20 flex justify-center">
           {state.players[3] && renderOpponentSeat(state.players[3], 'east')}
         </div>
 
@@ -1036,7 +1110,7 @@ export function ColpoBassoArena({
 
       {/* 3. LA TUA MANO + PULSANTI AZIONE (INTEGRATA SUL TAVOLO, ELEVATA IN PRIMO PIANO) */}
       <footer
-        className={`relative px-2 sm:px-3 pb-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-transparent shrink-0 select-none transition-all duration-300 ${
+        className={`relative px-2 sm:px-3 pb-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-transparent shrink-0 select-none transition-all duration-300 overflow-visible ${
           canLocalUserAct ? 'z-50' : 'z-40'
         }`}
       >
@@ -1059,7 +1133,7 @@ export function ColpoBassoArena({
           )}
 
         {/* CONTENITORE 3 COLONNE (PROFILO SX | MANO CENTRO | AZIONI DX) */}
-        <div className="flex items-end justify-between gap-1 sm:gap-2 w-full">
+        <div className="flex items-end justify-between gap-1 sm:gap-2 w-full overflow-visible">
           {/* COLONNA 1 (SX): PROFILO GIOCATORE LOCALE PULITO E CHIARO */}
           <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#140a26]/90 border border-white/20 w-[96px] sm:w-[104px] h-[108px] sm:h-[114px] shrink-0 shadow-xl select-none mb-0.5">
             {/* Nome del giocatore in alto */}
@@ -1121,7 +1195,7 @@ export function ColpoBassoArena({
 
           {/* COLONNA 2 (CENTRO): MANO DI CARTE PULITA E IN PRIMO PIANO */}
           <div
-            className={`flex-1 min-w-0 h-[108px] sm:h-[114px] relative flex items-end justify-center overflow-hidden ${
+            className={`flex-1 min-w-0 h-[112px] sm:h-[118px] relative flex items-end justify-center overflow-visible ${
               canLocalUserAct ? 'z-50 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]' : 'z-40'
             }`}
           >
@@ -1202,18 +1276,25 @@ export function ColpoBassoArena({
                 const handCards = [...playableList, ...unplayableList];
                 const totalCards = handCards.length;
 
-                // Calibrazione overlap: se poche carte nessun overlap, se tante overlap lieve
+                // Calibrazione overlap: garantisce che le carte stiano nel centro senza generare barre di scorrimento verticali
                 const overlapClass =
-                  totalCards > 9
-                    ? '-mr-5'
+                  totalCards > 12
+                    ? '-mr-7 sm:-mr-8'
+                    : totalCards > 9
+                    ? '-mr-5 sm:-mr-6'
                     : totalCards > 6
-                    ? '-mr-2.5'
+                    ? '-mr-3 sm:-mr-4'
                     : totalCards > 4
-                    ? '-mr-1'
+                    ? '-mr-1.5'
                     : 'mr-1 sm:mr-1.5';
 
+                const scrollContainerClass =
+                  totalCards > 16
+                    ? 'overflow-x-auto overflow-y-visible scroll-smooth touch-pan-x no-scrollbar'
+                    : 'overflow-visible';
+
                 return (
-                  <div className="relative w-full h-full flex items-end justify-center overflow-hidden">
+                  <div className="relative w-full h-full flex items-end justify-center overflow-visible">
                     <div
                       ref={handScrollRef}
                       onWheel={(e) => {
@@ -1221,9 +1302,9 @@ export function ColpoBassoArena({
                           handScrollRef.current.scrollLeft += e.deltaY;
                         }
                       }}
-                      className="overflow-x-auto overflow-y-hidden scroll-smooth touch-pan-x no-scrollbar pt-4 pb-0.5 px-2 h-full w-full select-none flex items-end"
+                      className={`${scrollContainerClass} pt-6 pb-0.5 px-2 h-full w-full select-none flex items-end justify-center`}
                     >
-                      <div className="flex items-end justify-center min-w-full w-max h-full">
+                      <div className="flex items-end justify-center min-w-full w-max h-full overflow-visible">
                         {handCards.map(({ card, playability }, cIdx) => {
                           const isSelected = selectedCardIds.includes(card.id);
                           const mid = (totalCards - 1) / 2;
@@ -1235,7 +1316,7 @@ export function ColpoBassoArena({
                               key={card.id}
                               style={{
                                 transform: isSelected
-                                  ? 'translateY(-12px) scale(1.08) rotate(0deg)'
+                                  ? 'translateY(-14px) scale(1.08) rotate(0deg)'
                                   : `rotate(${baseAngle}deg) translateY(${baseOffsetY}px)`,
                                 transformOrigin: 'bottom center',
                                 zIndex: isSelected ? 80 : canLocalUserAct ? cIdx + 30 : cIdx + 10,
