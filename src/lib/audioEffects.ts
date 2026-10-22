@@ -2,8 +2,53 @@
  * Audio cues using browser-native Web Audio API without any external dependencies or network assets.
  */
 
+class SfxManager {
+  private isEnabled = true;
+  private listeners: Set<(enabled: boolean) => void> = new Set();
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('colpo_basso_sfx_enabled');
+      this.isEnabled = stored !== null ? stored === 'true' : true;
+    }
+  }
+
+  public isSfxEnabled(): boolean {
+    return this.isEnabled;
+  }
+
+  public toggleSfx(): boolean {
+    this.setSfxEnabled(!this.isEnabled);
+    return this.isEnabled;
+  }
+
+  public setSfxEnabled(enabled: boolean) {
+    this.isEnabled = enabled;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('colpo_basso_sfx_enabled', String(enabled));
+    }
+    this.notifyListeners();
+  }
+
+  public subscribe(cb: (enabled: boolean) => void): () => void {
+    this.listeners.add(cb);
+    cb(this.isEnabled);
+    return () => this.listeners.delete(cb);
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach((cb) => cb(this.isEnabled));
+  }
+}
+
+export const sfxManager = new SfxManager();
+export const isSfxEnabled = () => sfxManager.isSfxEnabled();
+export const toggleSfx = () => sfxManager.toggleSfx();
+export const setSfxEnabled = (enabled: boolean) => sfxManager.setSfxEnabled(enabled);
+export const subscribeSfx = (cb: (enabled: boolean) => void) => sfxManager.subscribe(cb);
+
 export function playDrinkSound() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -32,7 +77,7 @@ export function playDrinkSound() {
 }
 
 export function playTurnSound() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -61,7 +106,7 @@ export function playTurnSound() {
 }
 
 export function playCardPlaySound() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -88,7 +133,7 @@ export function playCardPlaySound() {
 }
 
 export function playCardDrawSound() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -131,7 +176,7 @@ export type SpecialSoundType =
  * Web Audio synthesized sound effects for special cards and combat events.
  */
 export function playSpecialCardSound(type: SpecialSoundType) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
   try {
     const AudioCtx =
       window.AudioContext ||

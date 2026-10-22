@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   Beer,
+  Bell,
+  BellOff,
   BookOpen,
   Bot,
   Edit2,
@@ -22,6 +24,7 @@ import {
 import { Card, MatchPreset } from '@/types/game';
 import { SUITS, SUIT_INFO } from '@/lib/gameEngine';
 import { backgroundMusic } from '@/lib/backgroundMusic';
+import { sfxManager } from '@/lib/audioEffects';
 import { RulesModal } from './RulesModal';
 import { PlayingCard } from './PlayingCard';
 import { CardDetailModal } from './CardDetailModal';
@@ -96,11 +99,19 @@ export function HomeScreen({
   const [showLocalModal, setShowLocalModal] = useState(false);
   const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
   const [isMusicOn, setIsMusicOn] = useState(false);
+  const [isSfxOn, setIsSfxOn] = useState(true);
 
   useEffect(() => {
     setIsMusicOn(backgroundMusic.isMusicEnabled());
-    const unsub = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
-    return unsub;
+    const unsubMusic = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
+
+    setIsSfxOn(sfxManager.isSfxEnabled());
+    const unsubSfx = sfxManager.subscribe((enabled) => setIsSfxOn(enabled));
+
+    return () => {
+      unsubMusic();
+      unsubSfx();
+    };
   }, []);
 
   // Local preset configuration state
@@ -223,6 +234,29 @@ export function HomeScreen({
               <>
                 <VolumeX className="w-3.5 h-3.5 text-slate-400" />
                 <span className="hidden sm:inline">Muto</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => sfxManager.toggleSfx()}
+            className={`px-2.5 py-1 rounded-full border text-xs font-black flex items-center gap-1 cursor-pointer transition active:scale-95 shrink-0 ${
+              isSfxOn
+                ? 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.35)]'
+                : 'bg-white/10 hover:bg-white/20 border-white/15 text-slate-400'
+            }`}
+            title={isSfxOn ? 'Effetti Sonori: ATTIVI (tocca per silenziare)' : 'Effetti Sonori: SILENZIATI (tocca per attivare)'}
+          >
+            {isSfxOn ? (
+              <>
+                <Bell className="w-3.5 h-3.5 text-cyan-300" />
+                <span className="hidden sm:inline">SFX</span>
+              </>
+            ) : (
+              <>
+                <BellOff className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">No SFX</span>
               </>
             )}
           </button>

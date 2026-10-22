@@ -31,11 +31,14 @@ import {
   playSpecialCardSound,
   playTurnSound,
   SpecialSoundType,
+  sfxManager,
 } from '@/lib/audioEffects';
 import { backgroundMusic } from '@/lib/backgroundMusic';
 import {
   ArrowLeftRight,
   Beer,
+  Bell,
+  BellOff,
   BookOpen,
   Bot,
   ChevronLeft,
@@ -373,12 +376,20 @@ export function ColpoBassoArena({
   const [hideHandPrivacy, setHideHandPrivacy] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMusicOn, setIsMusicOn] = useState(false);
+  const [isSfxOn, setIsSfxOn] = useState(true);
 
   useEffect(() => {
     setIsMusicOn(backgroundMusic.isMusicEnabled());
-    const unsub = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
+    const unsubMusic = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
     backgroundMusic.start();
-    return unsub;
+
+    setIsSfxOn(sfxManager.isSfxEnabled());
+    const unsubSfx = sfxManager.subscribe((enabled) => setIsSfxOn(enabled));
+
+    return () => {
+      unsubMusic();
+      unsubSfx();
+    };
   }, []);
 
   const [playerDeltas, setPlayerDeltas] = useState<
@@ -1245,6 +1256,33 @@ export function ColpoBassoArena({
                     </span>
                   </button>
 
+                  {/* Toggle Effetti Sonori nel Menu */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfxManager.toggleSfx();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      {isSfxOn ? (
+                        <Bell className="w-4 h-4 text-cyan-400" />
+                      ) : (
+                        <BellOff className="w-4 h-4 text-slate-400" />
+                      )}
+                      <span>Effetti Sonori</span>
+                    </div>
+                    <span
+                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        isSfxOn
+                          ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400/50'
+                          : 'bg-white/10 text-slate-400'
+                      }`}
+                    >
+                      {isSfxOn ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1280,6 +1318,30 @@ export function ColpoBassoArena({
             ) : (
               <>
                 <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Muto</span>
+              </>
+            )}
+          </button>
+
+          {/* Pulsante Rapido Effetti Sonori in Header */}
+          <button
+            type="button"
+            onClick={() => sfxManager.toggleSfx()}
+            className={`px-2 py-1 rounded-xl border flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition ${
+              isSfxOn
+                ? 'bg-cyan-950/85 border-cyan-400/70 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.35)]'
+                : 'bg-[#140b2a]/90 hover:bg-[#201340] border-white/20 text-slate-400'
+            }`}
+            title={isSfxOn ? 'Effetti Sonori: ATTIVI (tocca per silenziare)' : 'Effetti Sonori: SILENZIATI (tocca per attivare)'}
+          >
+            {isSfxOn ? (
+              <>
+                <Bell className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline text-cyan-300">SFX</span>
+              </>
+            ) : (
+              <>
+                <BellOff className="w-3.5 h-3.5 text-slate-400" />
                 <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Muto</span>
               </>
             )}
