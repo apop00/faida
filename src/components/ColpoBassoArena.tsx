@@ -1348,29 +1348,29 @@ export function ColpoBassoArena({
             </div>
           )}
 
-          {/* TAVOLO DA GIOCO INCLINATO IN PROSPETTIVA 3D (FELTRO OVALE AL NEON) */}
-          <div className="w-full max-w-[420px] my-auto py-0.5 z-10 relative [perspective:800px]">
-            <div className="w-full flex items-center justify-around py-1.5 px-3 rounded-[32px] bg-gradient-to-b from-[#180d36]/70 via-[#100726]/85 to-[#070213]/90 border border-purple-500/25 shadow-[0_15px_35px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.08)] relative [transform:rotateX(26deg)] [transform-style:preserve-3d]">
-              {/* Animazione Giro del Tavolo (In trasparenza sul feltro inclinato) */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+          {/* TAVOLO DA GIOCO MOLTO INCLINATO IN PROSPETTIVA 3D (FELTRO OVALE AL NEON) */}
+          <div className="w-full max-w-[430px] my-auto py-0 z-10 relative [perspective:650px]">
+            <div className="w-full flex items-center justify-around py-1 px-3 sm:px-4 rounded-[38px] bg-gradient-to-b from-[#1d0f3d]/70 via-[#100726]/85 to-[#070213]/95 border border-purple-500/30 shadow-[0_20px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.1)] relative [transform:rotateX(46deg)] [transform-style:preserve-3d]">
+              {/* Animazione Giro del Tavolo (Inclinato ed ellittico per recuperare massimo spazio verticale) */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0 scale-x-[1.4] scale-y-[0.62] [transform-style:preserve-3d]">
                 <div
-                  className={`w-[190px] h-[190px] sm:w-[220px] sm:h-[220px] rounded-full border-2 border-dashed ${
+                  className={`w-[155px] h-[155px] sm:w-[175px] sm:h-[175px] rounded-full border-2 border-dashed ${
                     state.lastDirection === 'forward'
-                      ? 'border-cyan-400/40 text-cyan-300 animate-rotate-clockwise'
-                      : 'border-amber-400/40 text-amber-300 animate-rotate-counter-clockwise'
-                  } opacity-25 flex items-center justify-center relative`}
+                      ? 'border-cyan-400/50 text-cyan-300 animate-rotate-clockwise'
+                      : 'border-amber-400/50 text-amber-300 animate-rotate-counter-clockwise'
+                  } opacity-35 flex items-center justify-center relative`}
                 >
                   {/* Frecce direzionali orbitanti lungo la circonferenza */}
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest drop-shadow">
                     {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
                   </span>
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-widest">
+                  <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest drop-shadow">
                     {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
                   </span>
-                  <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                  <span className="absolute top-1/2 -left-2.5 -translate-y-1/2 text-[9px] font-black tracking-widest rotate-90 drop-shadow">
                     {state.lastDirection === 'forward' ? '◀◀◀' : '▶▶▶'}
                   </span>
-                  <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-black tracking-widest rotate-90">
+                  <span className="absolute top-1/2 -right-2.5 -translate-y-1/2 text-[9px] font-black tracking-widest rotate-90 drop-shadow">
                     {state.lastDirection === 'forward' ? '▶▶▶' : '◀◀◀'}
                   </span>
                 </div>
