@@ -1251,44 +1251,51 @@ export function ColpoBassoArena({
 
         {/* ZONA CENTRALE: TAVOLO CON FELTRO INCLINATO 3D */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-between z-10 px-1 py-0.5 relative">
-          {/* Pill Minimale di Stato o Avviso Turno Integrato (Zero sovrapposizioni) */}
+          {/* Pill Minimale di Stato o Avviso Turno Integrato (Zero sovrapposizioni, abbassato e ridisegnato) */}
           {idleTurnReminder && canLocalUserAct ? (
             <div
               onClick={() => setIdleTurnReminder(false)}
-              className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white cursor-pointer select-none animate-pulse z-30 mt-0.5"
+              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-2 sm:mt-2.5 mb-1"
               title="Tocca per chiudere l'avviso"
             >
               <span className="text-xs">⏰</span>
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-950">
                 TOCCA A TE!
               </span>
-              <span className="text-[9px] font-bold text-slate-900 truncate max-w-[160px]">
+              <div className="w-[1px] h-3 bg-slate-950/30 shrink-0" />
+              <span className="text-[9px] font-bold text-slate-900 truncate max-w-[170px]">
                 {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
               </span>
               <span className="text-[10px] font-black ml-0.5 bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
             </div>
           ) : (
-            <div className="w-fit max-w-[85%] mx-auto flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full bg-[#120824]/60 border border-white/10 backdrop-blur-md z-10 shadow-sm mt-0.5">
-              <span
-                className={`px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider text-[8px] shrink-0 border ${
-                  state.mode === 'ATTACK_CHAIN'
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                    : state.mode === 'SPECIAL_EVENT'
-                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35'
-                }`}
-              >
-                {state.mode === 'ATTACK_CHAIN'
-                  ? '🔥 Attacco'
-                  : state.mode === 'SPECIAL_EVENT'
-                  ? '⚡ Evento'
-                  : '🟢 Tregua'}
-              </span>
+            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-2 sm:mt-2.5 mb-1 transition-all">
+              {/* Badge di Stato Dinamico */}
+              {state.mode === 'ATTACK_CHAIN' ? (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/25 border border-rose-400/60 text-rose-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse shrink-0">
+                  <span>🔥</span>
+                  <span>Attacco ({state.currentSips}🍺)</span>
+                </div>
+              ) : state.mode === 'SPECIAL_EVENT' ? (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/25 border border-purple-400/50 text-purple-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(168,85,247,0.35)] shrink-0">
+                  <span>⚡</span>
+                  <span>Evento</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.3)] shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                  <span>Tregua</span>
+                </div>
+              )}
 
-              <span className="text-slate-300 font-medium truncate text-[10px]">
+              {/* Separatore sottile */}
+              <div className="w-[1px] h-3 bg-white/15 shrink-0" />
+
+              {/* Testo Mossa con contrasto brillante e leggibile */}
+              <span className="text-white/90 font-bold truncate text-[10px] sm:text-[11px] tracking-wide leading-tight">
                 {state.lastActionBanner
                   ? state.lastActionBanner.subtitle
-                  : 'Inizia la mano'}
+                  : 'Inizia la mano: collega seme o numero!'}
               </span>
             </div>
           )}
