@@ -2139,7 +2139,7 @@ export function ColpoBassoArena({
                       return { title: 'PENALITÀ', subtitle: 'Bevi 2🍺 + Pesca' };
                     }
                     if (ev.type === 'KING_TOAST') {
-                      return { title: 'BRINDA', subtitle: 'Bevi 1🍺' };
+                      return { title: 'HO BEVUTO! 🍻', subtitle: 'Bevi 1🍺 • Brindisi' };
                     }
                     if (ev.type === 'QUEEN_BURDEN') {
                       return { title: 'SUBISCI', subtitle: 'Pesca +2 Carte' };
@@ -2148,24 +2148,33 @@ export function ColpoBassoArena({
                   })();
 
                   if (selectedCards.length === 0) {
+                    const isKingToast = state.specialEvent?.type === 'KING_TOAST';
                     return (
                       <button
                         type="button"
                         onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
-                        className="w-full h-full p-2 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-rose-600 hover:brightness-110 active:scale-95 border-2 border-purple-300 text-white font-black shadow-xl shadow-purple-950/70 flex flex-col items-center justify-center gap-1 cursor-pointer transition animate-pulse"
+                        className={`w-full h-full p-2 rounded-2xl active:scale-95 border-2 text-white font-black shadow-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition animate-pulse ${
+                          isKingToast
+                            ? 'bg-gradient-to-br from-amber-500 via-rose-600 to-amber-600 hover:brightness-110 border-amber-300 shadow-rose-950/70'
+                            : 'bg-gradient-to-br from-purple-600 via-fuchsia-600 to-rose-600 hover:brightness-110 border-purple-300 shadow-purple-950/70'
+                        }`}
                       >
                         <div className="w-8 h-8 rounded-full bg-white/20 border border-white/40 flex items-center justify-center shadow-inner">
-                          <CornerDownRight className="w-5 h-5 text-white" />
+                          {isKingToast ? (
+                            <Beer className="w-5 h-5 text-amber-300 animate-bounce" />
+                          ) : (
+                            <CornerDownRight className="w-5 h-5 text-white" />
+                          )}
                         </div>
                         <div className="flex flex-col items-center justify-center leading-tight text-center">
                           <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider text-white">
                             {passLabels.title}
                           </span>
-                          <span className="text-[10px] font-extrabold uppercase text-purple-200 mt-0.5">
+                          <span className={`text-[10px] font-extrabold uppercase mt-0.5 ${isKingToast ? 'text-amber-200' : 'text-purple-200'}`}>
                             {passLabels.subtitle}
                           </span>
                         </div>
-                        <span className="text-[8px] font-medium text-purple-100/75 text-center leading-none mt-0.5">
+                        <span className={`text-[8px] font-medium text-center leading-none mt-0.5 ${isKingToast ? 'text-amber-100/75' : 'text-purple-100/75'}`}>
                           oppure tocca una risposta
                         </span>
                       </button>
@@ -2417,10 +2426,12 @@ export function ColpoBassoArena({
         onDismiss={() => setDrinkAlert(null)}
       />
 
-      <TurnAlertModal
-        alert={turnAlert}
-        onDismiss={() => setTurnAlert(null)}
-      />
+      {!drinkAlert && (
+        <TurnAlertModal
+          alert={turnAlert}
+          onDismiss={() => setTurnAlert(null)}
+        />
+      )}
 
       {inspectedCard && (
         <CardDetailModal

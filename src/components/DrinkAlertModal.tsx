@@ -41,7 +41,7 @@ export function DrinkAlertModal({ alert, onDismiss }: DrinkAlertModalProps) {
       role="dialog"
       aria-modal="true"
       onClick={onDismiss}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 select-none animate-fadeIn cursor-pointer"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 select-none animate-fadeIn cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}

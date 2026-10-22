@@ -2405,8 +2405,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             (c) => !c.eventKind && c.value === 13
           );
 
-          // Auto-resolve immediately if responder has no King!
-          if (!responderHasCounterKing) {
+          const isResponderAI = Boolean(updatedPlayers[responderIdx].isAI);
+
+          // Auto-resolve immediately ONLY if responder is AI and has no King!
+          // If the responder is a human player, ALWAYS enter SPECIAL_EVENT so they can click "HO BEVUTO! 🍻" or play a King!
+          if (isResponderAI && !responderHasCounterKing) {
             const autoPlayers = updatedPlayers.map((p, idx) =>
               idx !== controllingIndex ? { ...p, sipsDrunk: p.sipsDrunk + 1 } : p
             );
