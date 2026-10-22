@@ -37,6 +37,7 @@ export type Player = {
   suit: Suit;
   hand: Card[];
   sipsDrunk: number;
+  cardsDealtCount?: number; // Quante carte ha fatto pescare ad altri per via dei sorsi ricevuti
   isAI?: boolean;
   clientPlayerId?: string;
   attacksLaunched?: number;
@@ -59,6 +60,9 @@ export type CustomDeckConfig = {
   includeSuperDuel?: boolean; // Super Duello Tutti 💥 (2 carte)
   includeTaxRich?: boolean; // Tassa sui Ricchi 📉 (1 carta)
   includeDrawSwap?: boolean; // Scambio e Pescate 🫱 ♥♦+2 ♣♠+2 🃏+1 (4 carte)
+  // Regole Sorsi & Vendetta dell'Assetato
+  sipRewardThreshold?: 'none' | 5 | 10; // Ogni 5 o 10 sorsi ricevuti fai pescare 1 carta a chi vuoi
+  allowVoluntarySip?: boolean; // Permette di bere 1 sorso volontario a inizio turno per sbloccare la carica
 };
 
 export const DEFAULT_DECK_CONFIG: Required<CustomDeckConfig> = {
@@ -75,6 +79,8 @@ export const DEFAULT_DECK_CONFIG: Required<CustomDeckConfig> = {
   includeSuperDuel: true,
   includeTaxRich: true,
   includeDrawSwap: true,
+  sipRewardThreshold: 5,
+  allowVoluntarySip: true,
 };
 
 export type LobbySlot = {
@@ -245,6 +251,7 @@ export type GameState = {
   } | null;
   lastDrinkEvent?: LastDrinkEvent | null;
   logs: GameLogEntry[];
+  deckConfig?: CustomDeckConfig;
 };
 
 export type GameAction =
@@ -264,4 +271,6 @@ export type GameAction =
   | { type: 'RESOLVE_SPECIAL_PASS' }
   | { type: 'SELECT_QUEEN_REDIRECT'; targetPlayerIndex: number }
   | { type: 'COMMIT_DUEL_CARD'; cardId?: string }
-  | { type: 'DISMISS_DUEL' };
+  | { type: 'DISMISS_DUEL' }
+  | { type: 'DEAL_SIP_PENALTY_CARD'; targetPlayerIndex: number }
+  | { type: 'DRINK_VOLUNTARY_SIP' };

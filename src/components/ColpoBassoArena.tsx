@@ -6,8 +6,10 @@ import {
   createInitialGameState,
   calculateBaseAttackSips,
   gameReducer,
+  getAvailableSipCards,
   getCardPlayability,
   getControllingPlayerIndex,
+  getSipsProgressToNextCard,
   getTargetBonusCards,
   SUIT_INFO,
   validateCardSelection,
@@ -382,6 +384,7 @@ export function ColpoBassoArena({
   const [showLogs, setShowLogs] = useState(false);
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [idleTurnReminder, setIdleTurnReminder] = useState(false);
+  const [showSipTargetPicker, setShowSipTargetPicker] = useState(false);
   const [hideHandPrivacy, setHideHandPrivacy] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMusicOn, setIsMusicOn] = useState(false);
@@ -665,10 +668,28 @@ export function ColpoBassoArena({
     !isControllingPlayerAI &&
     (myLobbySlotIndex === -1 || myLobbySlotIndex === controllingPlayerIndex);
 
+  const availableSipCards = getAvailableSipCards(
+    displayedHandPlayer,
+    state.deckConfig?.sipRewardThreshold
+  );
+  const sipThreshold = state.deckConfig?.sipRewardThreshold;
+  const isSipRewardEnabled = sipThreshold && sipThreshold !== 'none';
+  const { currentInCycle, neededForNext } = getSipsProgressToNextCard(
+    displayedHandPlayer,
+    sipThreshold
+  );
+  const canVoluntarySip = Boolean(
+    canLocalUserAct &&
+    state.mode === 'NEUTRAL_FLOW' &&
+    state.deckConfig?.allowVoluntarySip &&
+    isSipRewardEnabled
+  );
+
   // Clear card selection when turn or mode changes
   useEffect(() => {
     setSelectedCardIds([]);
     setSelectedTargetOpponent((controllingPlayerIndex + 1) % 4);
+    setShowSipTargetPicker(false);
   }, [
     controllingPlayerIndex,
     state.mode,
@@ -875,6 +896,7 @@ export function ColpoBassoArena({
     const actualCardCount = player.hand.length;
     const isNorth = orientation === 'north';
     const isSingle = actualCardCount === 1;
+    const oppAvailable = getAvailableSipCards(player, state.deckConfig?.sipRewardThreshold);
 
     const isTargetCandidate = needsOpponentPicker;
     const effectiveTargetId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
@@ -963,6 +985,11 @@ export function ColpoBassoArena({
             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[9px] sm:text-[10px] font-black text-white w-full justify-center leading-none mb-0.5">
               <span className={`text-[11px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
               <span className="truncate max-w-[62px]">{cleanName}</span>
+              {oppAvailable > 0 && (
+                <span className="text-[7px] text-amber-300 font-black uppercase animate-pulse">
+                  🎯+{oppAvailable}🃏
+                </span>
+              )}
               {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
               {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
               {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
@@ -1050,6 +1077,11 @@ export function ColpoBassoArena({
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[9px] sm:text-[10px] font-black text-white w-full justify-center leading-none mb-0.5">
           <span className={`text-[11px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
           <span className="truncate max-w-[62px]">{cleanName}</span>
+          {oppAvailable > 0 && (
+            <span className="text-[7px] text-amber-300 font-black uppercase animate-pulse">
+              🎯+{oppAvailable}🃏
+            </span>
+          )}
           {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
           {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
           {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
@@ -1583,6 +1615,29 @@ export function ColpoBassoArena({
               </div>
             </div>
 
+            {/* Indicatore Vendetta Sorsi per il giocatore locale */}
+            {isSipRewardEnabled && (
+              <div
+                className={`w-full py-0.5 px-1 rounded-lg text-[8px] font-black uppercase text-center flex items-center justify-center gap-1 border shadow-xs transition-all ${
+                  availableSipCards > 0
+                    ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 border-white animate-pulse'
+                    : 'bg-black/50 text-amber-300/80 border-white/10'
+                }`}
+                title={
+                  availableSipCards > 0
+                    ? `${availableSipCards} carte penalità pronte da assegnare!`
+                    : `Soglia: ${currentInCycle}/${sipThreshold}🍺 per la prossima carta penalità`
+                }
+              >
+                <span>🎯</span>
+                <span>
+                  {availableSipCards > 0
+                    ? `+${availableSipCards}🃏 DA DARE`
+                    : `${currentInCycle}/${sipThreshold}🍺`}
+                </span>
+              </div>
+            )}
+
             {/* Target Bonus CTA if candidate cards exist */}
             {bonusCards.length > 0 && (
               <button
@@ -1748,6 +1803,93 @@ export function ColpoBassoArena({
 
           {/* COLONNA 3 (DX): PULSANTI D'AZIONE ERGONOMICI SOTTO IL POLLICE DESTRO */}
           <div className="w-[110px] sm:w-[125px] shrink-0 h-[108px] sm:h-[114px] flex flex-col justify-end gap-1 select-none self-end mb-0.5 relative">
+            {/* Popover Selettore Bersaglio per Vendetta Sorsi */}
+            {showSipTargetPicker && availableSipCards > 0 && (
+              <div className="absolute -top-28 right-0 z-50 flex flex-col gap-1 p-2 rounded-2xl bg-[#0e0622]/98 border-2 border-amber-400 shadow-[0_8px_32px_rgba(0,0,0,0.95)] backdrop-blur-xl animate-fadeIn w-[185px] sm:w-[205px]">
+                <div className="flex items-center justify-between border-b border-white/15 pb-1">
+                  <span className="text-[9px] font-black uppercase text-amber-300 flex items-center gap-1">
+                    <span>🎯</span>
+                    <span>Chi fa pescare? (+1🃏)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSipTargetPicker(false)}
+                    className="text-slate-400 hover:text-white text-xs font-bold px-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1 pt-0.5">
+                  {state.players
+                    .filter((p) => p.id !== controllingPlayerIndex)
+                    .map((opp) => (
+                      <button
+                        key={opp.id}
+                        type="button"
+                        onClick={() => {
+                          dispatchAction({
+                            type: 'DEAL_SIP_PENALTY_CARD',
+                            targetPlayerIndex: opp.id,
+                          });
+                          setCardAnimation({
+                            id: `${Date.now()}-sip-draw`,
+                            type: 'DRAW',
+                            playerIndex: opp.id,
+                          });
+                          playCardDrawSound();
+                          setShowSipTargetPicker(false);
+                        }}
+                        className="px-2 py-1 rounded-xl bg-white/10 hover:bg-gradient-to-r hover:from-purple-600 hover:to-amber-500 border border-white/15 text-white text-[10px] font-black flex items-center justify-between cursor-pointer active:scale-95 transition"
+                      >
+                        <span className="flex items-center gap-1 min-w-0">
+                          <span className={SUIT_INFO[opp.suit].neonText}>{SUIT_INFO[opp.suit].symbol}</span>
+                          <span className="truncate max-w-[85px]">{opp.name.replace('Bot ', '').replace(' 🤖', '')}</span>
+                        </span>
+                        <span className="text-[9px] text-cyan-300 font-bold shrink-0">{opp.hand.length}🃏</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pulsanti Vendetta Sorsi & Sorso Tattico a inizio turno */}
+            {canLocalUserAct && state.mode === 'NEUTRAL_FLOW' && isSipRewardEnabled && !needsOpponentPicker && (availableSipCards > 0 || canVoluntarySip) && (
+              <div className="absolute -top-9 right-0 z-40 flex items-center gap-1 max-w-[320px]">
+                {availableSipCards > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSipTargetPicker((v) => !v)}
+                    className="px-2 py-0.5 rounded-xl bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(245,158,11,0.6)] border border-white hover:brightness-110 active:scale-95 transition cursor-pointer animate-pulse shrink-0"
+                    title="Assegna carta penalità per i sorsi accumulati"
+                  >
+                    <span>🎯</span>
+                    <span>Dai Carta (+1🃏)</span>
+                    <span className="bg-slate-950 text-amber-300 rounded-full px-1 py-0.2 text-[8px] font-black">
+                      {availableSipCards}
+                    </span>
+                  </button>
+                )}
+
+                {canVoluntarySip && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatchAction({ type: 'DRINK_VOLUNTARY_SIP' });
+                    }}
+                    className={`px-2 py-0.5 rounded-xl border text-[9px] font-black uppercase tracking-wider flex items-center gap-1 transition active:scale-95 cursor-pointer backdrop-blur-md shrink-0 ${
+                      neededForNext === 1
+                        ? 'bg-amber-400 text-slate-950 border-white shadow-[0_0_14px_rgba(245,158,11,0.7)] animate-bounce font-black'
+                        : 'bg-[#150a26]/90 hover:bg-[#20103a] text-amber-200 border-amber-400/50'
+                    }`}
+                    title={`Bevi 1 sorso volontario per raggiungere la soglia (${currentInCycle}/${sipThreshold}🍺)`}
+                  >
+                    <span>🍺</span>
+                    <span>{neededForNext === 1 ? 'Bevi per sblocco (+1🃏)' : `Bevi (+1🍺)`}</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Sleek Compact Target Selector Pill Anchored Above Action Column */}
             {needsOpponentPicker && (
               <div className="absolute -top-10 right-0 z-40 flex items-center gap-1 py-1 px-1.5 rounded-xl bg-[#140b2a]/95 border border-purple-400/60 shadow-[0_4px_20px_rgba(168,85,247,0.4)] backdrop-blur-md">

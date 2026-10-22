@@ -9,8 +9,10 @@ import {
   getPrevValue,
   getTargetBonusCards,
   validateCardSelection,
+  getAvailableSipCards,
+  getSipsProgressToNextCard,
 } from '@/lib/gameEngine';
-import { Card, CustomDeckConfig, DEFAULT_DECK_CONFIG, GameState } from '@/types/game';
+import { Card, CustomDeckConfig, DEFAULT_DECK_CONFIG, GameState, Player } from '@/types/game';
 
 function card(suit: Card['suit'], value: number, suffix = ''): Card {
   const labels: Record<number, string> = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
@@ -794,6 +796,107 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     // Nessun giocatore deve avere carte STOP
     const allHandsCards = noStopState.players.flatMap((p) => p.hand);
     expect(allHandsCards.some((c) => c.eventKind === 'STOP_SUIT')).toBe(false);
+  });
+
+  it('Vendetta dei Sorsi (Sip Bounty): calcolo cumulativo, assegnazione carta penalità e sorso tattico volontario', () => {
+    // 1. Calcolo carte disponibili per soglia 5 e 10
+    const p1: Player = {
+      id: 0,
+      name: 'Mario',
+      suit: 'hearts',
+      hand: [],
+      sipsDrunk: 0,
+      cardsDealtCount: 0,
+    };
+    expect(getAvailableSipCards(p1, 5)).toBe(0);
+    expect(getAvailableSipCards(p1, 10)).toBe(0);
+    expect(getAvailableSipCards(p1, 'none')).toBe(0);
+
+    // 4 sorsi: 0 disponibili, 1 mancante alla soglia 5
+    p1.sipsDrunk = 4;
+    expect(getAvailableSipCards(p1, 5)).toBe(0);
+    expect(getSipsProgressToNextCard(p1, 5)).toEqual({ currentInCycle: 4, neededForNext: 1 });
+
+    // 5 sorsi: 1 disponibile
+    p1.sipsDrunk = 5;
+    expect(getAvailableSipCards(p1, 5)).toBe(1);
+    expect(getSipsProgressToNextCard(p1, 5)).toEqual({ currentInCycle: 0, neededForNext: 5 });
+
+    // 9 sorsi con soglia 10: 0 disponibili, 1 mancante
+    p1.sipsDrunk = 9;
+    expect(getAvailableSipCards(p1, 10)).toBe(0);
+    expect(getSipsProgressToNextCard(p1, 10)).toEqual({ currentInCycle: 9, neededForNext: 1 });
+
+    // 10 sorsi con soglia 10: 1 disponibile
+    p1.sipsDrunk = 10;
+    expect(getAvailableSipCards(p1, 10)).toBe(1);
+
+    // 12 sorsi con soglia 5: 2 disponibili (cumulativi: 12 / 5 = 2)
+    p1.sipsDrunk = 12;
+    expect(getAvailableSipCards(p1, 5)).toBe(2);
+
+    // Se ha già usato 1 carta: rimane 1 disponibile
+    p1.cardsDealtCount = 1;
+    expect(getAvailableSipCards(p1, 5)).toBe(1);
+
+    // 2. Azione DEAL_SIP_PENALTY_CARD: fa pescare 1 carta al bersaglio
+    const baseState = createInitialGameState(['P1', 'P2', 'P3', 'P4'], [false, true, true, true], {
+      ...DEFAULT_DECK_CONFIG,
+      sipRewardThreshold: 5,
+    });
+    baseState.activePlayerIndex = 0;
+    baseState.players[0].sipsDrunk = 5; // Ha 1 carica
+    baseState.players[0].cardsDealtCount = 0;
+
+    const initialTargetHandCount = baseState.players[1].hand.length;
+    const initialDeckCount = baseState.deck.length;
+
+    const stateAfterDeal = gameReducer(baseState, {
+      type: 'DEAL_SIP_PENALTY_CARD',
+      targetPlayerIndex: 1,
+    });
+
+    // P1 ha consumato la carica
+    expect(stateAfterDeal.players[0].cardsDealtCount).toBe(1);
+    expect(getAvailableSipCards(stateAfterDeal.players[0], 5)).toBe(0);
+    // P2 ha ricevuto 1 carta
+    expect(stateAfterDeal.players[1].hand.length).toBe(initialTargetHandCount + 1);
+    expect(stateAfterDeal.deck.length).toBe(initialDeckCount - 1);
+    expect(stateAfterDeal.lastActionBanner?.title).toContain('Vendetta dei Sorsi');
+
+    // 3. Azione DRINK_VOLUNTARY_SIP: sblocca la carica passando da 4 a 5 sorsi
+    const voluntaryState = createInitialGameState(['P1', 'P2', 'P3', 'P4'], [false, true, true, true], {
+      ...DEFAULT_DECK_CONFIG,
+      sipRewardThreshold: 5,
+      allowVoluntarySip: true,
+    });
+    voluntaryState.activePlayerIndex = 0;
+    voluntaryState.players[0].sipsDrunk = 4;
+    voluntaryState.players[0].cardsDealtCount = 0;
+
+    expect(getAvailableSipCards(voluntaryState.players[0], 5)).toBe(0);
+
+    const stateAfterVoluntary = gameReducer(voluntaryState, {
+      type: 'DRINK_VOLUNTARY_SIP',
+    });
+
+    expect(stateAfterVoluntary.players[0].sipsDrunk).toBe(5);
+    expect(stateAfterVoluntary.lastDrinkEvent?.sips).toBe(1);
+    expect(getAvailableSipCards(stateAfterVoluntary.players[0], 5)).toBe(1);
+    expect(stateAfterVoluntary.lastActionBanner?.title).toContain('SBLOCCO');
+
+    // 4. Intelligenza Artificiale Bot: usa DEAL_SIP_PENALTY_CARD se ha cariche disponibili
+    const botState = createInitialGameState(['P1', 'Bot1', 'Bot2', 'Bot3'], [false, true, true, true], {
+      ...DEFAULT_DECK_CONFIG,
+      sipRewardThreshold: 5,
+    });
+    botState.activePlayerIndex = 1; // Turno di Bot1
+    botState.players[1].sipsDrunk = 5;
+    botState.players[1].cardsDealtCount = 0;
+
+    const botMove = computeAIMove(botState);
+    expect(botMove).toBeDefined();
+    expect(botMove?.type).toBe('DEAL_SIP_PENALTY_CARD');
   });
 });
 

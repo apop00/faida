@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Swords,
+  Target,
   X,
   Zap,
 } from 'lucide-react';
@@ -253,7 +254,7 @@ export function DeckSettingsModal({
     ...DEFAULT_DECK_CONFIG,
     ...config,
   });
-  const [activeTab, setActiveTab] = useState<'all' | 'figure' | 'event'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'figure' | 'event' | 'rules'>('all');
 
   if (!isOpen) return null;
 
@@ -436,7 +437,7 @@ export function DeckSettingsModal({
               </div>
             )}
 
-            {/* Filter Tabs (Tutte / Figure / Eventi) */}
+            {/* Filter Tabs (Tutte / Figure / Eventi / Regole Sorsi) */}
             <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-xl border border-white/10 ml-auto">
               <button
                 type="button"
@@ -471,99 +472,209 @@ export function DeckSettingsModal({
               >
                 Eventi (9)
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('rules')}
+                className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase transition flex items-center gap-1 ${
+                  activeTab === 'rules'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                    : 'text-amber-300 hover:text-white'
+                }`}
+              >
+                <span>Sorsi 🍺</span>
+                {currentConfig.sipRewardThreshold && currentConfig.sipRewardThreshold !== 'none' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* LISTA CARTE CON ANTEPRIMA VISIVA, DESCRIZIONE E TOGGLE */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 sm:px-6 sm:py-3 space-y-2.5 divide-y divide-white/5">
-          {filteredCards.map((item) => {
-            const isEnabled = currentConfig[item.key] ?? true;
-
-            return (
-              <div
-                key={item.key}
-                className={`pt-2.5 first:pt-0 flex items-center justify-between gap-3 sm:gap-4 p-2 sm:p-2.5 rounded-2xl transition-all ${
-                  isEnabled
-                    ? 'bg-white/[0.03] border border-white/10 hover:border-purple-500/40'
-                    : 'bg-black/40 border border-white/5 opacity-60'
-                }`}
-              >
-                {/* 1. ANTEPRIMA VISIVA REALE DELLA CARTA */}
-                <div className="shrink-0 flex flex-col items-center justify-center">
-                  <div className={`transition-transform duration-200 ${isEnabled ? 'scale-90 sm:scale-95' : 'scale-85 grayscale opacity-50'}`}>
-                    <PlayingCard card={item.sampleCard} size="xs" />
+        {/* LISTA CARTE OPPURE REGOLE SORSI IN BASE AL TAB ATTIVO */}
+        {activeTab === 'rules' ? (
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4 space-y-4">
+            {/* 1. VENDETTA DEI SORSI */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-950/40 via-[#180a2c] to-[#0d0519] border border-purple-500/30 flex flex-col gap-3 shadow-lg">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                    🎯
                   </div>
-                </div>
-
-                {/* 2. INFORMAZIONI, EFFETTO E CONTROMOSSA */}
-                <div className="flex-1 min-w-0 flex flex-col gap-1 text-left">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs sm:text-sm font-black text-white tracking-wide">
-                      {item.title}
-                    </span>
-                    <span
-                      className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border ${item.badgeColor}`}
-                    >
-                      {item.badgeLabel}
-                    </span>
-                    <span className="text-[8px] font-bold text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">
-                      {item.countLabel}
-                    </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs sm:text-sm font-black uppercase text-amber-200">
+                        Vendetta dei Sorsi (Assegna Carte agli Avversari)
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400 text-amber-300 text-[8px] font-black uppercase">
+                        Cumulativo
+                      </span>
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] text-slate-300 mt-1 leading-relaxed">
+                      Chi beve non subisce passivamente: ogni volta che accumuli 5 o 10 sorsi ricevuti, sblocchi il potere di far pescare 1 carta forzata a chi vuoi all&apos;inizio del tuo turno!
+                    </p>
                   </div>
-
-                  {/* Effetto in gioco */}
-                  <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium leading-relaxed">
-                    <strong className="text-amber-300">Effetto:</strong> {item.effect}
-                  </p>
-
-                  {/* Come difendersi o contrastare */}
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 font-normal leading-tight">
-                    <strong className="text-cyan-300">Come contrastarla:</strong> {item.counterplay}
-                  </p>
-                </div>
-
-                {/* 3. SWITCH INTERATTIVO ATTIVA / ESCLUSA */}
-                <div className="shrink-0 flex flex-col items-end gap-1">
-                  {!readOnly ? (
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(item.key)}
-                      className={`px-3 py-1.5 rounded-xl font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 ${
-                        isEnabled
-                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 border border-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.35)]'
-                          : 'bg-white/10 hover:bg-white/15 text-slate-400 border border-white/10'
-                      }`}
-                      title={isEnabled ? 'Tocca per escludere dal mazzo' : 'Tocca per includere nel mazzo'}
-                    >
-                      {isEnabled ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
-                          <span>Attiva</span>
-                        </>
-                      ) : (
-                        <span>Esclusa</span>
-                      )}
-                    </button>
-                  ) : (
-                    <span
-                      className={`text-[10px] font-black px-2 py-1 rounded-lg ${
-                        isEnabled
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
-                          : 'bg-white/10 text-slate-500'
-                      }`}
-                    >
-                      {isEnabled ? 'Inclusa' : 'Esclusa'}
-                    </span>
-                  )}
-                  <span className="text-[8px] font-bold text-slate-400">
-                    {isEnabled ? `+${item.count} carte` : '0 carte'}
-                  </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Opzioni Soglia Sorsi */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                {[
+                  { value: 'none' as const, label: 'Disattivato', desc: 'Nessuna carta per sorsi', icon: '❌' },
+                  { value: 5 as const, label: 'Ogni 5 Sorsi ⚡', desc: 'Consigliato Party: dinamico e punitivo', icon: '🍺' },
+                  { value: 10 as const, label: 'Ogni 10 Sorsi 🍻', desc: 'Partita strategica e calma', icon: '👑' },
+                ].map((opt) => {
+                  const isSelected = (currentConfig.sipRewardThreshold ?? 5) === opt.value;
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      disabled={readOnly}
+                      onClick={() => setCurrentConfig((prev) => ({ ...prev, sipRewardThreshold: opt.value }))}
+                      className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between gap-1 cursor-pointer active:scale-98 ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-purple-900/80 to-amber-950/80 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)] ring-1 ring-amber-400'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-white flex items-center gap-1.5">
+                          <span>{opt.icon}</span>
+                          <span>{opt.label}</span>
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-amber-300" />}
+                      </div>
+                      <span className="text-[9px] text-slate-400">{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. BEVI VOLONTARIAMENTE PER SBLOCCARE (SORSEGGIO TATTICO) */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-950/30 via-[#120a28] to-[#0c051a] border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-start gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                  🍻
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs sm:text-sm font-black uppercase text-cyan-200">
+                      Sorseggio Tattico (Bevi Volontario per Sbloccare)
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-[8px] font-black uppercase">
+                      Tattica
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-300 mt-1 leading-relaxed">
+                    Sei ad esempio a 4 sorsi (con soglia 5) o a 9 sorsi (con soglia 10)? Puoi decidere di bere volontariamente 1 sorso a inizio turno per raggiungere la soglia e sbloccare all&apos;istante la carta penalità da scagliare sul leader del tavolo!
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={readOnly}
+                onClick={() => setCurrentConfig((prev) => ({ ...prev, allowVoluntarySip: !prev.allowVoluntarySip }))}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider shrink-0 transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                  currentConfig.allowVoluntarySip
+                    ? 'bg-gradient-to-r from-cyan-600 to-emerald-600 border-cyan-300 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                    : 'bg-white/10 border-white/20 text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>{currentConfig.allowVoluntarySip ? 'ATTIVO ✓' : 'DISATTIVATO ✕'}</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 sm:px-6 sm:py-3 space-y-2.5 divide-y divide-white/5">
+            {filteredCards.map((item) => {
+              const isEnabled = currentConfig[item.key] ?? true;
+
+              return (
+                <div
+                  key={item.key}
+                  className={`pt-2.5 first:pt-0 flex items-center justify-between gap-3 sm:gap-4 p-2 sm:p-2.5 rounded-2xl transition-all ${
+                    isEnabled
+                      ? 'bg-white/[0.03] border border-white/10 hover:border-purple-500/40'
+                      : 'bg-black/40 border border-white/5 opacity-60'
+                  }`}
+                >
+                  {/* 1. ANTEPRIMA VISIVA REALE DELLA CARTA */}
+                  <div className="shrink-0 flex flex-col items-center justify-center">
+                    <div className={`transition-transform duration-200 ${isEnabled ? 'scale-90 sm:scale-95' : 'scale-85 grayscale opacity-50'}`}>
+                      <PlayingCard card={item.sampleCard} size="xs" />
+                    </div>
+                  </div>
+
+                  {/* 2. INFORMAZIONI, EFFETTO E CONTROMOSSA */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-1 text-left">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs sm:text-sm font-black text-white tracking-wide">
+                        {item.title}
+                      </span>
+                      <span
+                        className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md border ${item.badgeColor}`}
+                      >
+                        {item.badgeLabel}
+                      </span>
+                      <span className="text-[8px] font-bold text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">
+                        {item.countLabel}
+                      </span>
+                    </div>
+
+                    {/* Effetto in gioco */}
+                    <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium leading-relaxed">
+                      <strong className="text-amber-300">Effetto:</strong> {item.effect}
+                    </p>
+
+                    {/* Come difendersi o contrastare */}
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-normal leading-tight">
+                      <strong className="text-cyan-300">Come contrastarla:</strong> {item.counterplay}
+                    </p>
+                  </div>
+
+                  {/* 3. SWITCH INTERATTIVO ATTIVA / ESCLUSA */}
+                  <div className="shrink-0 flex flex-col items-end gap-1">
+                    {!readOnly ? (
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(item.key)}
+                        className={`px-3 py-1.5 rounded-xl font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 ${
+                          isEnabled
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 border border-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.35)]'
+                            : 'bg-white/10 hover:bg-white/15 text-slate-400 border border-white/10'
+                        }`}
+                        title={isEnabled ? 'Tocca per escludere dal mazzo' : 'Tocca per includere nel mazzo'}
+                      >
+                        {isEnabled ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
+                            <span>Attiva</span>
+                          </>
+                        ) : (
+                          <span>Esclusa</span>
+                        )}
+                      </button>
+                    ) : (
+                      <span
+                        className={`text-[10px] font-black px-2 py-1 rounded-lg ${
+                          isEnabled
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
+                            : 'bg-white/10 text-slate-500'
+                        }`}
+                      >
+                        {isEnabled ? 'Inclusa' : 'Esclusa'}
+                      </span>
+                    )}
+                    <span className="text-[8px] font-bold text-slate-400">
+                      {isEnabled ? `+${item.count} carte` : '0 carte'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* FOOTER: STATISTICHE E PULSANTE DI CONFERMA */}
         <div className="shrink-0 px-4 py-2.5 sm:px-6 sm:py-3 border-t border-white/10 bg-[#090314] flex items-center justify-between">

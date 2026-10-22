@@ -549,6 +549,7 @@ export function createInitialGameState(
       suit,
       hand: shuffleDeck(hand),
       sipsDrunk: 0,
+      cardsDealtCount: 0,
       isAI: Boolean(aiFlags[index]),
       attacksLaunched: 0,
       defensesSucceeded: 0,
@@ -583,6 +584,7 @@ export function createInitialGameState(
     activeDuel: null,
     winnerIndex: null,
     lastDrinkEvent: null,
+    deckConfig: cfg,
     lastActionBanner: {
       title: `Battesimo: ${targetCard.label}${SUIT_INFO[targetCard.suit].symbol}`,
       subtitle: `Inizia ${players[starterIndex]?.name} (${SUIT_INFO[targetCard.suit].name})`,
@@ -595,6 +597,35 @@ export function createInitialGameState(
       ),
     ],
   };
+}
+
+/**
+ * Calcola quante carte da far pescare ha accumulato e ha a disposizione un giocatore
+ * in base alla soglia sorsi (5 o 10) e a quante ne ha già utilizzate.
+ */
+export function getAvailableSipCards(
+  player?: Player | null,
+  threshold?: 'none' | 5 | 10
+): number {
+  if (!player || !threshold || threshold === 'none') return 0;
+  const earned = Math.floor(player.sipsDrunk / threshold);
+  const used = player.cardsDealtCount || 0;
+  return Math.max(0, earned - used);
+}
+
+/**
+ * Calcola l'avanzamento verso la prossima carta penalità sbloccabile
+ */
+export function getSipsProgressToNextCard(
+  player?: Player | null,
+  threshold?: 'none' | 5 | 10
+): { currentInCycle: number; neededForNext: number } {
+  if (!player || !threshold || threshold === 'none') {
+    return { currentInCycle: 0, neededForNext: 0 };
+  }
+  const currentInCycle = player.sipsDrunk % threshold;
+  const neededForNext = threshold - currentInCycle;
+  return { currentInCycle, neededForNext };
 }
 
 /**
@@ -1322,6 +1353,106 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'USE_TARGET_BONUS': {
       // Carta Bersaglio rimossa
       return state;
+    }
+
+    case 'DEAL_SIP_PENALTY_CARD': {
+      if (state.mode !== 'NEUTRAL_FLOW') return state;
+      const activeIdx = state.activePlayerIndex;
+      const activeP = state.players[activeIdx];
+      const threshold = state.deckConfig?.sipRewardThreshold;
+      const available = getAvailableSipCards(activeP, threshold);
+      if (available <= 0) return state;
+
+      const targetIdx = action.targetPlayerIndex;
+      if (targetIdx === activeIdx || !state.players[targetIdx]) return state;
+      const targetP = state.players[targetIdx];
+
+      // Pescata forzata per il bersaglio dal mazzo
+      const { drawn, newDeck, newDiscardPile } = drawCardsFromDeck(
+        state.deck,
+        state.discardPile,
+        1
+      );
+
+      const updatedPlayers = state.players.map((p, idx) => {
+        if (idx === activeIdx) {
+          return {
+            ...p,
+            cardsDealtCount: (p.cardsDealtCount || 0) + 1,
+          };
+        }
+        if (idx === targetIdx) {
+          return {
+            ...p,
+            hand: [...p.hand, ...drawn],
+          };
+        }
+        return p;
+      });
+
+      return {
+        ...state,
+        deck: newDeck,
+        discardPile: newDiscardPile,
+        players: updatedPlayers,
+        lastActionBanner: {
+          title: 'Vendetta dei Sorsi! 🎯🃏',
+          subtitle: `${activeP.name} costringe ${targetP.name} a pescare 1 carta!`,
+          tone: 'special',
+        },
+        logs: [
+          makeLog(
+            `🎯 Vendetta dei Sorsi! ${activeP.name} (${activeP.sipsDrunk}🍺) scaglia una penalità e fa pescare 1 carta a ${targetP.name}!`,
+            'special'
+          ),
+          ...state.logs,
+        ],
+      };
+    }
+
+    case 'DRINK_VOLUNTARY_SIP': {
+      if (state.mode !== 'NEUTRAL_FLOW') return state;
+      if (!state.deckConfig?.allowVoluntarySip) return state;
+      const activeIdx = state.activePlayerIndex;
+      const activeP = state.players[activeIdx];
+      const threshold = state.deckConfig?.sipRewardThreshold;
+
+      const prevEarned = threshold && threshold !== 'none' ? Math.floor(activeP.sipsDrunk / threshold) : 0;
+      const nextSipsDrunk = activeP.sipsDrunk + 1;
+      const nextEarned = threshold && threshold !== 'none' ? Math.floor(nextSipsDrunk / threshold) : 0;
+      const unlockedNew = nextEarned > prevEarned;
+
+      const updatedPlayers = state.players.map((p, idx) =>
+        idx === activeIdx ? { ...p, sipsDrunk: nextSipsDrunk } : p
+      );
+
+      return {
+        ...state,
+        players: updatedPlayers,
+        lastDrinkEvent: {
+          drinkerIndex: activeIdx,
+          drinkerName: activeP.name,
+          drinkerSuit: activeP.suit,
+          sips: 1,
+          reason: 'Sorso Tattico Volontario',
+        },
+        lastActionBanner: {
+          title: unlockedNew ? 'Sorso Tattico: SBLOCCO! 🍻' : 'Sorso Tattico! 🍺',
+          subtitle: unlockedNew
+            ? `${activeP.name} beve 1 sorso (${nextSipsDrunk}🍺) e sblocca +1 carta da far pescare!`
+            : `${activeP.name} beve volontariamente 1 sorso (${nextSipsDrunk}🍺)`,
+          tone: 'drink',
+        },
+        logs: [
+          makeLog(
+            unlockedNew
+              ? `🍻 Sorso Tattico! ${activeP.name} beve 1 sorso volontario (${nextSipsDrunk}🍺) e raggiunge la soglia per far pescare 1 carta a un avversario!`
+              : `🍺 Sorso Tattico: ${activeP.name} beve 1 sorso volontario (${nextSipsDrunk}🍺).`,
+            'drink'
+          ),
+          ...state.logs,
+        ],
+      };
     }
 
     case 'DRAW_AND_PASS': {
@@ -3602,6 +3733,29 @@ export function computeAIMove(state: GameState): GameAction | null {
 
   // 1. NEUTRAL_FLOW
   if (state.mode === 'NEUTRAL_FLOW' && state.activePlayerIndex === controllingIdx) {
+    // 0a. Vendetta dei Sorsi: Se il bot ha sbloccato carte penalità da assegnare, colpisce l'avversario più avanti
+    const availableSipCards = getAvailableSipCards(bot, state.deckConfig?.sipRewardThreshold);
+    if (availableSipCards > 0) {
+      return {
+        type: 'DEAL_SIP_PENALTY_CARD',
+        targetPlayerIndex: priorityOpponent.id,
+      };
+    }
+
+    // 0b. Sorso Tattico: Se consentito e manca solo 1 sorso per sbloccare la carta penalità contro chi ha poche carte (<= 3)
+    if (
+      state.deckConfig?.allowVoluntarySip &&
+      state.deckConfig?.sipRewardThreshold &&
+      state.deckConfig.sipRewardThreshold !== 'none'
+    ) {
+      const { neededForNext } = getSipsProgressToNextCard(bot, state.deckConfig.sipRewardThreshold);
+      if (neededForNext === 1 && priorityOpponent.hand.length <= 3) {
+        return {
+          type: 'DRINK_VOLUNTARY_SIP',
+        };
+      }
+    }
+
     // 1a. Direct Sips Event Card (single card, playable when topCard has an opponent's suit)
     const playableDirectSips = bot.hand
       .filter(

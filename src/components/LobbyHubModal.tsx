@@ -618,7 +618,7 @@ export function LobbyHubModal({
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-400">
-                            Attiva o disattiva Asso, Re, Stop, Sorsi, Duelli, ecc.
+                            Carte speciali, Duelli e Regole Sorsi / Vendetta dell&apos;Assetato
                           </div>
                         </div>
                       </div>
