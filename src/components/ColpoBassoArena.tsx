@@ -25,7 +25,13 @@ import { TurnAlertModal, TurnAlertData } from './TurnAlertModal';
 import { CardDetailModal } from './CardDetailModal';
 import { AttackTrajectoryOverlay } from './AttackTrajectoryOverlay';
 import { PlayerAvatar } from './PlayerAvatar';
-import { playCardDrawSound, playCardPlaySound, playTurnSound } from '@/lib/audioEffects';
+import {
+  playCardDrawSound,
+  playCardPlaySound,
+  playSpecialCardSound,
+  playTurnSound,
+  SpecialSoundType,
+} from '@/lib/audioEffects';
 import {
   ArrowLeftRight,
   Beer,
@@ -50,6 +56,252 @@ import {
   Users,
   X,
 } from 'lucide-react';
+
+interface SpecialVisualEffect {
+  id: string;
+  type: SpecialSoundType;
+  icon: string;
+  title: string;
+  subtitle: string;
+  colorScheme: {
+    bg: string;
+    border: string;
+    glow: string;
+    text: string;
+    shockwave: string;
+  };
+}
+
+function getSpecialCardEffect(
+  card: Card,
+  banner?: { title: string; subtitle: string; tone: string } | null,
+  playerName?: string
+): SpecialVisualEffect | null {
+  const titleUpper = banner?.title?.toUpperCase() || '';
+
+  // 1. STOP (🚫)
+  if (card.eventKind === 'STOP_SUIT' || titleUpper.includes('STOP')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'STOP',
+      icon: '🚫',
+      title: 'STOP!',
+      subtitle: banner?.subtitle || `${playerName || 'Giocatore'} blocca il turno!`,
+      colorScheme: {
+        bg: 'bg-rose-950/90',
+        border: 'border-rose-400',
+        glow: 'shadow-[0_0_35px_rgba(244,63,94,0.7)]',
+        text: 'text-rose-300',
+        shockwave: 'border-rose-500 bg-rose-500/20',
+      },
+    };
+  }
+
+  // 2. REVERSE (🔄 Cambio Giro)
+  if (card.eventKind === 'REVERSE_SUIT' || titleUpper.includes('CAMBIO GIRO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'REVERSE',
+      icon: '🔄',
+      title: 'CAMBIO GIRO!',
+      subtitle: banner?.subtitle || 'Il senso del tavolo è invertito!',
+      colorScheme: {
+        bg: 'bg-cyan-950/90',
+        border: 'border-cyan-400',
+        glow: 'shadow-[0_0_35px_rgba(34,211,238,0.7)]',
+        text: 'text-cyan-300',
+        shockwave: 'border-cyan-400 bg-cyan-400/20',
+      },
+    };
+  }
+
+  // 3. MIRROR (🪞 Specchio)
+  if (card.eventKind === 'MIRROR' || titleUpper.includes('SPECCHIO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'MIRROR',
+      icon: '🪞',
+      title: 'SPECCHIO RADDOPPIO!',
+      subtitle: banner?.subtitle || 'Sorsi rispediti al mittente x2!',
+      colorScheme: {
+        bg: 'bg-purple-950/90',
+        border: 'border-fuchsia-400',
+        glow: 'shadow-[0_0_35px_rgba(217,70,239,0.7)]',
+        text: 'text-fuchsia-300',
+        shockwave: 'border-fuchsia-400 bg-fuchsia-400/20',
+      },
+    };
+  }
+
+  // 4. SHOCK (⚡ Contro-Shock)
+  if (titleUpper.includes('SHOCK')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'SHOCK',
+      icon: '⚡',
+      title: 'SHOCK ELETTRICO!',
+      subtitle: banner?.subtitle || '1 sorso a testa per tutti!',
+      colorScheme: {
+        bg: 'bg-amber-950/90',
+        border: 'border-amber-400',
+        glow: 'shadow-[0_0_35px_rgba(245,158,11,0.8)]',
+        text: 'text-amber-300',
+        shockwave: 'border-amber-400 bg-amber-400/25',
+      },
+    };
+  }
+
+  // 5. SCUDO (🛡️ Parata Alta)
+  if (titleUpper.includes('SCUDO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'SHIELD',
+      icon: '🛡️',
+      title: 'SCUDO PERFETTO!',
+      subtitle: banner?.subtitle || 'Attacco parato a 0 sorsi!',
+      colorScheme: {
+        bg: 'bg-teal-950/90',
+        border: 'border-emerald-400',
+        glow: 'shadow-[0_0_35px_rgba(16,185,129,0.7)]',
+        text: 'text-emerald-300',
+        shockwave: 'border-emerald-400 bg-emerald-400/20',
+      },
+    };
+  }
+
+  // 6. DUELLO (⚔️)
+  if (card.eventKind?.includes('DUEL') || titleUpper.includes('DUELLO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'DUEL',
+      icon: '⚔️',
+      title: 'DUELLO ALL\'ULTIMO SORSO!',
+      subtitle: banner?.subtitle || 'Sfida con la carta estratta dal mazzo!',
+      colorScheme: {
+        bg: 'bg-amber-950/90',
+        border: 'border-amber-400',
+        glow: 'shadow-[0_0_40px_rgba(245,158,11,0.8)]',
+        text: 'text-amber-300',
+        shockwave: 'border-amber-500 bg-amber-500/20',
+      },
+    };
+  }
+
+  // 7. BRINDISI DEL RE (👑 Re 13)
+  if (card.value === 13 || titleUpper.includes('BRINDISI')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'ROYAL',
+      icon: '👑',
+      title: 'BRINDISI DEL RE!',
+      subtitle: 'Tutti alzano i calici e bevono 1🍺!',
+      colorScheme: {
+        bg: 'bg-amber-950/90',
+        border: 'border-yellow-400',
+        glow: 'shadow-[0_0_40px_rgba(250,204,21,0.8)]',
+        text: 'text-yellow-300',
+        shockwave: 'border-yellow-400 bg-yellow-400/20',
+      },
+    };
+  }
+
+  // 8. FARDELLO DELLA REGINA (👸 Regina 12)
+  if (card.value === 12 || titleUpper.includes('FARDELLO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'ROYAL',
+      icon: '👸',
+      title: 'FARDELLO DELLA REGINA!',
+      subtitle: 'Pesca +2 carte o gioca la beffa del 6!',
+      colorScheme: {
+        bg: 'bg-purple-950/90',
+        border: 'border-fuchsia-400',
+        glow: 'shadow-[0_0_35px_rgba(217,70,239,0.7)]',
+        text: 'text-fuchsia-300',
+        shockwave: 'border-fuchsia-400 bg-fuchsia-400/20',
+      },
+    };
+  }
+
+  // 9. SPIONAGGIO (🕵️ Fante 11)
+  if (card.value === 11 || titleUpper.includes('SPIA')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'ROYAL',
+      icon: '🕵️',
+      title: 'SPIONAGGIO ATTIVO!',
+      subtitle: banner?.subtitle || 'La mano dell\'avversario è sotto esame!',
+      colorScheme: {
+        bg: 'bg-indigo-950/90',
+        border: 'border-indigo-400',
+        glow: 'shadow-[0_0_35px_rgba(99,102,241,0.7)]',
+        text: 'text-indigo-300',
+        shockwave: 'border-indigo-400 bg-indigo-400/20',
+      },
+    };
+  }
+
+  // 10. ASSO A CASCATA (🌊 Asso 1)
+  if (card.value === 1 || titleUpper.includes('CASCATA')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'CASCADE',
+      icon: '🌊',
+      title: 'CASCATA DELL\'ASSO!',
+      subtitle: banner?.subtitle || 'Rispondi con un Asso o subisci la penalità!',
+      colorScheme: {
+        bg: 'bg-blue-950/90',
+        border: 'border-sky-400',
+        glow: 'shadow-[0_0_35px_rgba(56,189,248,0.7)]',
+        text: 'text-sky-300',
+        shockwave: 'border-sky-400 bg-sky-400/20',
+      },
+    };
+  }
+
+  // 11. TASSA SUI RICCHI (📉)
+  if (card.eventKind === 'TAX_RICH' || titleUpper.includes('TASSA')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'TAX',
+      icon: '📉',
+      title: 'TASSA SUI RICCHI!',
+      subtitle: banner?.subtitle || 'Chi ha più carte in mano deve bere!',
+      colorScheme: {
+        bg: 'bg-emerald-950/90',
+        border: 'border-emerald-400',
+        glow: 'shadow-[0_0_35px_rgba(16,185,129,0.7)]',
+        text: 'text-emerald-300',
+        shockwave: 'border-emerald-400 bg-emerald-400/20',
+      },
+    };
+  }
+
+  // 12. ATTACCO DIRETTO / BORDATA SORSI (🔥)
+  if (
+    card.eventKind === 'DIRECT_SIPS' ||
+    titleUpper.includes('ATTACCA') ||
+    titleUpper.includes('COLPO') ||
+    titleUpper.includes('COMBO')
+  ) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'ATTACK',
+      icon: '🔥',
+      title: 'ATTACCO IN CORSO!',
+      subtitle: banner?.subtitle || 'Preparati a difenderti o incassa sorsi!',
+      colorScheme: {
+        bg: 'bg-rose-950/90',
+        border: 'border-rose-500',
+        glow: 'shadow-[0_0_35px_rgba(244,63,94,0.7)]',
+        text: 'text-rose-300',
+        shockwave: 'border-rose-500 bg-rose-500/25',
+      },
+    };
+  }
+
+  return null;
+}
 
 const DEFAULT_NAMES_1P_3PC = [
   'Tu (Cuori)',
@@ -88,6 +340,8 @@ export function ColpoBassoArena({
 
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [selectedTargetOpponent, setSelectedTargetOpponent] = useState<number | null>(null);
+  const [activeSpecialEffect, setActiveSpecialEffect] = useState<SpecialVisualEffect | null>(null);
+  const [isDeckDrawing, setIsDeckDrawing] = useState(false);
   const [showBonusModal, setShowBonusModal] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showLobbyModal, setShowLobbyModal] = useState(false);
@@ -145,7 +399,20 @@ export function ColpoBassoArena({
           playerIndex: playerIdx,
           card: state.topCard,
         });
-        playCardPlaySound();
+
+        // Trigger special card visual and sound effect if applicable!
+        const playerName = state.players[playerIdx]?.name?.replace('Bot ', '')?.replace(' 🤖', '');
+        const special = getSpecialCardEffect(state.topCard, state.lastActionBanner, playerName);
+        if (special) {
+          playSpecialCardSound(special.type);
+          setActiveSpecialEffect(special);
+          setTimeout(() => {
+            setActiveSpecialEffect((prev) => (prev?.id === special.id ? null : prev));
+          }, 1400);
+        } else {
+          playCardPlaySound();
+        }
+
         prevTopCardIdRef.current = state.topCard.id;
         setTimeout(() => {
           setCardAnimation((prev) => (prev?.type === 'PLAY' ? null : prev));
@@ -162,6 +429,8 @@ export function ColpoBassoArena({
             type: 'DRAW',
             playerIndex: playerWhoDrew,
           });
+          setIsDeckDrawing(true);
+          setTimeout(() => setIsDeckDrawing(false), 450);
           playCardDrawSound();
           setTimeout(() => {
             setCardAnimation((prev) => (prev?.type === 'DRAW' ? null : prev));
@@ -603,11 +872,11 @@ export function ColpoBassoArena({
 
             {/* Sorsi a Sinistra 🍺 */}
             <div
-              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md"
               title={`${player.sipsDrunk} sorsi bevuti`}
             >
-              <span className="text-[8px] leading-none">🍺</span>
-              <span className="text-[10px] font-black leading-none">{player.sipsDrunk}</span>
+              <span className="text-[10px] sm:text-xs leading-none">🍺</span>
+              <span className="text-xs sm:text-sm font-black leading-none">{player.sipsDrunk}</span>
             </div>
 
             {/* Avatar */}
@@ -623,14 +892,14 @@ export function ColpoBassoArena({
             />
 
             {/* Nome + Status */}
-            <div className="flex items-center gap-1 leading-none px-0.5">
-              <span className={`text-[10px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-              <span className="text-[10px] font-black text-white truncate max-w-[55px]">{cleanName}</span>
-              {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
-              {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
-              {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
+            <div className="flex items-center gap-1 leading-none px-1">
+              <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
+              <span className="text-[11px] sm:text-xs font-black text-white truncate max-w-[65px]">{cleanName}</span>
+              {isControlling && <span className="text-[8px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
+              {isDefender && <span className="text-[8px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
+              {isAttacker && <span className="text-[8px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
               {isTargetCandidate && (
-                <span className="text-[7px] text-purple-300 font-extrabold uppercase">
+                <span className="text-[8px] text-purple-300 font-extrabold uppercase">
                   {isSelectedTarget ? '🎯' : 'Tocca'}
                 </span>
               )}
@@ -638,15 +907,15 @@ export function ColpoBassoArena({
 
             {/* Conteggio Carte 🃏 */}
             <div
-              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border shadow-sm ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border-2 shadow-md ${
                 isSingle
-                  ? 'bg-rose-600/40 border-rose-400 text-white ring-1 ring-rose-400 animate-pulse'
-                  : 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200'
+                  ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
+                  : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
               }`}
               title={`${actualCardCount} carte in mano`}
             >
-              <span className="text-[8px] leading-none">🃏</span>
-              <span className="text-[10px] font-black leading-none">{actualCardCount}</span>
+              <span className="text-[10px] sm:text-xs leading-none">🃏</span>
+              <span className="text-xs sm:text-sm font-black leading-none">{actualCardCount}</span>
             </div>
           </div>
 
@@ -694,7 +963,7 @@ export function ColpoBassoArena({
         onClick={() => {
           if (isTargetCandidate) setSelectedTargetOpponent(player.id);
         }}
-        className={`relative flex flex-col items-center justify-between p-1 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[82px] sm:w-[88px] ${
+        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[96px] sm:w-[104px] ${
           isSelectedTarget
             ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
             : isTargetCandidate
@@ -726,14 +995,14 @@ export function ColpoBassoArena({
         )}
 
         {/* Nome del giocatore in alto con simbolo seme */}
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/50 border border-white/15 text-[9px] font-black text-white w-full justify-center leading-none mb-1">
-          <span className={`text-[10px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-          <span className="truncate max-w-[48px]">{cleanName}</span>
-          {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
-          {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
-          {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[10px] sm:text-[11px] font-black text-white w-full justify-center leading-none mb-1">
+          <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
+          <span className="truncate max-w-[58px]">{cleanName}</span>
+          {isControlling && <span className="text-[8px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
+          {isDefender && <span className="text-[8px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
+          {isAttacker && <span className="text-[8px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
           {isTargetCandidate && (
-            <span className="text-[7px] text-purple-300 font-extrabold uppercase">
+            <span className="text-[8px] text-purple-300 font-extrabold uppercase">
               {isSelectedTarget ? '🎯' : 'Tocca'}
             </span>
           )}
@@ -743,11 +1012,11 @@ export function ColpoBassoArena({
         <div className="flex items-center justify-between gap-1 w-full px-0.5">
           {/* Numero a SINISTRA per i sorsi bevuti 🍺 */}
           <div
-            className="flex flex-col items-center justify-center px-1 py-0.5 rounded-lg bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm min-w-[22px]"
+            className="flex flex-col items-center justify-center px-1.5 py-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md min-w-[28px] sm:min-w-[32px]"
             title={`${player.sipsDrunk} sorsi bevuti`}
           >
-            <span className="text-[8px] leading-none">🍺</span>
-            <span className="text-[10px] sm:text-[11px] font-black text-amber-300 leading-tight mt-0.5">
+            <span className="text-[10px] sm:text-xs leading-none">🍺</span>
+            <span className="text-xs sm:text-sm font-black text-amber-300 leading-none mt-0.5">
               {player.sipsDrunk}
             </span>
           </div>
@@ -766,15 +1035,15 @@ export function ColpoBassoArena({
 
           {/* Numero a DESTRA per le carte in mano 🃏 */}
           <div
-            className={`flex flex-col items-center justify-center px-1 py-0.5 rounded-lg border shadow-sm min-w-[22px] ${
+            className={`flex flex-col items-center justify-center px-1.5 py-1 rounded-xl border-2 shadow-md min-w-[28px] sm:min-w-[32px] ${
               isSingle
-                ? 'bg-rose-600/40 border-rose-400 text-white ring-1 ring-rose-400 animate-pulse'
-                : 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200'
+                ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
+                : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
             }`}
             title={`${actualCardCount} carte in mano`}
           >
-            <span className="text-[8px] leading-none">🃏</span>
-            <span className="text-[10px] sm:text-[11px] font-black text-cyan-300 leading-tight mt-0.5">
+            <span className="text-[10px] sm:text-xs leading-none">🃏</span>
+            <span className="text-xs sm:text-sm font-black text-cyan-200 leading-none mt-0.5">
               {actualCardCount}
             </span>
           </div>
@@ -1056,7 +1325,7 @@ export function ColpoBassoArena({
                 {cardAnimation.type === 'DRAW' && (
                   <div
                     key={cardAnimation.id}
-                    className={`w-[48px] h-[68px] sm:w-[54px] sm:h-[76px] rounded-xl bg-gradient-to-br from-[#27154d] via-[#14082c] to-[#090216] border-2 border-cyan-400 shadow-2xl flex items-center justify-center shrink-0 ${
+                    className={`w-[52px] h-[74px] sm:w-[58px] sm:h-[82px] rounded-xl bg-white p-[2px] shadow-2xl shrink-0 z-30 ${
                       cardAnimation.playerIndex === 1
                         ? 'animate-fly-to-west'
                         : cardAnimation.playerIndex === 2
@@ -1066,11 +1335,43 @@ export function ColpoBassoArena({
                         : 'animate-fly-to-south'
                     }`}
                   >
-                    <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center">
-                      <span className="text-xs">🍺</span>
+                    <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400 flex flex-col items-center justify-center">
+                      <span className="text-xs">⚔️</span>
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Effetto Speciale Grafico Fluttuante (Shockwave + Badge Animato) */}
+            {activeSpecialEffect && (
+              <div
+                key={activeSpecialEffect.id}
+                className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible"
+              >
+                {/* Shockwave expanding ring */}
+                <div
+                  className={`absolute w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 ${activeSpecialEffect.colorScheme.shockwave} animate-shockwave`}
+                />
+
+                {/* Badge Animato Centrale */}
+                <div
+                  className={`relative px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl ${activeSpecialEffect.colorScheme.bg} border-2 ${activeSpecialEffect.colorScheme.border} ${activeSpecialEffect.colorScheme.glow} backdrop-blur-md flex items-center gap-2 shadow-2xl animate-effect-blast max-w-[280px] sm:max-w-[320px]`}
+                >
+                  <span className="text-2xl sm:text-3xl animate-bounce shrink-0 drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                    {activeSpecialEffect.icon}
+                  </span>
+                  <div className="flex flex-col text-left min-w-0">
+                    <span
+                      className={`text-[11px] sm:text-xs font-black uppercase tracking-wider ${activeSpecialEffect.colorScheme.text} drop-shadow-md truncate`}
+                    >
+                      {activeSpecialEffect.title}
+                    </span>
+                    <span className="text-[8px] sm:text-[9px] font-bold text-white/95 truncate leading-tight mt-0.5">
+                      {activeSpecialEffect.subtitle}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1099,44 +1400,56 @@ export function ColpoBassoArena({
               </div>
             </div>
 
-            {/* Mazzo di Pesca 3D (Pila fisica di carte a faccia in giù con dorso Faida) */}
+            {/* Mazzo di Pesca 3D (Blocco fisico a strati di cartoncino - Stile UNO Mobile) */}
             <div
               role="button"
               tabIndex={canLocalUserAct ? 0 : -1}
               onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
-              className={`relative flex flex-col items-center group transition select-none z-10 ${
-                canLocalUserAct ? 'cursor-pointer active:scale-95' : 'cursor-default opacity-85'
+              className={`relative flex flex-col items-center group select-none z-10 transition-transform duration-200 ${
+                isDeckDrawing ? 'animate-deck-squish' : ''
+              } ${
+                canLocalUserAct ? 'cursor-pointer active:scale-95' : 'cursor-default opacity-90'
               }`}
               title={canLocalUserAct ? `Mazzo (${state.deck.length} carte) - Tocca per pescare` : `Mazzo (${state.deck.length} carte)`}
             >
-              {/* Spessore 3D a strati (fogli di cartoncino sfalsati per effetto mazzo reale) */}
-              <div className="absolute -bottom-1.5 -right-1.5 w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-slate-300/40 border border-slate-400/30 -rotate-3" />
-              <div className="absolute -bottom-0.5 -right-0.5 w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-slate-200 border border-slate-400/50 shadow-md rotate-1" />
+              {/* Contenitore Blocco 3D */}
+              <div className="relative group-hover:-translate-y-1 transition-transform duration-200">
+                {/* Ombra di contatto sul feltro */}
+                <div className="absolute -bottom-2.5 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-black/80 blur-md pointer-events-none" />
 
-              {/* Carta in Cima al Mazzo (Dorso carta Faida con cornice bianca e finitura scura) */}
-              <div className="relative w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-white p-[2px] shadow-[0_6px_16px_rgba(0,0,0,0.6)] group-hover:-translate-y-1 transition-transform duration-200">
-                <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1c1038] via-[#100724] to-[#080214] border border-cyan-400/40 flex flex-col items-center justify-center relative overflow-hidden">
-                  {/* Pattern geometrico a rombi sottile sul dorso */}
-                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:6px_6px]" />
+                {/* Spessore 3D - Bordo Inferiore e Laterale Destro (Blocco di fogli di carta bianchi come in UNO) */}
+                <div className="absolute -bottom-3 -right-2 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#94a3b8] border-r-2 border-b-2 border-slate-600/90 shadow-sm" />
+                <div className="absolute -bottom-2 -right-1.5 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#cbd5e1] border-r-2 border-b-2 border-slate-400 shadow-sm flex flex-col justify-end overflow-hidden">
+                  {/* Tratteggio sottile dei fogli del mazzo */}
+                  <div className="w-full h-full opacity-30 bg-[repeating-linear-gradient(0deg,#64748b_0px,#64748b_1px,transparent_1px,transparent_3px)]" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-[#f8fafc] border-r-2 border-b-2 border-slate-300" />
 
-                  {/* Emblema centrale Faida */}
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-cyan-400/20 to-purple-500/20 border border-cyan-300/50 flex items-center justify-center shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                    <span className="text-[10px] sm:text-xs">⚔️</span>
+                {/* Faccia Superiore: Dorso Carta Faida con cornice bianca e finitura scura */}
+                <div className="relative w-[52px] sm:w-[60px] h-[76px] sm:h-[86px] rounded-2xl bg-white p-[2.5px] shadow-[0_4px_12px_rgba(0,0,0,0.6)] border border-slate-300">
+                  <div className="w-full h-full rounded-[11px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400/60 flex flex-col items-center justify-center relative overflow-hidden">
+                    {/* Pattern geometrico a rombi sul dorso */}
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#22d3ee_1px,transparent_1px)] [background-size:6px_6px]" />
+
+                    {/* Emblema centrale Faida */}
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400/25 to-purple-600/25 border border-amber-300/60 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                      <span className="text-xs sm:text-sm">⚔️</span>
+                    </div>
+
+                    <span className="text-[7px] font-black uppercase tracking-widest text-amber-200/90 mt-1 drop-shadow">
+                      FAIDA
+                    </span>
+
+                    {/* Luce sweep diagonale al passaggio */}
+                    <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/15 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-700" />
                   </div>
-
-                  <span className="text-[6px] font-black uppercase tracking-widest text-cyan-200/70 mt-1">
-                    FAIDA
-                  </span>
-
-                  {/* Luce sweep diagonale */}
-                  <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-700" />
                 </div>
               </div>
 
-              {/* Conteggio carte nel mazzo */}
-              <div className="mt-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/10 text-[8px] font-bold text-slate-300 flex items-center gap-1 shadow-sm">
-                <Layers className="w-2.5 h-2.5 text-cyan-400" />
-                <span>{state.deck.length}</span>
+              {/* Pillola Conteggio Carte */}
+              <div className="mt-2 px-2 py-0.5 rounded-full bg-black/75 border border-white/20 text-[9px] font-black text-slate-200 flex items-center gap-1 shadow-md">
+                <Layers className="w-3 h-3 text-cyan-400" />
+                <span>{state.deck.length} carte</span>
               </div>
             </div>
 
