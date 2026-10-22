@@ -1398,7 +1398,7 @@ export function ColpoBassoArena({
           {idleTurnReminder && canLocalUserAct ? (
             <div
               onClick={() => setIdleTurnReminder(false)}
-              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-0.5 sm:mt-1 mb-0.5"
+              className="w-fit max-w-[92%] mx-auto flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)] border border-white cursor-pointer select-none animate-pulse z-30 mt-0.5 sm:mt-1 mb-0.5 translate-y-1.5 sm:translate-y-2 transition-all"
               title="Tocca per chiudere l'avviso"
             >
               <span className="text-xs">⏰</span>
@@ -1412,7 +1412,7 @@ export function ColpoBassoArena({
               <span className="text-[10px] font-black ml-0.5 bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</span>
             </div>
           ) : (
-            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-0.5 sm:mt-1 mb-0.5 transition-all">
+            <div className="w-fit max-w-[90%] mx-auto flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-[#180a2f]/90 via-[#0e051d]/95 to-[#180a2f]/90 border border-purple-500/35 backdrop-blur-md z-10 shadow-[0_4px_16px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.12)] mt-0.5 sm:mt-1 mb-0.5 translate-y-1.5 sm:translate-y-2 transition-all">
               {/* Badge di Stato Dinamico */}
               {state.mode === 'ATTACK_CHAIN' ? (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/25 border border-rose-400/60 text-rose-200 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse shrink-0">
