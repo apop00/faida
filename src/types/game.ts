@@ -226,6 +226,7 @@ export type ActiveDuelParticipant = {
   player: Player;
   card?: Card | null;
   hasNoCard?: boolean;
+  committed?: boolean;
 };
 
 export type ActiveDuelState = {
@@ -296,7 +297,7 @@ export type GameAction =
   | { type: 'TICK_TIMER' }
   | { type: 'RESOLVE_SPECIAL_PASS' }
   | { type: 'SELECT_QUEEN_REDIRECT'; targetPlayerIndex: number }
-  | { type: 'COMMIT_DUEL_CARD'; cardId?: string }
+  | { type: 'COMMIT_DUEL_CARD'; cardId?: string; playerIndex?: number }
   | { type: 'DISMISS_DUEL' }
   | { type: 'TAP_REFLEX_TARGET'; playerIndex: number; tapTimeMs: number }
   | { type: 'RESOLVE_REFLEX_TIMEOUT' }

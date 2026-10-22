@@ -583,6 +583,15 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
       afterDuel1v1.players[0].sipsDrunk + afterDuel1v1.players[2].sipsDrunk
     );
     expect(afterDuel1v1.activeDuel?.loserIndices).toBeDefined();
+    expect(afterDuel1v1.activeDuel?.phase).toBe('CHOOSING');
+
+    // Scelta / Conferma della carta con COMMIT_DUEL_CARD
+    const committedDuel = gameReducer(afterDuel1v1, {
+      type: 'COMMIT_DUEL_CARD',
+      cardId: afterDuel1v1.activeDuel?.participants[0]?.card?.id,
+      playerIndex: 0,
+    });
+    expect(committedDuel.activeDuel?.phase).toBe('REVEALED');
 
     const afterSuperDuel = gameReducer(sDuel, {
       type: 'PLAY_CARDS',

@@ -2824,7 +2824,13 @@ export function ColpoBassoArena({
         activeDuel={state.activeDuel}
         onDismiss={() => dispatchAction({ type: 'DISMISS_DUEL' })}
         humanPlayer={displayedHandPlayer}
-        onCommitCard={(cardId) => dispatchAction({ type: 'COMMIT_DUEL_CARD', cardId })}
+        onCommitCard={(cardId) =>
+          dispatchAction({
+            type: 'COMMIT_DUEL_CARD',
+            cardId,
+            playerIndex: displayedHandPlayer.id,
+          })
+        }
       />
 
       {/* MODALE SPIONAGGIO FANTE (JACK SPY MODAL) - Sempre visibile al centro per l'utente umano */}

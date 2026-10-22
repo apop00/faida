@@ -1528,11 +1528,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'COMMIT_DUEL_CARD': {
       if (!state.activeDuel) return state;
       const ad = state.activeDuel;
-      const humanIdx = state.players.findIndex((p) => !p.isAI);
-      if (humanIdx === -1) return state;
+      const humanIdx =
+        action.playerIndex !== undefined
+          ? action.playerIndex
+          : state.players.findIndex((p) => !p.isAI);
+      if (humanIdx === -1 || !state.players[humanIdx]) return state;
 
       const humanP = state.players[humanIdx];
-      const newCard = action.cardId ? humanP.hand.find((c) => c.id === action.cardId) : null;
+      const oldPt = ad.participants.find((pt) => pt.player.id === humanIdx);
+      const oldCard = oldPt?.card;
+
+      // Candidate cards include human's current hand plus the currently deployed card (if any)
+      const candidateCards: Card[] = [...humanP.hand];
+      if (oldCard && !candidateCards.some((c) => c.id === oldCard.id)) {
+        candidateCards.push(oldCard);
+      }
+
+      const newCard = action.cardId ? candidateCards.find((c) => c.id === action.cardId) : null;
+      if (!newCard && action.cardId) return state;
 
       const newParticipants = ad.participants.map((pt) => {
         if (pt.player.id === humanIdx) {
@@ -1540,24 +1553,47 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...pt,
             card: newCard || null,
             hasNoCard: !newCard,
+            committed: true,
           };
         }
         return pt;
       });
 
       const verdict = resolveDuelVerdict(ad.duelKind, newParticipants);
-      const prevLosers = ad.loserIndices;
+      const prevLosers = ad.loserIndices || (ad.loserIndex !== undefined ? [ad.loserIndex] : []);
       const nextLosers = verdict.loserIndices;
 
+      // Update hands: if card changed, restore oldCard to hand and remove newCard from hand
       const updatedPlayers = state.players.map((p) => {
         let sips = p.sipsDrunk;
         if (prevLosers.includes(p.id)) sips -= 2;
         if (nextLosers.includes(p.id)) sips += 2;
-        return { ...p, sipsDrunk: Math.max(0, sips) };
+
+        let nextHand = p.hand;
+        if (p.id === humanIdx) {
+          if (oldCard && newCard && oldCard.id !== newCard.id) {
+            if (!nextHand.some((c) => c.id === oldCard.id)) {
+              nextHand = [...nextHand, oldCard];
+            }
+            nextHand = nextHand.filter((c) => c.id !== newCard.id);
+          }
+        }
+
+        return { ...p, hand: nextHand, sipsDrunk: Math.max(0, sips) };
       });
+
+      // Update discardPile
+      let nextDiscard = state.discardPile;
+      if (oldCard && newCard && oldCard.id !== newCard.id) {
+        nextDiscard = nextDiscard.filter((c) => c.id !== oldCard.id);
+        if (!nextDiscard.some((c) => c.id === newCard.id)) {
+          nextDiscard = [...nextDiscard, newCard];
+        }
+      }
 
       return {
         ...state,
+        discardPile: nextDiscard,
         players: updatedPlayers,
         activeDuel: {
           ...ad,
@@ -2352,12 +2388,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
           const nextActive = getNextTurnIndex(controllingIndex, state.lastDirection, 1);
           const duelTitle = isHighDuel ? 'DUELLO CARTA ALTA ⚔️▲' : 'DUELLO CARTA BASSA ⚔️▼';
+          const hasHumanWithCards = participants.some((pt) => !pt.player.isAI && !pt.hasNoCard);
 
           const activeDuel: ActiveDuelState = {
             duelKind: isHighDuel ? 'DUEL_HIGH' : 'DUEL_LOW',
             initiatorIndex: controllingIndex,
             targetIndex: targetIdx,
-            phase: 'REVEALED',
+            phase: hasHumanWithCards ? 'CHOOSING' : 'REVEALED',
             participants,
             loserIndex: primaryLoserIdx,
             loserIndices,
@@ -2487,11 +2524,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           const superTitle = isHighSuper
             ? 'SUPER DUELLO ALTO 💥▲'
             : 'SUPER DUELLO BASSO 💥▼';
+          const hasHumanWithCards = participants.some((pt) => !pt.player.isAI && !pt.hasNoCard);
 
           const activeDuel: ActiveDuelState = {
             duelKind: isHighSuper ? 'SUPER_DUEL_HIGH' : 'SUPER_DUEL_LOW',
             initiatorIndex: controllingIndex,
-            phase: 'REVEALED',
+            phase: hasHumanWithCards ? 'CHOOSING' : 'REVEALED',
             participants,
             loserIndex: primaryLoserIdx,
             loserIndices,
