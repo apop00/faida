@@ -48,15 +48,27 @@ export function getCardDetails(card: Card, playerSuit?: Suit): CardDetailInfo {
 
       case 'STOP_SUIT':
         return {
-          title: `CARTELLINO ROSSO - STOP (🚫 ${suitMeta.symbol})`,
-          category: 'EVENTO',
+          title: `CARTELLINO ROSSO - STOP (🛑 ${suitMeta.symbol})`,
+          category: 'DIFESA',
           categoryColor: 'bg-rose-500 text-white',
-          tagline: 'Frena gli entusiasmi e para i colpi!',
-          effect: 'Nel tuo turno: fa saltare il turno al giocatore successivo. In difesa: annulla completamente qualsiasi attacco subito a costo ZERO (0 sorsi)!',
-          defenseInfo: 'Usata in difesa cancella l\'attacco all\'istante senza subire penalità.',
+          tagline: 'Il paracolpi supremo: ferma ogni attacco a 0 sorsi!',
+          effect: 'In difesa: annulla completamente qualsiasi attacco subito a costo ZERO (0 sorsi)! Nel proprio turno si scarta pacificamente stabilendo una tregua.',
+          defenseInfo: 'Usata in difesa cancella l\'attacco all\'istante senza subire penalità o sorsi.',
           sipsInfo: '0 sorsi (annulla)',
           colpoFinaleValid: false,
-          funFact: 'Ognuno ne ha uno garantito a inizio partita: usalo con saggezza!',
+          funFact: 'Ognuno ne ha uno garantito a inizio partita come scudo difensivo personale!',
+        };
+
+      case 'SKIP_TURN':
+        return {
+          title: `SALTA TURNO (⏭️ ${suitMeta.symbol})`,
+          category: 'EVENTO',
+          categoryColor: 'bg-amber-500 text-slate-950',
+          tagline: 'Non cumulabile: battibile solo con lo Specchio!',
+          effect: 'Fa saltare immediatamente il turno all\'avversario successivo! I Salta Turno non sono cumulabili (non si può rispondere con un altro Salta Turno): SOLO lo Specchio (🪞) può rispondere riflettendolo indietro!',
+          defenseInfo: 'Se subisci un Salta Turno, puoi giocare SOLO la carta Specchio (🪞) per farlo rimbalzare su chi te l\'ha lanciato.',
+          colpoFinaleValid: false,
+          funFact: 'Chi subisce un Salta Turno prega di avere uno Specchio per servire la vendetta!',
         };
 
       case 'REVERSE_SUIT':

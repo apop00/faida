@@ -112,6 +112,8 @@ export function CardDetailModal({
                       ? '🪞'
                       : card.eventKind === 'STOP_SUIT'
                       ? '🚫'
+                      : card.eventKind === 'SKIP_TURN'
+                      ? '⏭️'
                       : card.eventKind === 'REVERSE_SUIT'
                       ? '🔄'
                       : card.eventKind === 'TAX_RICH'

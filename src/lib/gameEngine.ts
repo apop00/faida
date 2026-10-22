@@ -194,7 +194,7 @@ export function createDeck(): Card[] {
     });
   }
 
-  // 4. 8x Stop with Suits (4 given 1 per player in initial hand + 4 in the draw deck)
+  // 4. 8x Stop with Suits (4 given 1 per player in initial hand + 4 in the draw deck - solo paracolpi/difesa)
   for (const suit of SUITS) {
     deck.push({
       id: `event-stop-${suit}`,
@@ -209,6 +209,17 @@ export function createDeck(): Card[] {
       value: 0,
       label: '🚫',
       eventKind: 'STOP_SUIT',
+    });
+  }
+
+  // 4b. 4x Salta Turno (1 per seme: ♥, ♦, ♣, ♠) - fa saltare il turno al prossimo, solo Specchio risponde
+  for (const suit of SUITS) {
+    deck.push({
+      id: `event-skip-${suit}`,
+      suit,
+      value: 0,
+      label: '⏭️',
+      eventKind: 'SKIP_TURN',
     });
   }
 
@@ -670,7 +681,22 @@ export function getCardPlayability(
           return {
             playable: true,
             actionType: 'EVENT_STOP',
-            badgeLabel: 'Stop 🚫',
+            badgeLabel: 'Stop 🛑',
+          };
+        }
+        return { playable: false };
+      }
+
+      if (card.eventKind === 'SKIP_TURN') {
+        if (
+          isEventOnTop ||
+          card.suit === state.topCard.suit ||
+          state.topCard.eventKind === 'SKIP_TURN'
+        ) {
+          return {
+            playable: true,
+            actionType: 'EVENT_SKIP_TURN',
+            badgeLabel: 'Salta Turno ⏭️',
           };
         }
         return { playable: false };
@@ -957,6 +983,17 @@ export function getCardPlayability(
           actionType: 'SPECIAL_COUNTER_MIRROR',
           badgeLabel: `Rifletti x2 (${reflected}🍺) 🪞`,
           sipsPreview: reflected,
+        };
+      }
+      return { playable: false };
+    }
+
+    if (ev.type === 'SKIP_ATTACK') {
+      if (card.eventKind === 'MIRROR') {
+        return {
+          playable: true,
+          actionType: 'SPECIAL_COUNTER_MIRROR',
+          badgeLabel: 'Rifletti Salto Turno 🪞',
         };
       }
       return { playable: false };
@@ -1473,10 +1510,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return checkGameOver(nextState);
         }
 
-        // E2: Stop (STOP_SUIT in NEUTRAL_FLOW -> skips next player)
+        // E2: Stop (STOP_SUIT in NEUTRAL_FLOW -> neutral discard / tregua, NO skip)
         if (playInfo.actionType === 'EVENT_STOP') {
-          const skippedIdx = getNextTurnIndex(controllingIndex, state.lastDirection, 1);
-          const nextActive = getNextTurnIndex(controllingIndex, state.lastDirection, 2);
+          const nextActive = getNextTurnIndex(controllingIndex, state.lastDirection, 1);
           const updatedPlayers = state.players.map((p, idx) =>
             idx === controllingIndex ? removePlayedFromHand(p) : p
           );
@@ -1489,13 +1525,84 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             activePlayerIndex: nextActive,
             timer: 7,
             lastActionBanner: {
-              title: `STOP A ${state.players[skippedIdx].name.toUpperCase()}!`,
-              subtitle: `${state.players[skippedIdx].name} salta il turno! Tocca a ${state.players[nextActive].name}.`,
+              title: `STOP A TERRA (TREGUA)!`,
+              subtitle: `${player.name} gioca STOP (${SUIT_INFO[primaryCard.suit].symbol}). Nessun salto: tocca a ${state.players[nextActive].name}.`,
               tone: 'special',
             },
             logs: [
               makeLog(
-                `🚫 ${player.name} gioca STOP (${SUIT_INFO[primaryCard.suit].symbol}): ${state.players[skippedIdx].name} salta il turno!`,
+                `🛑 ${player.name} posa STOP (${SUIT_INFO[primaryCard.suit].symbol}) a terra e passa il turno a ${state.players[nextActive].name}.`,
+                'special'
+              ),
+              ...state.logs,
+            ],
+          };
+
+          return checkGameOver(nextState);
+        }
+
+        // E2b: Salta Turno (SKIP_TURN in NEUTRAL_FLOW -> skips next player, unless countered by Mirror)
+        if (playInfo.actionType === 'EVENT_SKIP_TURN') {
+          const targetIdx = getNextTurnIndex(controllingIndex, state.lastDirection, 1);
+          const targetPlayer = state.players[targetIdx];
+          const updatedPlayers = state.players.map((p, idx) =>
+            idx === controllingIndex ? removePlayedFromHand(p) : p
+          );
+
+          const targetHasMirror = updatedPlayers[targetIdx]?.hand.some(
+            (c) => c.eventKind === 'MIRROR'
+          );
+
+          // If target has a MIRROR card, give them the chance to reflect the Skip Turn!
+          if (targetHasMirror) {
+            const nextState: GameState = {
+              ...state,
+              players: updatedPlayers,
+              discardPile: [...state.discardPile, state.topCard],
+              topCard: primaryCard,
+              mode: 'SPECIAL_EVENT',
+              activePlayerIndex: targetIdx,
+              timer: 7,
+              specialEvent: {
+                type: 'SKIP_ATTACK',
+                attackerIndex: controllingIndex,
+                targetIndex: targetIdx,
+                playedCard: primaryCard,
+              },
+              lastActionBanner: {
+                title: `SALTA TURNO A ${targetPlayer.name.toUpperCase()}!`,
+                subtitle: `${player.name} lancia Salta Turno a ${targetPlayer.name}! Rifletti con lo Specchio o salta il turno!`,
+                tone: 'attack',
+              },
+              logs: [
+                makeLog(
+                  `⏭️ ${player.name} gioca SALTA TURNO contro ${targetPlayer.name}!`,
+                  'attack'
+                ),
+                ...state.logs,
+              ],
+            };
+
+            return checkGameOver(nextState);
+          }
+
+          // Target has NO mirror: skipped automatically!
+          const nextActive = getNextTurnIndex(controllingIndex, state.lastDirection, 2);
+          const nextState: GameState = {
+            ...state,
+            players: updatedPlayers,
+            discardPile: [...state.discardPile, state.topCard],
+            topCard: primaryCard,
+            activePlayerIndex: nextActive,
+            timer: 7,
+            lastActionBanner: {
+              title: `SALTA IL TURNO A ${targetPlayer.name.toUpperCase()}!`,
+              subtitle: `${targetPlayer.name} salta il turno! Tocca a ${state.players[nextActive].name}.`,
+              tone: 'special',
+            },
+            logs: [
+              makeLog(
+                `⏭️ ${player.name} gioca SALTA TURNO: ${targetPlayer.name} salta il turno!`,
                 'special'
               ),
               ...state.logs,
@@ -2718,6 +2825,55 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return checkGameOver(nextState);
         }
 
+        // C0b: Specchio contro Salta Turno (SKIP_ATTACK) - Rimanda il salto all'aggressore!
+        if (
+          ev.type === 'SKIP_ATTACK' &&
+          playInfo.actionType === 'SPECIAL_COUNTER_MIRROR'
+        ) {
+          const origAttackerIdx = ev.attackerIndex;
+          const origAttacker = state.players[origAttackerIdx];
+          const targetPlayer = state.players[ev.targetIndex];
+          // Mirror reflects the skip turn back to the original attacker!
+          // So origAttacker is skipped!
+          // Target player (controllingIndex) now gets to play their normal turn!
+          const nextActive = controllingIndex;
+
+          const updatedPlayers = state.players.map((p, idx) =>
+            idx === controllingIndex
+              ? {
+                  ...removePlayedFromHand(p),
+                  defensesSucceeded: (p.defensesSucceeded || 0) + 1,
+                }
+              : p
+          );
+
+          const nextState: GameState = {
+            ...state,
+            players: updatedPlayers,
+            discardPile: [...state.discardPile, state.topCard],
+            topCard: primaryCard,
+            mode: 'NEUTRAL_FLOW',
+            activePlayerIndex: nextActive,
+            defenderIndex: null,
+            specialEvent: null,
+            timer: 7,
+            lastActionBanner: {
+              title: `SPECCHIO 🪞 RIFLETTE IL SALTA TURNO!`,
+              subtitle: `${targetPlayer.name} usa lo Specchio! ${origAttacker.name} salta il turno, tocca a ${targetPlayer.name}!`,
+              tone: 'defense',
+            },
+            logs: [
+              makeLog(
+                `🪞 ${targetPlayer.name} usa lo SPECCHIO! Il Salta Turno rimbalza su ${origAttacker.name} che viene saltato!`,
+                'defense'
+              ),
+              ...state.logs,
+            ],
+          };
+
+          return checkGameOver(nextState);
+        }
+
         // C1: Contro-Fante (J su J)
         if (ev.type === 'JACK_SPY' && playInfo.actionType === 'SPECIAL_COUNTER_JACK') {
           const origAttacker = ev.attackerIndex;
@@ -3151,6 +3307,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             makeLog(
               `🍺 ${targetPlayer.name} non usa lo Specchio e beve ${sipsToGive} ${sipsToGive === 1 ? 'sorso' : 'sorsi'}!`,
               'drink'
+            ),
+            ...state.logs,
+          ],
+        };
+      }
+
+      // 0b. SKIP_ATTACK (Target non ha o non usa lo Specchio: salta il turno!)
+      if (ev.type === 'SKIP_ATTACK') {
+        const targetPlayer = state.players[ev.targetIndex];
+        const nextActive = getNextTurnIndex(ev.attackerIndex, state.lastDirection, 2);
+
+        return {
+          ...state,
+          mode: 'NEUTRAL_FLOW',
+          specialEvent: null,
+          activePlayerIndex: nextActive,
+          timer: 7,
+          lastActionBanner: {
+            title: `SALTA IL TURNO A ${targetPlayer.name.toUpperCase()}!`,
+            subtitle: `${targetPlayer.name} salta il turno! Tocca a ${state.players[nextActive].name}.`,
+            tone: 'special',
+          },
+          logs: [
+            makeLog(
+              `⏭️ ${targetPlayer.name} subisce il Salta Turno e salta il proprio turno. Tocca a ${state.players[nextActive].name}.`,
+              'special'
             ),
             ...state.logs,
           ],

@@ -118,6 +118,11 @@ export function PlayingCard({
             centerText: `🚫`,
             accent: 'text-rose-400',
           };
+        case 'SKIP_TURN':
+          return {
+            centerText: '⏭️',
+            accent: 'text-amber-300',
+          };
         case 'PASS_RIGHT':
           return {
             centerText: '🫱',
@@ -206,6 +211,7 @@ export function PlayingCard({
     !card.eventKind ||
     card.eventKind === 'REVERSE_SUIT' ||
     card.eventKind === 'STOP_SUIT' ||
+    card.eventKind === 'SKIP_TURN' ||
     (card.eventKind === 'MIRROR' && card.value > 0);
 
   // Dynamic faction gradient backgrounds reminiscent of UNO mobile cards

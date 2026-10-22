@@ -79,20 +79,38 @@ function getSpecialCardEffect(
 ): SpecialVisualEffect | null {
   const titleUpper = banner?.title?.toUpperCase() || '';
 
-  // 1. STOP (🚫)
+  // 1. STOP (🛑)
   if (card.eventKind === 'STOP_SUIT' || titleUpper.includes('STOP')) {
     return {
       id: 'effect_' + Date.now(),
       type: 'STOP',
-      icon: '🚫',
-      title: 'STOP!',
-      subtitle: banner?.subtitle || `${playerName || 'Giocatore'} blocca il turno!`,
+      icon: '🛑',
+      title: 'STOP DIFESA!',
+      subtitle: banner?.subtitle || `${playerName || 'Giocatore'} annulla l'attacco a 0 sorsi!`,
       colorScheme: {
         bg: 'bg-rose-950/90',
         border: 'border-rose-400',
         glow: 'shadow-[0_0_35px_rgba(244,63,94,0.7)]',
         text: 'text-rose-300',
         shockwave: 'border-rose-500 bg-rose-500/20',
+      },
+    };
+  }
+
+  // 1b. SALTA TURNO (⏭️)
+  if (card.eventKind === 'SKIP_TURN' || titleUpper.includes('SALTA TURNO') || titleUpper.includes('SALTA IL TURNO')) {
+    return {
+      id: 'effect_' + Date.now(),
+      type: 'STOP',
+      icon: '⏭️',
+      title: 'SALTA TURNO!',
+      subtitle: banner?.subtitle || `${playerName || 'Giocatore'} fa saltare il turno!`,
+      colorScheme: {
+        bg: 'bg-amber-950/90',
+        border: 'border-amber-400',
+        glow: 'shadow-[0_0_35px_rgba(245,158,11,0.7)]',
+        text: 'text-amber-300',
+        shockwave: 'border-amber-500 bg-amber-500/20',
       },
     };
   }
@@ -2018,7 +2036,7 @@ export function ColpoBassoArena({
                     if (c.eventKind === 'MIRROR') {
                       return {
                         title: 'SPECCHIO 🪞',
-                        subtitle: 'Rimanda sorsi',
+                        subtitle: state.specialEvent?.type === 'SKIP_ATTACK' ? 'Rimanda Salto' : 'Rimanda sorsi',
                       };
                     }
                     return {
@@ -2031,6 +2049,9 @@ export function ColpoBassoArena({
                     const ev = state.specialEvent!;
                     if (ev.type === 'DIRECT_SIPS_ATTACK') {
                       return { title: 'INCASSA', subtitle: `Bevi ${ev.sipsAmount}🍺` };
+                    }
+                    if (ev.type === 'SKIP_ATTACK') {
+                      return { title: 'SALTA TURNO', subtitle: 'Accetta Salto' };
                     }
                     if (ev.type === 'ACE_CASCADE') {
                       return { title: 'PENALITÀ', subtitle: 'Bevi 2🍺 + Pesca' };

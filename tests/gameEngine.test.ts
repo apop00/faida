@@ -22,7 +22,7 @@ function card(suit: Card['suit'], value: number, suffix = ''): Card {
 }
 
 describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
-  it('Setup Iniziale: 88 cards (52 standard + 36 event), 8 per player with 1 guaranteed STOP each + 4 STOP in deck', () => {
+  it('Setup Iniziale: 92 cards (52 standard + 40 event), 8 per player with 1 guaranteed STOP each + 4 STOP in deck', () => {
     const state = createInitialGameState(['Marco', 'Luca', 'Sara', 'Giulia']);
     expect(state.players).toHaveLength(4);
     expect(state.players[0].suit).toBe('hearts');
@@ -39,7 +39,7 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     expect(state.topCard.id).toBe(state.targetCard.id);
     expect(state.targetCard.eventKind).toBeUndefined();
     expect(state.players[state.activePlayerIndex].suit).toBe(state.targetCard.suit);
-    expect(state.deck).toHaveLength(88 - 32 - 1);
+    expect(state.deck).toHaveLength(92 - 32 - 1);
     expect(state.deck.filter((c) => c.eventKind === 'STOP_SUIT')).toHaveLength(4);
   });
 
@@ -662,6 +662,91 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     expect(result.activeDuel?.loserIndices).toEqual([1]);
     expect(result.players[1].sipsDrunk).toBe(2);
     expect(result.players[0].sipsDrunk).toBe(0);
+  });
+
+  it('Separazione STOP e SALTA TURNO: STOP a terra non salta il turno, Salta Turno salta il prossimo', () => {
+    const base = createInitialGameState();
+    const stopCard: Card = { id: 'test-stop-1', suit: 'hearts', value: 0, label: '🚫', eventKind: 'STOP_SUIT' };
+    const skipCard: Card = { id: 'test-skip-1', suit: 'hearts', value: 0, label: '⏭️', eventKind: 'SKIP_TURN' };
+
+    // 1. STOP a terra nel turno neutro -> NON salta il prossimo giocatore (tocca a Player 1)
+    const stateWithStop: GameState = {
+      ...base,
+      topCard: card('hearts', 5),
+      mode: 'NEUTRAL_FLOW',
+      activePlayerIndex: 0,
+      players: base.players.map((p, idx) => (idx === 0 ? { ...p, hand: [stopCard, card('hearts', 3)] } : p)),
+    };
+
+    const afterStop = gameReducer(stateWithStop, {
+      type: 'PLAY_CARDS',
+      cardIds: [stopCard.id],
+    });
+
+    expect(afterStop.mode).toBe('NEUTRAL_FLOW');
+    expect(afterStop.activePlayerIndex).toBe(1); // Player 1 is NOT skipped!
+
+    // 2. SALTA TURNO contro Player 1 (che NON ha specchio) -> Player 1 viene saltato, tocca a Player 2!
+    const stateWithSkipNoMirror: GameState = {
+      ...base,
+      topCard: card('hearts', 5),
+      mode: 'NEUTRAL_FLOW',
+      activePlayerIndex: 0,
+      players: base.players.map((p, idx) => {
+        if (idx === 0) return { ...p, hand: [skipCard, card('hearts', 4)] };
+        if (idx === 1) return { ...p, hand: [card('diamonds', 6), card('clubs', 8)] }; // No mirror
+        return p;
+      }),
+    };
+
+    const afterSkipNoMirror = gameReducer(stateWithSkipNoMirror, {
+      type: 'PLAY_CARDS',
+      cardIds: [skipCard.id],
+    });
+
+    expect(afterSkipNoMirror.mode).toBe('NEUTRAL_FLOW');
+    expect(afterSkipNoMirror.activePlayerIndex).toBe(2); // Player 1 was skipped!
+
+    // 3. SALTA TURNO contro Player 1 (che HA SPECCHIO) -> Triggera SPECIAL_EVENT SKIP_ATTACK
+    const mirrorCard: Card = { id: 'mirror-p1', suit: 'diamonds', value: 0, label: '🪞', eventKind: 'MIRROR' };
+    const anotherSkip: Card = { id: 'skip-p1', suit: 'diamonds', value: 0, label: '⏭️', eventKind: 'SKIP_TURN' };
+    const stateWithSkipHasMirror: GameState = {
+      ...base,
+      topCard: card('hearts', 5),
+      mode: 'NEUTRAL_FLOW',
+      activePlayerIndex: 0,
+      players: base.players.map((p, idx) => {
+        if (idx === 0) return { ...p, hand: [skipCard, card('hearts', 4)] };
+        if (idx === 1) return { ...p, hand: [mirrorCard, anotherSkip, card('diamonds', 8)] };
+        return p;
+      }),
+    };
+
+    const afterSkipWithMirror = gameReducer(stateWithSkipHasMirror, {
+      type: 'PLAY_CARDS',
+      cardIds: [skipCard.id],
+    });
+
+    expect(afterSkipWithMirror.mode).toBe('SPECIAL_EVENT');
+    expect(afterSkipWithMirror.specialEvent?.type).toBe('SKIP_ATTACK');
+    expect(afterSkipWithMirror.activePlayerIndex).toBe(1); // Player 1 must respond
+
+    // Verifica che i Salta Turno NON siano cumulabili: Player 1 NON può giocare anotherSkip
+    const skipPlayability = getCardPlayability(afterSkipWithMirror, 1, anotherSkip);
+    expect(skipPlayability.playable).toBe(false);
+
+    // Solo lo Specchio può rispondere!
+    const mirrorPlayability = getCardPlayability(afterSkipWithMirror, 1, mirrorCard);
+    expect(mirrorPlayability.playable).toBe(true);
+
+    // Player 1 gioca lo SPECCHIO -> Il Salta Turno rimbalza su Player 0 (aggressore), Player 1 gioca il suo turno!
+    const afterMirrorResponse = gameReducer(afterSkipWithMirror, {
+      type: 'PLAY_CARDS',
+      cardIds: [mirrorCard.id],
+    });
+
+    expect(afterMirrorResponse.mode).toBe('NEUTRAL_FLOW');
+    expect(afterMirrorResponse.activePlayerIndex).toBe(1); // Player 0 is skipped, Player 1 plays!
   });
 });
 

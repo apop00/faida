@@ -79,10 +79,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <strong>Scudo Alto (Stesso Seme + Valore Più Alto):</strong> Blocca l&apos;attacco (0 sorsi) solo se la tua carta dello stesso seme è <strong>più alta</strong> di quella d&apos;attacco!
               </li>
               <li>
-                <strong>Stop (🚫):</strong> Annulla subito qualsiasi attacco (0 sorsi).
+                <strong>Stop (🛑):</strong> Annulla subito qualsiasi attacco nemico a costo ZERO (0 sorsi)! Nel proprio turno si scarta come tregua senza saltare nessuno.
               </li>
               <li>
-                <strong>Specchio (🪞):</strong> Riflette qualsiasi attacco indietro al mittente <strong>raddoppiando i sorsi (x2)</strong>! Funziona anche per rispedire al mittente i <strong>Sorsi Diretti</strong>!
+                <strong>Specchio (🪞):</strong> Riflette qualsiasi attacco indietro al mittente <strong>raddoppiando i sorsi (x2)</strong>! Funziona anche per rispedire al mittente i <strong>Sorsi Diretti</strong> e i <strong>Salta Turno</strong>!
               </li>
               <li>
                 <strong>Incasso (Bevi):</strong> Bevi i sorsi accumulati e peschi 1 carta di penalità.
@@ -120,7 +120,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <strong>Carte Sorso Diretto (4x 1🍺, 4x 2🍺, 2x 3🍺, 1x 5🍺):</strong> Si giocano <strong>da sole (1 carta)</strong> sul seme avversario a terra! (Riflettibili con <strong>Specchio 🪞</strong>).
               </li>
               <li>
-                <strong>2x Specchio (🪞):</strong> Rimanda indietro attacchi (x2 sorsi) e Sorsi Diretti!
+                <strong>4x Salta Turno (⏭️):</strong> Fa saltare il turno all&apos;avversario successivo! <strong>Non cumulabile</strong>: solo lo <strong>Specchio (🪞)</strong> può rispondere per farlo rimbalzare al mittente!
+              </li>
+              <li>
+                <strong>2x Specchio (🪞):</strong> Rimanda indietro attacchi (x2 sorsi), Sorsi Diretti e Salta Turno!
               </li>
               <li>
                 <strong>1x Tassa sui Ricchi (📉):</strong> Chi ha meno carte in mano pesca <strong>+2 carte</strong> e beve <strong>1 sorso</strong>!
@@ -132,7 +135,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <strong>2x Super Duello con Tutti (1x 💥▲ Alta, 1x 💥▼ Bassa):</strong> Sfida tra tutti e 4 con carte da 2 a 10: chi perde beve <strong>2 sorsi</strong>!
               </li>
               <li>
-                <strong>4x Cambio Giro (🔄), 8x Stop (🚫), 1x Scambia a Destra (🫱), Rossi/Neri +2, Tutti +1.</strong>
+                <strong>8x Stop (🛑 Paracolpi 0🍺), 4x Cambio Giro (🔄), 1x Scambia a Destra (🫱), Rossi/Neri +2, Tutti +1.</strong>
               </li>
               <li>
                 <strong>Titoli &amp; Penitenza Finale:</strong> A fine partita vengono incoronati <strong>🧽 La Spugna</strong>, <strong>🗡️ Il Cecchino</strong>, <strong>🛡️ Il Muro</strong> e chi ha più carte in mano beve <strong>1 Sorso Finale ogni 2 carte rimaste</strong>!

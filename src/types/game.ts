@@ -9,7 +9,8 @@ export type MatchPreset = '1P_3PC' | '2P_2PC' | '3P_1PC' | '4P_0PC';
 export type EventCardKind =
   | 'DIRECT_SIPS' // 4x 1🍺, 4x 2🍺, 2x 3🍺, 1x 5🍺 (played on opponent's suit on table)
   | 'REVERSE_SUIT' // 4x Cambio Giro (1 per suit)
-  | 'STOP_SUIT' // 8x Stop (4 in initial hands + 4 in deck)
+  | 'STOP_SUIT' // 8x Stop (4 in initial hands + 4 in deck) - Solo difesa / paracolpi
+  | 'SKIP_TURN' // 4x Salta Turno (1 per suit: ♥♦♣♠) - Fa saltare il turno, contrastabile solo da Specchio
   | 'PASS_RIGHT' // 1x Tutti cambiano 1 carta col vicino di destra
   | 'RED_DRAW_2' // 1x Rossi (♥♦) pescano 2 carte
   | 'BLACK_DRAW_2' // 1x Neri (♣♠) pescano 2 carte
@@ -99,6 +100,12 @@ export type SpecialEventState =
       targetIndex: number;
       sipsAmount: number;
       playedCard: Card;
+    }
+  | {
+      type: 'SKIP_ATTACK';
+      attackerIndex: number;
+      targetIndex: number;
+      playedCard: Card;
     };
 
 export type CardPlayability = {
@@ -115,6 +122,7 @@ export type CardPlayability = {
     | 'EVENT_SIPS_SUIT_COMPANION'
     | 'EVENT_REVERSE'
     | 'EVENT_STOP'
+    | 'EVENT_SKIP_TURN'
     | 'EVENT_PASS_RIGHT'
     | 'EVENT_RED_DRAW_2'
     | 'EVENT_BLACK_DRAW_2'
