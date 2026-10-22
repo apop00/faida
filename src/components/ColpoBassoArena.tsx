@@ -887,7 +887,7 @@ export function ColpoBassoArena({
       return (
         <div
           key={player.id}
-          className="flex items-center gap-1 sm:gap-1.5 select-none"
+          className="flex items-center gap-1.5 sm:gap-2 select-none"
         >
           {/* Fanned 3D Cards on the LEFT for North (UNO Party Style) */}
           {visibleNorthCards > 0 && (
@@ -906,14 +906,14 @@ export function ColpoBassoArena({
                       transform: `rotate(${rot}deg)`,
                       zIndex: cIdx + 1,
                     }}
-                    className={`relative w-[18px] h-[26px] sm:w-[20px] sm:h-[28px] rounded-md shrink-0 select-none transition-all duration-300 ${
+                    className={`relative w-[22px] h-[32px] sm:w-[24px] sm:h-[36px] rounded-lg shrink-0 select-none transition-all duration-300 ${
                       isSingle
-                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border border-amber-300 ring-1 ring-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse'
+                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-1 ring-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse'
                         : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_6px_rgba(0,0,0,0.7)]'
                     }`}
                   >
                     <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
-                      <span className={`text-[7px] font-black ${isSingle ? 'text-amber-300' : suitMeta.neonText}`}>
+                      <span className={`text-[8px] font-black ${isSingle ? 'text-amber-300' : suitMeta.neonText}`}>
                         {isSingle ? '⚡' : suitMeta.symbol}
                       </span>
                     </div>
@@ -923,12 +923,12 @@ export function ColpoBassoArena({
             </div>
           )}
 
-          {/* North Opponent Pod on the RIGHT */}
+          {/* North Opponent Pod on the RIGHT (ROUGHLY SQUARE, matching West/East/South style) */}
           <div
             onClick={() => {
               if (isTargetCandidate) setSelectedTargetOpponent(player.id);
             }}
-            className={`relative flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 rounded-xl border transition-all select-none backdrop-blur-md shadow-md h-[28px] sm:h-[30px] ${
+            className={`relative flex flex-col items-center justify-between p-1 sm:p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[96px] sm:w-[102px] ${
               isSelectedTarget
                 ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
                 : isTargetCandidate
@@ -939,13 +939,13 @@ export function ColpoBassoArena({
                 ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.5)]'
                 : isControlling
                 ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
-                : 'bg-[#140a26]/90 border-white/20'
+                : 'bg-[#120a22]/85 border-white/15'
             }`}
             title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
           >
             {/* Floating Animated Delta Badges */}
             {delta && (delta.sips > 0 || delta.cards > 0) && (
-              <div className="absolute -top-3.5 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
+              <div className="absolute -top-3 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
                 {delta.sips > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full bg-rose-600 border border-amber-300 text-white text-[8px] font-black shadow">
                     +{delta.sips}🍺
@@ -959,19 +959,10 @@ export function ColpoBassoArena({
               </div>
             )}
 
-            {/* Sorsi a SINISTRA 🍺 */}
-            <div
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-amber-950/95 border border-amber-400 text-amber-300 shadow-sm shrink-0"
-              title={`${player.sipsDrunk} sorsi bevuti`}
-            >
-              <span className="text-[7px] font-bold text-amber-400/90 uppercase leading-none hidden xs:inline">Sorsi</span>
-              <span className="text-[11px] sm:text-xs font-black leading-none">🍺{player.sipsDrunk}</span>
-            </div>
-
-            {/* Nome del giocatore al CENTRO con simbolo seme */}
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[9px] sm:text-[10px] font-black text-white shrink-0 leading-none">
+            {/* Nome del giocatore in alto con simbolo seme */}
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[9px] sm:text-[10px] font-black text-white w-full justify-center leading-none mb-0.5">
               <span className={`text-[11px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-              <span className="truncate max-w-[65px]">{cleanName}</span>
+              <span className="truncate max-w-[62px]">{cleanName}</span>
               {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
               {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
               {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
@@ -982,17 +973,33 @@ export function ColpoBassoArena({
               )}
             </div>
 
-            {/* Carte a DESTRA 🃏 */}
-            <div
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border shadow-sm shrink-0 ${
-                isSingle
-                  ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
-                  : 'bg-cyan-950/95 border border-cyan-400 text-cyan-200'
-              }`}
-              title={`${actualCardCount} carte in mano`}
-            >
-              <span className="text-[7px] font-bold text-cyan-400/90 uppercase leading-none hidden xs:inline">Carte</span>
-              <span className="text-[11px] sm:text-xs font-black leading-none">🃏{actualCardCount}</span>
+            {/* DUE GRANDI NUMERI: Sorsi a SINISTRA 🍺 | Carte a DESTRA 🃏 */}
+            <div className="grid grid-cols-2 gap-1 w-full">
+              {/* Sorsi 🍺 */}
+              <div
+                className="flex flex-col items-center justify-center py-0.5 px-0.5 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md"
+                title={`${player.sipsDrunk} sorsi bevuti`}
+              >
+                <span className="text-[8px] font-bold text-amber-400/90 uppercase leading-none">Sorsi</span>
+                <span className="text-xs sm:text-sm font-black text-amber-300 leading-tight mt-0.5">
+                  🍺{player.sipsDrunk}
+                </span>
+              </div>
+
+              {/* Carte 🃏 */}
+              <div
+                className={`flex flex-col items-center justify-center py-0.5 px-0.5 rounded-xl border-2 shadow-md ${
+                  isSingle
+                    ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
+                    : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
+                }`}
+                title={`${actualCardCount} carte in mano`}
+              >
+                <span className="text-[8px] font-bold text-cyan-400/90 uppercase leading-none">Carte</span>
+                <span className="text-xs sm:text-sm font-black leading-tight mt-0.5">
+                  🃏{actualCardCount}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1164,7 +1171,7 @@ export function ColpoBassoArena({
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
-      <header className="h-[34px] sm:h-[36px] shrink-0 w-full flex items-center justify-between px-2 py-0.5 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
+      <header className="shrink-0 w-full flex items-center justify-between px-2 pt-1 pb-1 z-30 select-none bg-gradient-to-b from-[#090514]/95 via-[#090514]/80 to-transparent">
         {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
         <div className="flex items-center gap-1 sm:gap-1.5">
           <button
@@ -1258,55 +1265,6 @@ export function ColpoBassoArena({
 
         {/* ZONA CENTRALE: TAVOLO CON FELTRO INCLINATO 3D */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center z-10 px-1 py-0.5 relative">
-          {/* Box Notifica Partita Discreto e Non Invadente (Floating overlay, zero ingombro di layout) */}
-          {idleTurnReminder && canLocalUserAct ? (
-            <div
-              onClick={() => setIdleTurnReminder(false)}
-              className="absolute top-0.5 sm:top-1 left-1/2 -translate-x-1/2 z-30 w-fit max-w-[80%] sm:max-w-[340px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_2px_12px_rgba(245,158,11,0.5)] border border-white/80 cursor-pointer select-none animate-pulse transition-all"
-              title="Tocca per chiudere l'avviso"
-            >
-              <span className="text-[10px]">⏰</span>
-              <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-slate-950 shrink-0">
-                TOCCA A TE!
-              </span>
-              <span className="text-slate-950/40 text-[8px] shrink-0">•</span>
-              <span className="text-[8px] sm:text-[9px] font-bold text-slate-900 truncate leading-none">
-                {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
-              </span>
-              <span className="text-[8px] font-black ml-0.5 bg-black/20 rounded-full w-3.5 h-3.5 flex items-center justify-center shrink-0">✕</span>
-            </div>
-          ) : (
-            <div className="absolute top-0.5 sm:top-1 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-fit max-w-[75%] sm:max-w-[360px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/40 border border-white/10 backdrop-blur-sm shadow-sm select-none transition-all">
-              {/* Badge di Stato Dinamico Discreto */}
-              {state.mode === 'ATTACK_CHAIN' ? (
-                <div className="flex items-center gap-1 text-[8px] font-black uppercase text-rose-300 tracking-wider shrink-0 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]" />
-                  <span>Attacco ({state.currentSips}🍺)</span>
-                </div>
-              ) : state.mode === 'SPECIAL_EVENT' ? (
-                <div className="flex items-center gap-1 text-[8px] font-black uppercase text-purple-300 tracking-wider shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_6px_#c084fc]" />
-                  <span>Evento</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-[8px] font-bold uppercase text-emerald-400/90 tracking-wider shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
-                  <span>Tregua</span>
-                </div>
-              )}
-
-              {/* Separatore minimale */}
-              <span className="text-white/20 text-[8px] shrink-0">•</span>
-
-              {/* Testo Mossa discreto, limpido e non invadente */}
-              <span className="text-white/85 font-medium truncate text-[9px] sm:text-[10px] tracking-tight leading-none min-w-0">
-                {state.lastActionBanner
-                  ? state.lastActionBanner.subtitle
-                  : 'Inizia la mano: collega seme o numero!'}
-              </span>
-            </div>
-          )}
-
           {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
           {cardAnimation && (
             <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center translate-y-2 sm:translate-y-2.5">
@@ -1380,8 +1338,56 @@ export function ColpoBassoArena({
             </div>
           )}
 
-          {/* TAVOLO DA GIOCO MOLTO INCLINATO IN PROSPETTIVA 3D (FELTRO OVALE AL NEON) */}
-          <div className="w-full max-w-[430px] my-0 py-0 z-10 relative [perspective:650px] translate-y-2 sm:translate-y-2.5">
+          {/* TAVOLO DA GIOCO CON NOTIFICA SUBITO SOPRA IL FELTRO */}
+          <div className="w-full max-w-[430px] my-0 py-0 z-10 relative flex flex-col items-center [perspective:650px] translate-y-2 sm:translate-y-2.5">
+            {/* Box Notifica Partita Discreto e Non Invadente (Subito sopra il feltro) */}
+            {idleTurnReminder && canLocalUserAct ? (
+              <div
+                onClick={() => setIdleTurnReminder(false)}
+                className="mb-1 z-30 w-fit max-w-[85%] sm:max-w-[340px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_2px_12px_rgba(245,158,11,0.5)] border border-white/80 cursor-pointer select-none animate-pulse transition-all"
+                title="Tocca per chiudere l'avviso"
+              >
+                <span className="text-[10px]">⏰</span>
+                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-slate-950 shrink-0">
+                  TOCCA A TE!
+                </span>
+                <span className="text-slate-950/40 text-[8px] shrink-0">•</span>
+                <span className="text-[8px] sm:text-[9px] font-bold text-slate-900 truncate leading-none">
+                  {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
+                </span>
+                <span className="text-[8px] font-black ml-0.5 bg-black/20 rounded-full w-3.5 h-3.5 flex items-center justify-center shrink-0">✕</span>
+              </div>
+            ) : (
+              <div className="mb-1 z-20 pointer-events-none w-fit max-w-[85%] sm:max-w-[360px] flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm shadow-sm select-none transition-all">
+                {/* Badge di Stato Dinamico Discreto */}
+                {state.mode === 'ATTACK_CHAIN' ? (
+                  <div className="flex items-center gap-1 text-[8px] font-black uppercase text-rose-300 tracking-wider shrink-0 animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e]" />
+                    <span>Attacco ({state.currentSips}🍺)</span>
+                  </div>
+                ) : state.mode === 'SPECIAL_EVENT' ? (
+                  <div className="flex items-center gap-1 text-[8px] font-black uppercase text-purple-300 tracking-wider shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_6px_#c084fc]" />
+                    <span>Evento</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-[8px] font-bold uppercase text-emerald-400/90 tracking-wider shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
+                    <span>Tregua</span>
+                  </div>
+                )}
+
+                {/* Separatore minimale */}
+                <span className="text-white/20 text-[8px] shrink-0">•</span>
+
+                {/* Testo Mossa discreto, limpido e non invadente */}
+                <span className="text-white/85 font-medium truncate text-[9px] sm:text-[10px] tracking-tight leading-none min-w-0">
+                  {state.lastActionBanner
+                    ? state.lastActionBanner.subtitle
+                    : 'Inizia la mano: collega seme o numero!'}
+                </span>
+              </div>
+            )}
             <div className="w-full flex items-center justify-around py-1 px-3 sm:px-4 rounded-[38px] bg-gradient-to-b from-[#1d0f3d]/70 via-[#100726]/85 to-[#070213]/95 border border-purple-500/30 shadow-[0_20px_45px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.1)] relative [transform:rotateX(46deg)] [transform-style:preserve-3d]">
               {/* Animazione Giro del Tavolo (Inclinato ed ellittico per recuperare massimo spazio verticale) */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0 scale-x-[1.4] scale-y-[0.62] [transform-style:preserve-3d]">
