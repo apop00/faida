@@ -148,14 +148,19 @@ export type GameLogEntry = {
   type: 'info' | 'attack' | 'defense' | 'drink' | 'special' | 'bonus';
 };
 
+export type ActiveDuelParticipant = {
+  player: Player;
+  card?: Card | null;
+  hasNoCard?: boolean;
+};
+
 export type ActiveDuelState = {
   duelKind: 'DUEL_HIGH' | 'DUEL_LOW' | 'SUPER_DUEL_HIGH' | 'SUPER_DUEL_LOW';
   initiatorIndex: number;
   targetIndex?: number;
-  participants: {
-    player: Player;
-    card: Card;
-  }[];
+  phase: 'CHOOSING' | 'REVEALED';
+  pendingPlayerIndex?: number | null;
+  participants: ActiveDuelParticipant[];
   loserIndex: number;
   loserIndices: number[];
   isTie?: boolean;
@@ -214,4 +219,5 @@ export type GameAction =
   | { type: 'TICK_TIMER' }
   | { type: 'RESOLVE_SPECIAL_PASS' }
   | { type: 'SELECT_QUEEN_REDIRECT'; targetPlayerIndex: number }
+  | { type: 'COMMIT_DUEL_CARD'; cardId?: string }
   | { type: 'DISMISS_DUEL' };

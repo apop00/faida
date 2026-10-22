@@ -856,14 +856,14 @@ export function ColpoBassoArena({
           >
             {/* Delta Floating Badges */}
             {delta && (delta.sips > 0 || delta.cards > 0) && (
-              <div className="absolute -bottom-3 right-2 z-30 flex items-center gap-0.5 pointer-events-none animate-bounce">
+              <div className="absolute -top-3 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
                 {delta.sips > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-600 border border-amber-300 text-white text-[8px] font-black">
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-600 border border-amber-300 text-white text-[8px] font-black shadow">
                     +{delta.sips}🍺
                   </span>
                 )}
                 {delta.cards > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-cyan-500 border border-white text-slate-950 text-[8px] font-black">
+                  <span className="px-1.5 py-0.2 rounded-full bg-cyan-500 border border-white text-slate-950 text-[8px] font-black shadow">
                     +{delta.cards}🃏
                   </span>
                 )}
@@ -872,32 +872,20 @@ export function ColpoBassoArena({
 
             {/* Sorsi a Sinistra 🍺 */}
             <div
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md shrink-0"
               title={`${player.sipsDrunk} sorsi bevuti`}
             >
-              <span className="text-[10px] sm:text-xs leading-none">🍺</span>
+              <span className="text-xs leading-none">🍺</span>
               <span className="text-xs sm:text-sm font-black leading-none">{player.sipsDrunk}</span>
             </div>
 
-            {/* Avatar */}
-            <PlayerAvatar
-              suit={player.suit}
-              name={player.name}
-              isAI={player.isAI}
-              isAttacker={isAttacker}
-              isDefender={isDefender}
-              isControlling={isControlling}
-              sipsDelta={delta?.sips || 0}
-              size="sm"
-            />
-
             {/* Nome + Status */}
-            <div className="flex items-center gap-1 leading-none px-1">
+            <div className="flex items-center gap-1.5 leading-none px-1.5 min-w-0">
               <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-              <span className="text-[11px] sm:text-xs font-black text-white truncate max-w-[65px]">{cleanName}</span>
-              {isControlling && <span className="text-[8px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
-              {isDefender && <span className="text-[8px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
-              {isAttacker && <span className="text-[8px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
+              <span className="text-xs font-black text-white truncate max-w-[75px]">{cleanName}</span>
+              {isControlling && <span className="px-1 py-0.2 rounded bg-emerald-500/20 text-[8px] text-emerald-400 font-extrabold uppercase border border-emerald-400/40">TURNO</span>}
+              {isDefender && <span className="px-1 py-0.2 rounded bg-rose-500/20 text-[8px] text-rose-400 font-extrabold uppercase border border-rose-400/40 animate-pulse">DIFESA</span>}
+              {isAttacker && <span className="px-1 py-0.2 rounded bg-amber-500/20 text-[8px] text-amber-400 font-extrabold uppercase border border-amber-400/40">ATTACCO</span>}
               {isTargetCandidate && (
                 <span className="text-[8px] text-purple-300 font-extrabold uppercase">
                   {isSelectedTarget ? '🎯' : 'Tocca'}
@@ -907,14 +895,14 @@ export function ColpoBassoArena({
 
             {/* Conteggio Carte 🃏 */}
             <div
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border-2 shadow-md ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border-2 shadow-md shrink-0 ${
                 isSingle
                   ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
                   : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
               }`}
               title={`${actualCardCount} carte in mano`}
             >
-              <span className="text-[10px] sm:text-xs leading-none">🃏</span>
+              <span className="text-xs leading-none">🃏</span>
               <span className="text-xs sm:text-sm font-black leading-none">{actualCardCount}</span>
             </div>
           </div>
@@ -963,7 +951,7 @@ export function ColpoBassoArena({
         onClick={() => {
           if (isTargetCandidate) setSelectedTargetOpponent(player.id);
         }}
-        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[96px] sm:w-[104px] ${
+        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[100px] sm:w-[110px] ${
           isSelectedTarget
             ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
             : isTargetCandidate
@@ -980,14 +968,14 @@ export function ColpoBassoArena({
       >
         {/* Floating Animated Delta Badges */}
         {delta && (delta.sips > 0 || delta.cards > 0) && (
-          <div className="absolute -top-3 right-0 z-30 flex items-center gap-0.5 pointer-events-none animate-bounce">
+          <div className="absolute -top-3.5 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
             {delta.sips > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-rose-600 border border-amber-300 text-white text-[9px] font-black">
+              <span className="px-1.5 py-0.5 rounded-full bg-rose-600 border border-amber-300 text-white text-[9px] font-black shadow">
                 +{delta.sips}🍺
               </span>
             )}
             {delta.cards > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-cyan-500 border border-white text-slate-950 text-[9px] font-black">
+              <span className="px-1.5 py-0.5 rounded-full bg-cyan-500 border border-white text-slate-950 text-[9px] font-black shadow">
                 +{delta.cards}🃏
               </span>
             )}
@@ -997,7 +985,7 @@ export function ColpoBassoArena({
         {/* Nome del giocatore in alto con simbolo seme */}
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-[10px] sm:text-[11px] font-black text-white w-full justify-center leading-none mb-1">
           <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-          <span className="truncate max-w-[58px]">{cleanName}</span>
+          <span className="truncate max-w-[65px]">{cleanName}</span>
           {isControlling && <span className="text-[8px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
           {isDefender && <span className="text-[8px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
           {isAttacker && <span className="text-[8px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
@@ -1008,43 +996,31 @@ export function ColpoBassoArena({
           )}
         </div>
 
-        {/* Trio: Sorsi a SINISTRA | Avatar al CENTRO | Carte a DESTRA */}
-        <div className="flex items-center justify-between gap-1 w-full px-0.5">
+        {/* DUE GRANDI NUMERI: Sorsi a SINISTRA 🍺 | Carte a DESTRA 🃏 */}
+        <div className="grid grid-cols-2 gap-1.5 w-full">
           {/* Numero a SINISTRA per i sorsi bevuti 🍺 */}
           <div
-            className="flex flex-col items-center justify-center px-1.5 py-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md min-w-[28px] sm:min-w-[32px]"
+            className="flex flex-col items-center justify-center py-1 px-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-amber-300 shadow-md"
             title={`${player.sipsDrunk} sorsi bevuti`}
           >
-            <span className="text-[10px] sm:text-xs leading-none">🍺</span>
-            <span className="text-xs sm:text-sm font-black text-amber-300 leading-none mt-0.5">
-              {player.sipsDrunk}
+            <span className="text-[9px] font-bold text-amber-400/90 uppercase leading-none">Sorsi</span>
+            <span className="text-sm sm:text-base font-black text-amber-300 leading-tight mt-0.5">
+              🍺{player.sipsDrunk}
             </span>
           </div>
 
-          {/* Avatar al CENTRO */}
-          <PlayerAvatar
-            suit={player.suit}
-            name={player.name}
-            isAI={player.isAI}
-            isAttacker={isAttacker}
-            isDefender={isDefender}
-            isControlling={isControlling}
-            sipsDelta={delta?.sips || 0}
-            size="sm"
-          />
-
           {/* Numero a DESTRA per le carte in mano 🃏 */}
           <div
-            className={`flex flex-col items-center justify-center px-1.5 py-1 rounded-xl border-2 shadow-md min-w-[28px] sm:min-w-[32px] ${
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl border-2 shadow-md ${
               isSingle
                 ? 'bg-rose-600 border-amber-300 text-white ring-2 ring-rose-400 animate-pulse'
                 : 'bg-cyan-950/95 border-cyan-400 text-cyan-200'
             }`}
             title={`${actualCardCount} carte in mano`}
           >
-            <span className="text-[10px] sm:text-xs leading-none">🃏</span>
-            <span className="text-xs sm:text-sm font-black text-cyan-200 leading-none mt-0.5">
-              {actualCardCount}
+            <span className="text-[9px] font-bold text-cyan-400/90 uppercase leading-none">Carte</span>
+            <span className="text-sm sm:text-base font-black leading-tight mt-0.5">
+              🃏{actualCardCount}
             </span>
           </div>
         </div>
@@ -1275,15 +1251,15 @@ export function ColpoBassoArena({
 
         {/* ZONA CENTRALE: TAVOLO APERTO SENZA IL PESANTE QUADRATO RIGIDO */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-between z-10 px-1 py-0.5 relative">
-          {/* Pill Minimale di Stato + Ultima Mossa (Discreta e Fluttuante) */}
-          <div className="w-full max-w-[360px] flex items-center justify-between gap-1.5 px-2.5 py-0.5 rounded-full bg-[#140b2a]/70 border border-white/10 backdrop-blur-sm z-10 shadow-sm mt-0.5">
+          {/* Pill Minimale di Stato + Ultima Mossa (Discreta, Compatta e Fluttuante) */}
+          <div className="w-fit max-w-[85%] mx-auto flex items-center justify-center gap-1.5 px-3 py-0.5 rounded-full bg-[#120824]/60 border border-white/10 backdrop-blur-md z-10 shadow-sm mt-0.5">
             <span
-              className={`px-2 py-0.5 rounded-full font-black uppercase tracking-wider text-[8px] sm:text-[9px] shrink-0 border ${
+              className={`px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider text-[8px] shrink-0 border ${
                 state.mode === 'ATTACK_CHAIN'
-                  ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-[0_0_8px_rgba(244,63,94,0.2)]'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                   : state.mode === 'SPECIAL_EVENT'
-                  ? 'bg-purple-500/25 text-purple-300 border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35'
               }`}
             >
               {state.mode === 'ATTACK_CHAIN'
@@ -1293,7 +1269,7 @@ export function ColpoBassoArena({
                 : '🟢 Tregua'}
             </span>
 
-            <span className="text-slate-300 font-medium truncate text-right text-[10px]">
+            <span className="text-slate-300 font-medium truncate text-[10px]">
               {state.lastActionBanner
                 ? state.lastActionBanner.subtitle
                 : 'Inizia la mano'}
@@ -1509,71 +1485,6 @@ export function ColpoBassoArena({
         <div className="shrink-0 self-center z-20 flex justify-center">
           {state.players[3] && renderOpponentSeat(state.players[3], 'east')}
         </div>
-
-        {/* Special Overlays: Spionaggio (Jack Hand Reveal) or Beffa del 6 Redirect Picker */}
-        {state.mode === 'SPECIAL_EVENT' &&
-          state.specialEvent?.type === 'JACK_SPY' &&
-          state.specialEvent.phase === 'SPYING_ATTACK' &&
-          !isControllingPlayerAI && (
-            <div className="p-2 rounded-2xl bg-purple-950/90 border border-purple-400/60 shrink-0 z-20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black uppercase text-purple-200">
-                  👁️ Carte di {state.players[state.specialEvent.targetIndex].name}:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
-                  className="px-2 py-0.5 rounded-md bg-white/15 text-[9px] font-bold text-white cursor-pointer"
-                >
-                  Passa
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {state.players[state.specialEvent.targetIndex].hand.map((c) => (
-                  <div key={c.id} className="shrink-0">
-                    <PlayingCard
-                      card={c}
-                      size="xs"
-                      onInspect={(card) => setInspectedCard({ card, isTopCard: false })}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {state.mode === 'SPECIAL_EVENT' &&
-          state.specialEvent?.type === 'QUEEN_BURDEN' &&
-          state.specialEvent.phase === 'SELECTING_REDIRECT_TARGET' &&
-          !isControllingPlayerAI && (
-            <div className="p-2 rounded-2xl bg-amber-950/90 border border-amber-400/60 shrink-0 z-20">
-              <div className="text-[10px] font-black text-amber-300 uppercase mb-1">
-                🃏 Scegli chi pesca +2 carte:
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {state.players
-                  .filter((p) => p.id !== controllingPlayerIndex)
-                  .map((opp) => (
-                    <button
-                      key={opp.id}
-                      type="button"
-                      onClick={() =>
-                        dispatchAction({
-                          type: 'SELECT_QUEEN_REDIRECT',
-                          targetPlayerIndex: opp.id,
-                        })
-                      }
-                      className="p-1.5 rounded-xl bg-white/10 hover:bg-amber-500 hover:text-slate-950 border border-white/20 text-[10px] font-black transition cursor-pointer flex items-center justify-center gap-1"
-                    >
-                      <span className={SUIT_INFO[opp.suit].neonText}>
-                        {SUIT_INFO[opp.suit].symbol}
-                      </span>
-                      <span className="truncate">{opp.name.replace(' 🤖', '')}</span>
-                    </button>
-                  ))}
-              </div>
-            </div>
-          )}
       </section>
 
       {/* 3. LA TUA MANO + PULSANTI AZIONE (INTEGRATA SUL TAVOLO, ELEVATA IN PRIMO PIANO) */}
@@ -1603,48 +1514,36 @@ export function ColpoBassoArena({
         {/* CONTENITORE 3 COLONNE (PROFILO SX | MANO CENTRO | AZIONI DX) */}
         <div className="flex items-end justify-between gap-1 sm:gap-2 w-full overflow-visible">
           {/* COLONNA 1 (SX): PROFILO GIOCATORE LOCALE PULITO E CHIARO */}
-          <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#140a26]/90 border border-white/20 w-[96px] sm:w-[104px] h-[108px] sm:h-[114px] shrink-0 shadow-xl select-none mb-0.5">
+          <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#140a26]/90 border border-white/20 w-[100px] sm:w-[110px] h-[108px] sm:h-[114px] shrink-0 shadow-xl select-none mb-0.5">
             {/* Nome del giocatore in alto */}
             <div className="px-2 py-0.5 rounded-full bg-black/60 border border-white/15 text-[10px] font-black text-white flex items-center gap-1 w-full justify-center shadow-sm">
               <span className={SUIT_INFO[displayedHandPlayer.suit].neonText}>
                 {SUIT_INFO[displayedHandPlayer.suit].symbol}
               </span>
-              <span className="truncate max-w-[65px]">TU ({displayedHandPlayer.name.replace(' 🤖', '')})</span>
+              <span className="truncate max-w-[70px]">TU ({displayedHandPlayer.name.replace(' 🤖', '')})</span>
             </div>
 
-            {/* Trio: Sorsi a SINISTRA | Avatar al CENTRO | Carte a DESTRA */}
-            <div className="flex items-center justify-between gap-1 w-full my-auto px-0.5">
+            {/* DUE GRANDI NUMERI: Sorsi a SINISTRA 🍺 | Carte a DESTRA 🃏 */}
+            <div className="grid grid-cols-2 gap-1.5 w-full my-auto">
               {/* Sorsi a SINISTRA 🍺 */}
               <div
-                className="flex flex-col items-center justify-center px-1.5 py-0.5 rounded-xl bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm min-w-[26px]"
+                className="flex flex-col items-center justify-center py-1 px-1 rounded-xl bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm"
                 title={`${displayedHandPlayer.sipsDrunk} sorsi bevuti`}
               >
-                <span className="text-[9px] leading-none">🍺</span>
-                <span className="text-xs font-black text-amber-300 leading-tight mt-0.5">
-                  {displayedHandPlayer.sipsDrunk}
+                <span className="text-[9px] font-bold text-amber-400/90 uppercase leading-none">Sorsi</span>
+                <span className="text-sm sm:text-base font-black text-amber-300 leading-tight mt-0.5">
+                  🍺{displayedHandPlayer.sipsDrunk}
                 </span>
               </div>
 
-              {/* Avatar al CENTRO */}
-              <PlayerAvatar
-                suit={displayedHandPlayer.suit}
-                name={displayedHandPlayer.name}
-                isAI={displayedHandPlayer.isAI}
-                isAttacker={state.mode === 'ATTACK_CHAIN' && displayedHandPlayer.id === state.activePlayerIndex}
-                isDefender={state.mode === 'ATTACK_CHAIN' && displayedHandPlayer.id === state.defenderIndex}
-                isControlling={displayedHandPlayer.id === controllingPlayerIndex}
-                sipsDelta={playerDeltas[displayedHandPlayer.id]?.sips || 0}
-                size="sm"
-              />
-
               {/* Carte a DESTRA 🃏 */}
               <div
-                className="flex flex-col items-center justify-center px-1.5 py-0.5 rounded-xl bg-cyan-950/90 border border-cyan-400/80 text-cyan-200 shadow-sm min-w-[26px]"
+                className="flex flex-col items-center justify-center py-1 px-1 rounded-xl bg-cyan-950/90 border border-cyan-400/80 text-cyan-200 shadow-sm"
                 title={`${displayedHandPlayer.hand.length} carte in mano`}
               >
-                <span className="text-[9px] leading-none">🃏</span>
-                <span className="text-xs font-black text-cyan-300 leading-tight mt-0.5">
-                  {displayedHandPlayer.hand.length}
+                <span className="text-[9px] font-bold text-cyan-400/90 uppercase leading-none">Carte</span>
+                <span className="text-sm sm:text-base font-black text-cyan-300 leading-tight mt-0.5">
+                  🃏{displayedHandPlayer.hand.length}
                 </span>
               </div>
             </div>
@@ -2302,7 +2201,116 @@ export function ColpoBassoArena({
       <DuelModal
         activeDuel={state.activeDuel}
         onDismiss={() => dispatchAction({ type: 'DISMISS_DUEL' })}
+        humanPlayer={displayedHandPlayer}
+        onCommitCard={(cardId) => dispatchAction({ type: 'COMMIT_DUEL_CARD', cardId })}
       />
+
+      {/* MODALE SPIONAGGIO FANTE (JACK SPY MODAL) - Sempre visibile al centro per l'utente umano */}
+      {state.mode === 'SPECIAL_EVENT' &&
+        state.specialEvent?.type === 'JACK_SPY' &&
+        state.specialEvent.attackerIndex === controllingPlayerIndex &&
+        !isControllingPlayerAI && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 select-none animate-fadeIn">
+            <div className="w-full max-w-md rounded-2xl bg-gradient-to-b from-[#241040] via-[#150a29] to-[#090314] border-2 border-purple-400/80 shadow-[0_0_50px_rgba(168,85,247,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-1.5 border-b border-white/10 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl">🕵️</span>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-purple-200 uppercase tracking-wide">
+                      Mano di {state.players[state.specialEvent.targetIndex].name}
+                    </h3>
+                    <p className="text-[9px] text-purple-300/80">
+                      Spionaggio attivo: vedi tutte le sue carte! Sferra un attacco o passa.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
+                  className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center text-xs font-black cursor-pointer transition"
+                  title="Chiudi spionaggio"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Carte del Bersaglio */}
+              <div className="py-2.5">
+                {state.players[state.specialEvent.targetIndex].hand.length === 0 ? (
+                  <div className="p-4 text-center text-slate-400 text-xs font-bold bg-white/5 rounded-xl border border-white/10">
+                    Il giocatore non ha carte in mano!
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 overflow-x-auto py-1">
+                    {state.players[state.specialEvent.targetIndex].hand.map((c) => (
+                      <div key={c.id} className="shrink-0 hover:scale-105 transition-transform">
+                        <PlayingCard
+                          card={c}
+                          size="sm"
+                          onInspect={(card) => setInspectedCard({ card, isTopCard: false })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottoni Azione */}
+              <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 mt-1">
+                <button
+                  type="button"
+                  onClick={() => dispatchAction({ type: 'RESOLVE_SPECIAL_PASS' })}
+                  className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wider cursor-pointer shadow active:scale-95 transition text-center"
+                >
+                  ✅ Ho Visto le Carte (Fine Spionaggio)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      {/* MODALE REINDIRIZZO REGINA (QUEEN BURDEN REDIRECT) */}
+      {state.mode === 'SPECIAL_EVENT' &&
+        state.specialEvent?.type === 'QUEEN_BURDEN' &&
+        state.specialEvent.phase === 'SELECTING_REDIRECT_TARGET' &&
+        !isControllingPlayerAI && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 select-none animate-fadeIn">
+            <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#2a1708] via-[#1a0e05] to-[#0c0602] border-2 border-amber-400/80 shadow-[0_0_50px_rgba(245,158,11,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
+              <div className="text-center mb-2">
+                <span className="text-xl">🃏</span>
+                <h3 className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wide mt-0.5">
+                  Reindirizza la Beffa della Regina!
+                </h3>
+                <p className="text-[9px] text-amber-200/80">
+                  Scegli a quale avversario far pescare le +2 carte:
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-1">
+                {state.players
+                  .filter((p) => p.id !== controllingPlayerIndex)
+                  .map((opp) => (
+                    <button
+                      key={opp.id}
+                      type="button"
+                      onClick={() =>
+                        dispatchAction({
+                          type: 'SELECT_QUEEN_REDIRECT',
+                          targetPlayerIndex: opp.id,
+                        })
+                      }
+                      className="p-2 rounded-xl bg-white/10 hover:bg-amber-500 hover:text-slate-950 border border-white/20 text-xs font-black transition cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 shadow"
+                    >
+                      <span className={`text-base ${SUIT_INFO[opp.suit].neonText}`}>
+                        {SUIT_INFO[opp.suit].symbol}
+                      </span>
+                      <span className="truncate max-w-[80px]">{opp.name.replace('Bot ', '').replace(' 🤖', '')}</span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       <DrinkAlertModal
         alert={drinkAlert}

@@ -603,19 +603,17 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
       eventKind: 'DUEL_HIGH',
     };
 
-    // Prepare deck where top 2 numeric cards have IDENTICAL value (e.g. 5 of spades and 5 of diamonds)
+    // Ciascun giocatore sceglie da mano: prepariamo le mani con carte di identico valore (es. 5 di cuori e 5 di quadri)
     const tieState: GameState = {
       ...base,
-      deck: [
-        { id: 't1', suit: 'spades', value: 5, label: '5' },
-        { id: 't2', suit: 'diamonds', value: 5, label: '5' },
-      ],
       discardPile: [],
       mode: 'NEUTRAL_FLOW',
       activePlayerIndex: 0,
-      players: base.players.map((p, idx) =>
-        idx === 0 ? { ...p, hand: [duelHighCard, card('hearts', 2)] } : p
-      ),
+      players: base.players.map((p, idx) => {
+        if (idx === 0) return { ...p, hand: [duelHighCard, card('hearts', 5)] };
+        if (idx === 1) return { ...p, hand: [card('diamonds', 5)] };
+        return p;
+      }),
     };
 
     const afterTieDuel = gameReducer(tieState, {
@@ -628,6 +626,42 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     expect(afterTieDuel.activeDuel?.loserIndices).toEqual([0, 1]);
     expect(afterTieDuel.players[0].sipsDrunk).toBe(2);
     expect(afterTieDuel.players[1].sipsDrunk).toBe(2);
+  });
+
+  it('Duello: giocatore senza carte numeriche in mano perde automaticamente', () => {
+    const base = createInitialGameState();
+    const duelHighCard: Card = {
+      id: 'duel-nocard-1',
+      suit: 'hearts',
+      value: 0,
+      label: '⚔️▲',
+      eventKind: 'DUEL_HIGH',
+    };
+
+    // Player 0 ha una carta numerica valida (7), Player 1 NON ha carte numeriche (solo carta evento)
+    const noCardState: GameState = {
+      ...base,
+      discardPile: [],
+      mode: 'NEUTRAL_FLOW',
+      activePlayerIndex: 0,
+      players: base.players.map((p, idx) => {
+        if (idx === 0) return { ...p, hand: [duelHighCard, card('hearts', 7)] };
+        if (idx === 1) return { ...p, hand: [{ id: 'stop-only', suit: 'clubs', value: 0, label: '🚫', eventKind: 'STOP_SUIT' }] };
+        return p;
+      }),
+    };
+
+    const result = gameReducer(noCardState, {
+      type: 'PLAY_CARDS',
+      cardIds: [duelHighCard.id],
+      targetPlayerIndex: 1,
+    });
+
+    // Player 1 non ha carte numeriche -> perde automaticamente e beve 2 sorsi!
+    expect(result.activeDuel?.participants[1].hasNoCard).toBe(true);
+    expect(result.activeDuel?.loserIndices).toEqual([1]);
+    expect(result.players[1].sipsDrunk).toBe(2);
+    expect(result.players[0].sipsDrunk).toBe(0);
   });
 });
 

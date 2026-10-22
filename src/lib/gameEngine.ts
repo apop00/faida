@@ -1,4 +1,5 @@
 import {
+  ActiveDuelParticipant,
   ActiveDuelState,
   Card,
   CardPlayability,
@@ -421,6 +422,58 @@ export function drawDuelNumericCards(
     duelCards,
     newDeck: currentDeck,
     newDiscardPile: currentDiscard,
+  };
+}
+
+export function isDuelNumericCard(c: Card): boolean {
+  return !c.eventKind && c.value >= 2 && c.value <= 10;
+}
+
+export function pickBestDuelCard(hand: Card[], isHigh: boolean): Card | null {
+  const eligible = hand.filter(isDuelNumericCard);
+  if (eligible.length === 0) return null;
+  return [...eligible].sort((a, b) => (isHigh ? b.value - a.value : a.value - b.value))[0];
+}
+
+export function resolveDuelVerdict(
+  duelKind: 'DUEL_HIGH' | 'DUEL_LOW' | 'SUPER_DUEL_HIGH' | 'SUPER_DUEL_LOW',
+  participants: ActiveDuelParticipant[]
+): {
+  loserIndices: number[];
+  primaryLoserIdx: number;
+  isTie: boolean;
+} {
+  const isHigh = duelKind === 'DUEL_HIGH' || duelKind === 'SUPER_DUEL_HIGH';
+
+  // Rule: If any player has no card (hasNoCard === true or !card), they lose automatically!
+  const forfeiting = participants.filter((p) => p.hasNoCard || !p.card);
+  if (forfeiting.length > 0) {
+    const loserIndices = forfeiting.map((p) => p.player.id);
+    return {
+      loserIndices,
+      primaryLoserIdx: loserIndices[0],
+      isTie: loserIndices.length > 1,
+    };
+  }
+
+  // All participants have a card
+  const cards = participants.map((p) => ({
+    playerId: p.player.id,
+    value: p.card!.value,
+  }));
+
+  const worstVal = isHigh
+    ? Math.min(...cards.map((c) => c.value))
+    : Math.max(...cards.map((c) => c.value));
+
+  const loserIndices = cards
+    .filter((c) => c.value === worstVal)
+    .map((c) => c.playerId);
+
+  return {
+    loserIndices,
+    primaryLoserIdx: loserIndices[0],
+    isTie: loserIndices.length > 1,
   };
 }
 
@@ -1156,6 +1209,51 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'COMMIT_DUEL_CARD': {
+      if (!state.activeDuel) return state;
+      const ad = state.activeDuel;
+      const humanIdx = state.players.findIndex((p) => !p.isAI);
+      if (humanIdx === -1) return state;
+
+      const humanP = state.players[humanIdx];
+      const newCard = action.cardId ? humanP.hand.find((c) => c.id === action.cardId) : null;
+
+      const newParticipants = ad.participants.map((pt) => {
+        if (pt.player.id === humanIdx) {
+          return {
+            ...pt,
+            card: newCard || null,
+            hasNoCard: !newCard,
+          };
+        }
+        return pt;
+      });
+
+      const verdict = resolveDuelVerdict(ad.duelKind, newParticipants);
+      const prevLosers = ad.loserIndices;
+      const nextLosers = verdict.loserIndices;
+
+      const updatedPlayers = state.players.map((p) => {
+        let sips = p.sipsDrunk;
+        if (prevLosers.includes(p.id)) sips -= 2;
+        if (nextLosers.includes(p.id)) sips += 2;
+        return { ...p, sipsDrunk: Math.max(0, sips) };
+      });
+
+      return {
+        ...state,
+        players: updatedPlayers,
+        activeDuel: {
+          ...ad,
+          phase: 'REVEALED',
+          participants: newParticipants,
+          loserIndex: verdict.primaryLoserIdx,
+          loserIndices: verdict.loserIndices,
+          isTie: verdict.isTie,
+        },
+      };
+    }
+
     case 'USE_TARGET_BONUS': {
       // Carta Bersaglio rimossa
       return state;
@@ -1682,7 +1780,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return checkGameOver(nextState);
         }
 
-        // E8: Duello 1v1 (DUEL_HIGH / DUEL_LOW - solo carte da 2 a 10)
+        // E8: Duello 1v1 (DUEL_HIGH / DUEL_LOW - ciascun giocatore sceglie una carta numerica 2-10 da mano, chi non la ha perde in automatico)
         if (
           playInfo.actionType === 'EVENT_DUEL_HIGH' ||
           playInfo.actionType === 'EVENT_DUEL_LOW'
@@ -1695,41 +1793,58 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               : getNextTurnIndex(controllingIndex, state.lastDirection, 1);
 
           const targetPlayer = state.players[targetIdx];
-          const { duelCards, newDeck, newDiscardPile } = drawDuelNumericCards(
-            state.deck,
-            [...state.discardPile, state.topCard],
-            2
-          );
 
-          const cardAttacker = duelCards[0];
-          const cardTarget = duelCards[1];
+          // Mano dell'attaccante senza la carta duello appena giocata
+          const initiatorHandWithoutDuel = player.hand.filter((c) => !action.cardIds.includes(c.id));
 
-          // DUEL_HIGH: vince chi fa la carta più alta -> chi fa il numero più basso beve 2 sorsi!
-          // DUEL_LOW: vince chi fa la carta più bassa -> chi fa il numero più alto beve 2 sorsi!
-          // In caso di parità (stesso valore numerico): entrambi bevono 2 sorsi!
-          const isTie = cardAttacker.value === cardTarget.value;
-          let loserIndices: number[];
+          // Attaccante sceglie carta numerica 2-10 dalla propria mano
+          const cardAttacker = pickBestDuelCard(initiatorHandWithoutDuel, isHighDuel);
+          const hasAttackerCard = Boolean(cardAttacker);
 
-          if (isTie) {
-            loserIndices = [controllingIndex, targetIdx];
-          } else {
-            const attackerLoses = isHighDuel
-              ? cardAttacker.value < cardTarget.value
-              : cardAttacker.value > cardTarget.value;
-            loserIndices = [attackerLoses ? controllingIndex : targetIdx];
-          }
+          // Bersaglio sceglie carta numerica 2-10 dalla propria mano
+          const cardTarget = pickBestDuelCard(targetPlayer.hand, isHighDuel);
+          const hasTargetCard = Boolean(cardTarget);
 
-          const primaryLoserIdx = loserIndices[0];
+          const participants: ActiveDuelParticipant[] = [
+            {
+              player: { ...player, hand: initiatorHandWithoutDuel },
+              card: cardAttacker,
+              hasNoCard: !hasAttackerCard,
+            },
+            {
+              player: targetPlayer,
+              card: cardTarget,
+              hasNoCard: !hasTargetCard,
+            },
+          ];
+
+          const verdict = resolveDuelVerdict(isHighDuel ? 'DUEL_HIGH' : 'DUEL_LOW', participants);
+          const primaryLoserIdx = verdict.primaryLoserIdx;
           const primaryLoserPlayer = state.players[primaryLoserIdx];
+          const isTie = verdict.isTie;
+          const loserIndices = verdict.loserIndices;
+
+          // Rimuovi le carte giocate nel duello dalle rispettive mani
+          const cardsToRemoveByPlayer: { [pId: number]: string } = {};
+          if (cardAttacker) cardsToRemoveByPlayer[controllingIndex] = cardAttacker.id;
+          if (cardTarget) cardsToRemoveByPlayer[targetIdx] = cardTarget.id;
+
+          const cardsToDiscard: Card[] = [
+            ...otherSelected,
+            ...(cardAttacker ? [cardAttacker] : []),
+            ...(cardTarget ? [cardTarget] : []),
+          ];
 
           const updatedPlayers = state.players.map((p, idx) => {
-            let nextP =
-              idx === controllingIndex
-                ? {
-                    ...removePlayedFromHand(p),
-                    attacksLaunched: (p.attacksLaunched || 0) + 1,
-                  }
-                : p;
+            let nextHand = idx === controllingIndex ? initiatorHandWithoutDuel : p.hand;
+            if (cardsToRemoveByPlayer[idx]) {
+              nextHand = nextHand.filter((c) => c.id !== cardsToRemoveByPlayer[idx]);
+            }
+            let nextP: Player = {
+              ...p,
+              hand: nextHand,
+              attacksLaunched: idx === controllingIndex ? (p.attacksLaunched || 0) + 1 : p.attacksLaunched,
+            };
             if (loserIndices.includes(idx)) {
               nextP = {
                 ...nextP,
@@ -1746,26 +1861,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             duelKind: isHighDuel ? 'DUEL_HIGH' : 'DUEL_LOW',
             initiatorIndex: controllingIndex,
             targetIndex: targetIdx,
-            participants: [
-              {
-                player: player,
-                card: cardAttacker,
-              },
-              {
-                player: targetPlayer,
-                card: cardTarget,
-              },
-            ],
+            phase: 'REVEALED',
+            participants,
             loserIndex: primaryLoserIdx,
             loserIndices,
             isTie,
             sipsToDrink: 2,
           };
 
+          const attackerDesc = cardAttacker
+            ? `${cardAttacker.label}${SUIT_INFO[cardAttacker.suit].symbol}`
+            : 'Nessuna Carta';
+          const targetDesc = cardTarget
+            ? `${cardTarget.label}${SUIT_INFO[cardTarget.suit].symbol}`
+            : 'Nessuna Carta';
+
           const nextState: GameState = {
             ...state,
-            deck: newDeck,
-            discardPile: newDiscardPile,
+            discardPile: [...state.discardPile, state.topCard, ...cardsToDiscard],
             topCard: { ...primaryCard, suit: state.topCard.suit },
             players: updatedPlayers,
             activePlayerIndex: nextActive,
@@ -1780,7 +1893,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                   senderName: 'Parità al Duello',
                   senderSuit: player.suit,
                   sips: 2,
-                  reason: `Parità (${cardAttacker.label} = ${cardTarget.label}) al ${duelTitle}`,
+                  reason: `Parità (${attackerDesc} = ${targetDesc}) al ${duelTitle}`,
                   cardLabel: primaryCard.label,
                   cardSuit: state.topCard.suit,
                 }
@@ -1798,23 +1911,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 },
             lastActionBanner: isTie
               ? {
-                  title: `${duelTitle}: PARITÀ (${cardAttacker.label}=${cardTarget.label})! BEVONO ENTRAMBI 2🍺!`,
-                  subtitle: `${player.name} [${cardAttacker.label}${SUIT_INFO[cardAttacker.suit].symbol}] vs ${targetPlayer.name} [${cardTarget.label}${SUIT_INFO[cardTarget.suit].symbol}] → Parità! 2 sorsi a testa!`,
+                  title: `${duelTitle}: PARITÀ (${attackerDesc}=${targetDesc})! BEVONO ENTRAMBI 2🍺!`,
+                  subtitle: `${player.name} [${attackerDesc}] vs ${targetPlayer.name} [${targetDesc}] → Parità! 2 sorsi a testa!`,
                   tone: 'drink',
                 }
               : {
-                  title: `${duelTitle}: ${primaryLoserPlayer.name.toUpperCase()} BEVE 2🍺 DA ${(primaryLoserIdx === controllingIndex ? targetPlayer.name : player.name).toUpperCase()}!`,
-                  subtitle: `${player.name} [${cardAttacker.label}${SUIT_INFO[cardAttacker.suit].symbol}] vs ${targetPlayer.name} [${cardTarget.label}${SUIT_INFO[cardTarget.suit].symbol}] → ${primaryLoserPlayer.name} beve 2 sorsi!`,
+                  title: `${duelTitle}: ${primaryLoserPlayer.name.toUpperCase()} BEVE 2🍺!`,
+                  subtitle: `${player.name} [${attackerDesc}] vs ${targetPlayer.name} [${targetDesc}] → ${primaryLoserPlayer.name} perde e beve 2 sorsi!`,
                   tone: 'drink',
                 },
             logs: [
               isTie
                 ? makeLog(
-                    `⚔️ ${duelTitle}! PARITÀ tra ${player.name} (${cardAttacker.label}${SUIT_INFO[cardAttacker.suit].symbol}) e ${targetPlayer.name} (${cardTarget.label}${SUIT_INFO[cardTarget.suit].symbol}): entrambi bevono 2 sorsi!`,
+                    `⚔️ ${duelTitle}! PARITÀ tra ${player.name} (${attackerDesc}) e ${targetPlayer.name} (${targetDesc}): entrambi bevono 2 sorsi!`,
                     'drink'
                   )
                 : makeLog(
-                    `⚔️ ${duelTitle}! ${player.name} pesca ${cardAttacker.label}${SUIT_INFO[cardAttacker.suit].symbol}, ${targetPlayer.name} pesca ${cardTarget.label}${SUIT_INFO[cardTarget.suit].symbol}: ${primaryLoserPlayer.name} perde e beve 2 sorsi!`,
+                    `⚔️ ${duelTitle}! ${player.name} gioca ${attackerDesc}, ${targetPlayer.name} gioca ${targetDesc}: ${primaryLoserPlayer.name} perde e beve 2 sorsi!`,
                     'drink'
                   ),
               ...state.logs,
@@ -1824,48 +1937,47 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return checkGameOver(nextState);
         }
 
-        // E9: Super Duello con Tutti (SUPER_DUEL_HIGH / SUPER_DUEL_LOW - solo carte da 2 a 10 per tutti e 4)
+        // E9: Super Duello con Tutti (SUPER_DUEL_HIGH / SUPER_DUEL_LOW - ciascun giocatore sceglie da mano, chi non la ha perde in automatico)
         if (
           playInfo.actionType === 'EVENT_SUPER_DUEL_HIGH' ||
           playInfo.actionType === 'EVENT_SUPER_DUEL_LOW'
         ) {
           const isHighSuper = playInfo.actionType === 'EVENT_SUPER_DUEL_HIGH';
-          const { duelCards, newDeck, newDiscardPile } = drawDuelNumericCards(
-            state.deck,
-            [...state.discardPile, state.topCard],
-            4
-          );
+          const initiatorHandWithoutDuel = player.hand.filter((c) => !action.cardIds.includes(c.id));
 
-          // SUPER_DUEL_HIGH: vince la più alta -> chi fa la più bassa beve 2 sorsi! (in caso di parità sul minimo, tutti i pareggianti bevono)
-          // SUPER_DUEL_LOW: vince la più bassa -> chi fa la più alta beve 2 sorsi! (in caso di parità sul massimo, tutti i pareggianti bevono)
-          const targetWorstVal = isHighSuper
-            ? Math.min(...duelCards.map((c) => c.value))
-            : Math.max(...duelCards.map((c) => c.value));
+          const participants: ActiveDuelParticipant[] = state.players.map((p, idx) => {
+            const h = idx === controllingIndex ? initiatorHandWithoutDuel : p.hand;
+            const chosen = pickBestDuelCard(h, isHighSuper);
+            return {
+              player: idx === controllingIndex ? { ...p, hand: initiatorHandWithoutDuel } : p,
+              card: chosen,
+              hasNoCard: !chosen,
+            };
+          });
 
-          const loserIndices = state.players
-            .map((_, i) => i)
-            .filter((i) => duelCards[i].value === targetWorstVal);
-          const isTie = loserIndices.length > 1;
-
-          const primaryLoserIdx = loserIndices[0];
+          const verdict = resolveDuelVerdict(isHighSuper ? 'SUPER_DUEL_HIGH' : 'SUPER_DUEL_LOW', participants);
+          const loserIndices = verdict.loserIndices;
+          const primaryLoserIdx = verdict.primaryLoserIdx;
           const primaryLoserPlayer = state.players[primaryLoserIdx];
+          const isTie = verdict.isTie;
           const tiedNames = loserIndices.map((i) => state.players[i].name).join(' e ');
 
-          const drawsSummary = state.players
-            .map(
-              (p, i) =>
-                `${p.name.replace('Bot ', '').replace(' 🤖', '')}:${duelCards[i].label}${SUIT_INFO[duelCards[i].suit].symbol}`
-            )
-            .join(' · ');
+          const cardsToDiscard: Card[] = [...otherSelected];
+          participants.forEach((pt) => {
+            if (pt.card) cardsToDiscard.push(pt.card);
+          });
 
           const updatedPlayers = state.players.map((p, idx) => {
-            let nextP =
-              idx === controllingIndex
-                ? {
-                    ...removePlayedFromHand(p),
-                    attacksLaunched: (p.attacksLaunched || 0) + 1,
-                  }
-                : p;
+            let nextHand = idx === controllingIndex ? initiatorHandWithoutDuel : p.hand;
+            const pt = participants[idx];
+            if (pt?.card) {
+              nextHand = nextHand.filter((c) => c.id !== pt.card!.id);
+            }
+            let nextP: Player = {
+              ...p,
+              hand: nextHand,
+              attacksLaunched: idx === controllingIndex ? (p.attacksLaunched || 0) + 1 : p.attacksLaunched,
+            };
             if (loserIndices.includes(idx)) {
               nextP = {
                 ...nextP,
@@ -1883,20 +1995,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           const activeDuel: ActiveDuelState = {
             duelKind: isHighSuper ? 'SUPER_DUEL_HIGH' : 'SUPER_DUEL_LOW',
             initiatorIndex: controllingIndex,
-            participants: state.players.map((p, i) => ({
-              player: p,
-              card: duelCards[i],
-            })),
+            phase: 'REVEALED',
+            participants,
             loserIndex: primaryLoserIdx,
             loserIndices,
             isTie,
             sipsToDrink: 2,
           };
 
+          const summaryCards = participants
+            .map((pt) => {
+              const name = pt.player.name.replace('Bot ', '').replace(' 🤖', '');
+              const cDesc = pt.card ? `${pt.card.label}${SUIT_INFO[pt.card.suit].symbol}` : 'No Carta';
+              return `${name}:${cDesc}`;
+            })
+            .join(' · ');
+
           const nextState: GameState = {
             ...state,
-            deck: newDeck,
-            discardPile: newDiscardPile,
+            discardPile: [...state.discardPile, state.topCard, ...cardsToDiscard],
             topCard: { ...primaryCard, suit: state.topCard.suit },
             players: updatedPlayers,
             activePlayerIndex: nextActive,
@@ -1911,7 +2028,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                   senderName: player.name,
                   senderSuit: player.suit,
                   sips: 2,
-                  reason: `Parità sul peggior punteggio (${targetWorstVal}) a ${superTitle}`,
+                  reason: `Parità a ${superTitle}`,
                   cardLabel: primaryCard.label,
                   cardSuit: state.topCard.suit,
                 }
@@ -1923,31 +2040,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                   senderName: player.name,
                   senderSuit: player.suit,
                   sips: 2,
-                  reason: `${superTitle} lanciato da ${player.name}`,
+                  reason: `${superTitle} perso`,
                   cardLabel: primaryCard.label,
                   cardSuit: state.topCard.suit,
                 },
             lastActionBanner: isTie
               ? {
-                  title: `${superTitle}: PARITÀ SUL ${targetWorstVal}! BEVONO IN ${loserIndices.length} (${tiedNames.toUpperCase()}) 2🍺!`,
-                  subtitle: `${drawsSummary} → Parità con valore ${targetWorstVal}! Ognuno beve 2 sorsi!`,
+                  title: `${superTitle}: PARITÀ (${tiedNames.toUpperCase()})!`,
+                  subtitle: `${summaryCards} → ${tiedNames} bevono 2 sorsi a testa!`,
                   tone: 'drink',
                 }
               : {
-                  title: `${superTitle}: ${primaryLoserPlayer.name.toUpperCase()} BEVE 2🍺 DA ${player.name.toUpperCase()}!`,
-                  subtitle: `${drawsSummary} → ${primaryLoserPlayer.name} beve 2 sorsi!`,
+                  title: `${superTitle}: ${primaryLoserPlayer.name.toUpperCase()} BEVE 2🍺!`,
+                  subtitle: `${summaryCards} → ${primaryLoserPlayer.name} perde e beve 2 sorsi!`,
                   tone: 'drink',
                 },
             logs: [
-              isTie
-                ? makeLog(
-                    `💥 ${superTitle}! Estratte: ${drawsSummary}. Parità sul valore ${targetWorstVal}: ${tiedNames} bevono 2 sorsi a testa!`,
-                    'drink'
-                  )
-                : makeLog(
-                    `💥 ${superTitle}! Estratte (2-10): ${drawsSummary}. ${primaryLoserPlayer.name} perde e beve 2 sorsi!`,
-                    'drink'
-                  ),
+              makeLog(
+                `💥 ${superTitle}! ${summaryCards} → ${isTie ? `${tiedNames} pareggiano e bevono` : `${primaryLoserPlayer.name} perde e beve`} 2 sorsi!`,
+                'drink'
+              ),
               ...state.logs,
             ],
           };

@@ -10,9 +10,11 @@ import { Beer, FastForward, Skull, Swords } from 'lucide-react';
 interface DuelModalProps {
   activeDuel?: ActiveDuelState | null;
   onDismiss: () => void;
+  humanPlayer?: Player;
+  onCommitCard?: (cardId?: string) => void;
 }
 
-export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
+export function DuelModal({ activeDuel, onDismiss, humanPlayer, onCommitCard }: DuelModalProps) {
   const [revealedCount, setRevealedCount] = useState(0);
   const [isVerdictRevealed, setIsVerdictRevealed] = useState(false);
   const timersRef = useRef<NodeJS.Timeout[]>([]);
@@ -85,8 +87,13 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
     : 'DUELLO 1v1 CARTA BASSA ⚔️▼';
 
   const ruleSummary = isHigh
-    ? 'Carta più ALTA vince • Chi fa meno beve 2🍺'
-    : 'Carta più BASSA vince • Chi fa di più beve 2🍺';
+    ? 'Carta più ALTA vince • Chi fa meno o non ha carte beve 2🍺'
+    : 'Carta più BASSA vince • Chi fa di più o non ha carte beve 2🍺';
+
+  const eligibleCards = humanPlayer
+    ? humanPlayer.hand.filter((c) => !c.eventKind && c.value >= 2 && c.value <= 10)
+    : [];
+  const humanParticipant = activeDuel.participants.find((p) => !p.player.isAI);
 
   const handleSkipAnimation = () => {
     timersRef.current.forEach((t) => clearTimeout(t));
@@ -97,10 +104,10 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
   };
 
   const renderDuelistBox = (
-    item: { player: Player; card: any },
+    item: { player: Player; card?: any; hasNoCard?: boolean },
     idx: number
   ) => {
-    const { player, card } = item;
+    const { player, card, hasNoCard } = item;
     const suitMeta = SUIT_INFO[player.suit];
     const isThisRevealed = revealedCount > idx;
     const isThisLoser = isVerdictRevealed && loserIndices.includes(player.id);
@@ -129,7 +136,17 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
 
         {/* Card Display with Step-by-Step Reveal (Size XS) */}
         <div className="my-0.5">
-          {isThisRevealed ? (
+          {hasNoCard || !card ? (
+            <div className="w-[60px] h-[86px] rounded-xl bg-rose-950/80 border-2 border-rose-500/60 flex flex-col items-center justify-center shadow-lg p-1 text-center animate-pulse">
+              <span className="text-xl">💀</span>
+              <span className="text-[8px] font-black text-rose-300 uppercase leading-tight mt-1">
+                Nessuna Carta
+              </span>
+              <span className="text-[7px] text-amber-300 font-bold leading-tight">
+                Auto-Sconfitta
+              </span>
+            </div>
+          ) : isThisRevealed ? (
             <div className="animate-scaleIn flex flex-col items-center">
               <PlayingCard card={card} size="xs" />
               <span className="mt-0.5 text-[9px] font-black text-amber-300 bg-amber-400/20 px-1.5 py-0.2 rounded border border-amber-400/40">
@@ -140,7 +157,7 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
             <div className="w-[60px] h-[86px] rounded-xl bg-gradient-to-br from-indigo-950 to-slate-950 border-2 border-amber-400/30 flex flex-col items-center justify-center shadow-lg animate-pulse">
               <span className="text-xl">🂠</span>
               <span className="text-[8px] font-black text-amber-300 uppercase mt-0.5">
-                Estrae...
+                Schiera...
               </span>
             </div>
           )}
@@ -152,7 +169,7 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
             isThisLoser ? (
               <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[8px] font-black uppercase flex items-center gap-0.5 animate-bounce">
                 <Skull className="w-2.5 h-2.5" />
-                {isTie ? 'PARITÀ 2🍺' : 'Beve 2🍺'}
+                {hasNoCard ? 'NO CARTA 2🍺' : isTie ? 'PARITÀ 2🍺' : 'Beve 2🍺'}
               </span>
             ) : (
               <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[8px] font-black uppercase">
@@ -161,7 +178,7 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
             )
           ) : isThisRevealed ? (
             <span className="text-[8px] text-cyan-300 font-bold uppercase animate-fadeIn">
-              Rivelata!
+              {hasNoCard ? 'Nessuna Carta!' : 'Rivelata!'}
             </span>
           ) : (
             <span className="text-[8px] text-slate-400 font-bold uppercase animate-pulse">
@@ -228,6 +245,34 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
             </div>
           )}
         </div>
+
+        {/* Scelta Carta per il Giocatore Umano (se ha opzioni numeriche in mano) */}
+        {humanParticipant && eligibleCards.length > 1 && onCommitCard && (
+          <div className="w-full py-1 px-2 rounded-xl bg-purple-950/70 border border-purple-400/40 my-0.5 flex items-center justify-between gap-1 shrink-0">
+            <span className="text-[9px] font-black uppercase text-purple-200 shrink-0">
+              Scegli tua Carta:
+            </span>
+            <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+              {eligibleCards.map((c) => {
+                const isSelected = humanParticipant.card?.id === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onCommitCard(c.id)}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-black transition cursor-pointer border shrink-0 ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow ring-1 ring-amber-400'
+                        : 'bg-white/10 hover:bg-white/20 text-slate-200 border-white/20'
+                    }`}
+                  >
+                    {c.label}{SUIT_INFO[c.suit].symbol} (Val. {c.value})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Footer: Verdict Banner + Action Button Sempre Visibili Senza Scroll */}
         <div className="w-full flex flex-col gap-1 mt-1 shrink-0">
