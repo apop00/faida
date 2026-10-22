@@ -7,6 +7,8 @@ export function SmartphoneFrame({ children }: { children: React.ReactNode }) {
   const [currentTime, setCurrentTime] = useState('23:45');
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
   const [isFrameEnabled, setIsFrameEnabled] = useState(true);
+  const [isMobilePortrait, setIsMobilePortrait] = useState(false);
+  const [dismissPortraitPrompt, setDismissPortraitPrompt] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -17,7 +19,24 @@ export function SmartphoneFrame({ children }: { children: React.ReactNode }) {
     };
     updateTime();
     const interval = setInterval(updateTime, 30000);
-    return () => clearInterval(interval);
+
+    const checkOrientation = () => {
+      if (typeof window === 'undefined') return;
+      // Detect real mobile devices in vertical/portrait mode
+      const isMobile = window.innerWidth <= 768;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      setIsMobilePortrait(isMobile && isPortrait);
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
   }, []);
 
   return (
@@ -114,6 +133,34 @@ export function SmartphoneFrame({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </div>
+
+      {/* Mobile Portrait Orientation Prompt */}
+      {isMobilePortrait && !dismissPortraitPrompt && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#070211]/95 backdrop-blur-xl text-white p-6 text-center select-none animate-fadeIn">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-500 flex items-center justify-center shadow-[0_0_50px_rgba(244,63,94,0.6)] mb-6 animate-pulse">
+            <Smartphone className="w-10 h-10 text-white rotate-90" />
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-white uppercase mb-2">
+            Ruota lo Smartphone 🔄
+          </h2>
+          <p className="text-sm font-bold text-slate-300 max-w-xs leading-relaxed mb-6">
+            Colpo Basso è progettato per essere giocato a schermo intero in <strong className="text-amber-400">orizzontale</strong> (stile UNO Mobile).
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/20 text-xs text-rose-300 font-black flex items-center justify-center gap-2 shadow-lg">
+              <span>🍺</span>
+              <span>Gira il telefono di 90° in orizzontale</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissPortraitPrompt(true)}
+              className="text-xs text-slate-400 underline hover:text-white pt-2 cursor-pointer"
+            >
+              Continua comunque in verticale
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

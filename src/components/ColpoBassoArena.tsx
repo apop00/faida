@@ -538,7 +538,7 @@ export function ColpoBassoArena({
     setSelectedCardIds([]);
   };
 
-  // Helper to render a clean, high-clarity Opponent Box in the Top Row
+  // Helper to render a clean, compact Opponent Capsule
   const renderOpponentSeat = (player: Player, orientation: 'west' | 'north' | 'east' = 'north') => {
     const idx = player.id;
     const suitMeta = SUIT_INFO[player.suit];
@@ -548,195 +548,150 @@ export function ColpoBassoArena({
     const delta = playerDeltas[idx];
     const cleanName = player.name.replace('Bot ', '').replace(' 🤖', '');
     const actualCardCount = player.hand.length;
-    const isPlayingCard = cardAnimation?.type === 'PLAY' && cardAnimation.playerIndex === idx;
-    const isDrawingCard = cardAnimation?.type === 'DRAW' && cardAnimation.playerIndex === idx;
     const isNorth = orientation === 'north';
 
     const isTargetCandidate = needsOpponentPicker;
     const effectiveTargetId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
     const isSelectedTarget = isTargetCandidate && effectiveTargetId === player.id;
 
+    if (isNorth) {
+      // NORTH OPPONENT: Ultra-sleek horizontal pill at top center (height: 32px)
+      return (
+        <div
+          key={player.id}
+          onClick={() => {
+            if (isTargetCandidate) setSelectedTargetOpponent(player.id);
+          }}
+          className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full border transition-all select-none backdrop-blur-md shadow-md ${
+            isSelectedTarget
+              ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
+              : isTargetCandidate
+              ? 'bg-[#180f2c]/90 border-purple-400/50 hover:border-purple-300 cursor-pointer'
+              : isDefender
+              ? 'bg-rose-950/90 border-rose-400 ring-2 ring-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
+              : isAttacker
+              ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.5)]'
+              : isControlling
+              ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+              : 'bg-[#120a22]/85 border-white/15'
+          }`}
+          title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
+        >
+          <PlayerAvatar
+            suit={player.suit}
+            name={player.name}
+            isAI={player.isAI}
+            isAttacker={isAttacker}
+            isDefender={isDefender}
+            isControlling={isControlling}
+            sipsDelta={delta?.sips || 0}
+            size="sm"
+          />
+          <div className="flex items-center gap-1 leading-none">
+            <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
+            <span className="text-[11px] font-black text-white truncate max-w-[70px]">{cleanName}</span>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] font-black">
+            <span className="px-1.5 py-0.5 rounded-md bg-cyan-950/90 border border-cyan-400/40 text-cyan-200">
+              🃏 {actualCardCount}
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md bg-amber-950/90 border border-amber-400/40 text-amber-300">
+              🍺 {player.sipsDrunk}
+            </span>
+          </div>
+          {isTargetCandidate && (
+            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-purple-500 text-white uppercase animate-pulse">
+              {isSelectedTarget ? '🎯 SCELTO' : '🎯 TOCCA'}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // WEST & EAST OPPONENTS: Compact side capsule (width: ~82px)
     return (
       <div
         key={player.id}
-        className={`relative select-none transition-all duration-200 ${
-          isPlayingCard || isDrawingCard ? 'scale-105' : ''
-        } ${
-          isNorth
-            ? 'flex flex-row items-center justify-center gap-2.5 sm:gap-3.5'
-            : orientation === 'west'
-            ? 'flex flex-col items-start gap-1.5'
-            : 'flex flex-col items-end gap-1.5'
+        onClick={() => {
+          if (isTargetCandidate) setSelectedTargetOpponent(player.id);
+        }}
+        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none w-full max-w-[84px] backdrop-blur-md shadow-lg ${
+          isSelectedTarget
+            ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
+            : isTargetCandidate
+            ? 'bg-[#180f2c]/90 border-purple-400/50 hover:border-purple-300 cursor-pointer'
+            : isDefender
+            ? 'bg-rose-950/90 border-rose-400 ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.6)] animate-pulse'
+            : isAttacker
+            ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.5)]'
+            : isControlling
+            ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+            : 'bg-[#120a22]/85 border-white/15'
         }`}
+        title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
       >
-        {/* Unified Player HUD Badge - High Clarity & Contrast with Bigger Numbers */}
-        <div
-          onClick={() => {
-            if (isTargetCandidate) {
-              setSelectedTargetOpponent(player.id);
-            }
-          }}
-          className={`relative flex flex-col justify-between p-2 sm:p-2.5 rounded-2xl border-2 transition-all w-full min-w-[136px] max-w-[162px] sm:max-w-[180px] shadow-xl ${
-            isSelectedTarget
-              ? 'bg-[#2a1038] border-purple-400 ring-4 ring-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.85)] scale-105 cursor-pointer z-30'
-              : isTargetCandidate
-              ? 'bg-[#1a0e33] border-purple-400/50 hover:border-purple-300 ring-2 ring-purple-400/30 cursor-pointer hover:scale-103'
-              : isDrawingCard
-              ? 'bg-[#0f2334] border-cyan-300 ring-4 ring-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.7)] animate-punch-scale'
-              : isPlayingCard
-              ? 'bg-[#291136] border-white ring-4 ring-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.7)] animate-punch-scale'
-              : isDefender
-              ? 'bg-[#2b0c1c] border-rose-400 ring-2 ring-rose-500 shadow-[0_0_22px_rgba(244,63,94,0.6)] animate-punch-scale'
-              : isAttacker
-              ? 'bg-[#2b1807] border-amber-400 ring-2 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.5)]'
-              : isControlling
-              ? 'bg-[#152520] border-emerald-400 ring-2 ring-emerald-400 animate-active-glow shadow-[0_0_22px_rgba(52,211,153,0.55)]'
-              : 'bg-[#170e30] border-white/20'
-          }`}
-        >
-          {/* Floating Animated Delta Badges (+X 🍺 / +X 🃏) */}
-          {delta && (delta.sips > 0 || delta.cards > 0) && (
-            <div className="absolute -top-3.5 right-1 z-30 flex items-center gap-1 pointer-events-none animate-bounce">
-              {delta.sips > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-rose-600 border border-amber-300 text-white text-[10px] font-black shadow-lg">
-                  +{delta.sips}🍺
-                </span>
-              )}
-              {delta.cards > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500 border border-white text-slate-950 text-[10px] font-black shadow-lg">
-                  +{delta.cards}🃏
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Top: Avatar + Name & Prominent Status Tag */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <PlayerAvatar
-              suit={player.suit}
-              name={player.name}
-              isAI={player.isAI}
-              isAttacker={isAttacker}
-              isDefender={isDefender}
-              isControlling={isControlling}
-              sipsDelta={delta?.sips || 0}
-              size="sm"
-            />
-
-            <div className="flex flex-col min-w-0 flex-1 leading-tight">
-              <div className="flex items-center gap-1">
-                <span className={`text-sm ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-                <span className="text-xs sm:text-[13px] font-black text-white truncate drop-shadow-sm">{cleanName}</span>
-              </div>
-
-              {/* High-Contrast Status Pill */}
-              {isTargetCandidate && (
-                <span
-                  className={`mt-0.5 px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm w-fit ${
-                    isSelectedTarget
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white animate-pulse'
-                      : 'bg-purple-900/80 text-purple-200 border border-purple-400/40'
-                  }`}
-                >
-                  {isSelectedTarget ? '🎯 BERSAGLIO SCELTO' : '🎯 Clicca per bersaglio'}
-                </span>
-              )}
-              {!isTargetCandidate && isDrawingCard && (
-                <span className="mt-0.5 px-1.5 py-0.5 rounded-md bg-cyan-400 text-slate-950 text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm animate-pulse w-fit">
-                  🃏 PESCA!
-                </span>
-              )}
-              {!isTargetCandidate && !isDrawingCard && isPlayingCard && (
-                <span className="mt-0.5 px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm animate-pulse w-fit">
-                  🎯 GIOCA!
-                </span>
-              )}
-              {!isTargetCandidate && !isDrawingCard && !isPlayingCard && isDefender && (
-                <span className="mt-0.5 px-1.5 py-0.5 rounded-md bg-rose-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm animate-pulse w-fit">
-                  🎯 BERSAGLIO ({state.currentSips}🍺)
-                </span>
-              )}
-              {!isTargetCandidate && !isDrawingCard && !isPlayingCard && !isDefender && isAttacker && (
-                <span className="mt-0.5 px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm w-fit">
-                  ⚔️ ATTACCO
-                </span>
-              )}
-              {!isTargetCandidate && !isDrawingCard && !isPlayingCard && !isDefender && !isAttacker && isControlling && (
-                <span className="mt-0.5 px-1.5 py-0.5 rounded-md bg-emerald-400 text-slate-950 text-[8px] sm:text-[9px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow-sm w-fit">
-                  🟢 IN TURNO
-                </span>
-              )}
-            </div>
+        {/* Floating Animated Delta Badges */}
+        {delta && (delta.sips > 0 || delta.cards > 0) && (
+          <div className="absolute -top-3 right-0 z-30 flex items-center gap-0.5 pointer-events-none animate-bounce">
+            {delta.sips > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-rose-600 border border-amber-300 text-white text-[9px] font-black">
+                +{delta.sips}🍺
+              </span>
+            )}
+            {delta.cards > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-cyan-500 border border-white text-slate-950 text-[9px] font-black">
+                +{delta.cards}🃏
+              </span>
+            )}
           </div>
+        )}
 
-          {/* Bottom: High-Visibility Color-Coded Chips with BIGGER numbers (🃏 Carte | 🍺 Sorsi) */}
-          <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-white/15">
-            <div
-              className="flex-1 flex items-center justify-center gap-1.5 py-1 px-1.5 rounded-xl bg-cyan-950/80 border border-cyan-400/60 shadow-sm"
-              title={`${actualCardCount} carte in mano`}
-            >
-              <span className="text-xs sm:text-sm">🃏</span>
-              <span className="text-sm sm:text-base font-black text-cyan-200 drop-shadow">{actualCardCount}</span>
-            </div>
-            <div
-              className="flex-1 flex items-center justify-center gap-1.5 py-1 px-1.5 rounded-xl bg-amber-950/80 border border-amber-400/60 shadow-sm"
-              title={`${player.sipsDrunk} sorsi bevuti`}
-            >
-              <span className="text-xs sm:text-sm">🍺</span>
-              <span className="text-sm sm:text-base font-black text-amber-300 drop-shadow">{player.sipsDrunk}</span>
-            </div>
-          </div>
+        <PlayerAvatar
+          suit={player.suit}
+          name={player.name}
+          isAI={player.isAI}
+          isAttacker={isAttacker}
+          isDefender={isDefender}
+          isControlling={isControlling}
+          sipsDelta={delta?.sips || 0}
+          size="sm"
+        />
+
+        <div className="flex items-center gap-0.5 mt-1 leading-none">
+          <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
+          <span className="text-[10px] font-black text-white truncate max-w-[60px]">{cleanName}</span>
         </div>
 
-        {/* 3D Larger Card-Back Fan facing towards center or to the side for North! */}
-        {actualCardCount > 0 && (
-          <div
-            className={`flex items-center justify-center pointer-events-none transition-transform shrink-0 ${
-              isDrawingCard ? 'scale-110' : ''
-            } ${
-              isNorth
-                ? 'self-center pl-1'
-                : orientation === 'west'
-                ? 'self-end pl-1 mt-1'
-                : 'self-start pr-1 mt-1'
-            }`}
-            title={`${actualCardCount} carte in mano`}
-          >
-            <div
-              className={`flex items-center ${
-                actualCardCount > 8
-                  ? '-space-x-4 sm:-space-x-5'
-                  : actualCardCount > 5
-                  ? '-space-x-3.5 sm:-space-x-4'
-                  : '-space-x-2.5 sm:-space-x-3'
-              }`}
-            >
-              {Array.from({ length: actualCardCount }).map((_, cIdx) => {
-                const angleStep = Math.min(30 / Math.max(actualCardCount - 1, 1), 6);
-                const angle =
-                  orientation === 'north'
-                    ? (cIdx - (actualCardCount - 1) / 2) * angleStep
-                    : orientation === 'west'
-                    ? (cIdx - (actualCardCount - 1) / 2) * (angleStep * 0.7) + 12
-                    : (cIdx - (actualCardCount - 1) / 2) * (angleStep * 0.7) - 12;
+        {/* Counter chips */}
+        <div className="flex items-center gap-1 mt-1 text-[9px] font-black w-full justify-center">
+          <span className="px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/30 text-cyan-200">
+            🃏{actualCardCount}
+          </span>
+          <span className="px-1 py-0.5 rounded bg-amber-950/80 border border-amber-400/30 text-amber-300">
+            🍺{player.sipsDrunk}
+          </span>
+        </div>
 
-                return (
-                  <div
-                    key={cIdx}
-                    style={{
-                      transform: `rotate(${angle}deg)`,
-                      transformOrigin: 'bottom center',
-                    }}
-                    className="w-[28px] h-[40px] sm:w-[32px] sm:h-[46px] rounded-lg bg-gradient-to-br from-[#2f185c] via-[#160830] to-[#090216] border-2 border-cyan-400/60 shadow-lg flex flex-col items-center justify-center shrink-0 transition-transform duration-200"
-                  >
-                    <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center shadow-inner">
-                      <span className="text-[7px] sm:text-[9px]">🍺</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* Status tag */}
+        {isTargetCandidate && (
+          <span className="mt-1 text-[7px] font-black px-1 py-0.5 rounded bg-purple-500 text-white uppercase text-center w-full truncate">
+            {isSelectedTarget ? '🎯 SCELTO' : '🎯 TOCCA'}
+          </span>
+        )}
+        {!isTargetCandidate && isDefender && (
+          <span className="mt-1 text-[7px] font-black px-1 py-0.5 rounded bg-rose-600 text-white uppercase text-center w-full truncate animate-pulse">
+            BERSAGLIO
+          </span>
+        )}
+        {!isTargetCandidate && !isDefender && isAttacker && (
+          <span className="mt-1 text-[7px] font-black px-1 py-0.5 rounded bg-amber-400 text-slate-950 uppercase text-center w-full truncate">
+            ATTACCO
+          </span>
+        )}
+        {!isTargetCandidate && !isDefender && !isAttacker && isControlling && (
+          <span className="mt-1 text-[7px] font-black px-1 py-0.5 rounded bg-emerald-400 text-slate-950 uppercase text-center w-full truncate">
+            TURNO
+          </span>
         )}
       </div>
     );
@@ -858,39 +813,26 @@ export function ColpoBassoArena({
         <span className="text-[11px] font-black">{SUIT_INFO[state.topCard.suit].name}</span>
       </div>
 
-      {/* Avviso Inattività 10 Secondi "TOCCA A TE!" */}
+      {/* Avviso Inattività 10 Secondi "TOCCA A TE!" Compatto e Discreto */}
       {idleTurnReminder && canLocalUserAct && (
         <div
           onClick={() => setIdleTurnReminder(false)}
-          className="absolute top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-[0_0_30px_rgba(245,158,11,0.9)] border-2 border-white flex items-center gap-2.5 animate-bounce cursor-pointer select-none"
+          className="absolute top-11 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-amber-400 text-slate-950 font-black shadow-lg border border-white flex items-center gap-2 cursor-pointer select-none animate-bounce"
           title="Tocca per chiudere"
         >
-          <span className="text-base">⏰</span>
-          <div className="flex flex-col leading-tight">
-            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-950 drop-shadow-sm">
-              TOCCA A TE!
-            </span>
-            <span className="text-[10px] font-extrabold text-slate-900/95">
-              {state.mode === 'ATTACK_CHAIN'
-                ? `Difenditi o bevi ${state.currentSips} sorsi!`
-                : 'Gioca una carta valida o tocca il mazzo per pescare.'}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIdleTurnReminder(false);
-            }}
-            className="ml-1 p-1 rounded-full bg-black/20 hover:bg-black/40 text-slate-950 font-black text-xs"
-          >
-            ✕
-          </button>
+          <span className="text-xs">⏰</span>
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-950">
+            TOCCA A TE!
+          </span>
+          <span className="text-[9px] font-bold text-slate-900 truncate max-w-[150px]">
+            {state.mode === 'ATTACK_CHAIN' ? `Difenditi (${state.currentSips}🍺)` : 'Gioca o pesca'}
+          </span>
+          <span className="text-[10px] font-black ml-1">✕</span>
         </div>
       )}
 
       {/* 2. TAVOLO CENTRALE IN PROSPETTIVA 2.5D (4 LATI, FELTRO INCLINATO) */}
-      <section className="relative px-2 py-1 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-hidden perspective-arena">
+      <section className="relative px-1.5 py-1 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-hidden perspective-arena">
         {/* Traiettoria d'Attacco Laser al Neon animata */}
         <AttackTrajectoryOverlay
           state={state}
@@ -898,7 +840,7 @@ export function ColpoBassoArena({
         />
 
         {/* LATO SINISTRO: AVVERSARIO 1 (Ovest ♦) */}
-        <div className="w-[125px] sm:w-[145px] shrink-0 self-center z-20">
+        <div className="w-[84px] sm:w-[94px] shrink-0 self-center z-20 flex justify-center">
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
         </div>
 
@@ -1095,7 +1037,7 @@ export function ColpoBassoArena({
         </div>
 
         {/* LATO DESTRO: AVVERSARIO 3 (Est ♠) */}
-        <div className="w-[125px] sm:w-[145px] shrink-0 self-center z-20">
+        <div className="w-[84px] sm:w-[94px] shrink-0 self-center z-20 flex justify-center">
           {state.players[3] && renderOpponentSeat(state.players[3], 'east')}
         </div>
 
@@ -1190,10 +1132,10 @@ export function ColpoBassoArena({
           )}
 
         {/* CONTENITORE 3 COLONNE (PROFILO SX | MANO CENTRO | AZIONI DX) */}
-        <div className="flex items-end justify-between gap-1.5 sm:gap-2.5 w-full">
-          {/* COLONNA 1 (SX): PROFILO GIOCATORE LOCALE (Chiaro, Robusto & Leggibile) */}
-          <div className="flex flex-col items-center justify-between p-2 rounded-2xl bg-gradient-to-b from-[#180f33]/90 to-[#0c061a]/95 border border-white/20 w-[100px] sm:w-[120px] h-[130px] sm:h-[138px] shrink-0 shadow-2xl select-none mb-1">
-            <div className="flex flex-col items-center gap-1 w-full">
+        <div className="flex items-end justify-between gap-1 sm:gap-2 w-full">
+          {/* COLONNA 1 (SX): PROFILO GIOCATORE LOCALE COMPATTO */}
+          <div className="flex flex-col items-center justify-between p-1.5 rounded-2xl bg-[#120a22]/90 border border-white/15 w-[80px] sm:w-[88px] shrink-0 shadow-lg select-none mb-0.5">
+            <div className="flex items-center gap-1 w-full justify-center">
               <PlayerAvatar
                 suit={displayedHandPlayer.suit}
                 name={displayedHandPlayer.name}
@@ -1204,44 +1146,30 @@ export function ColpoBassoArena({
                 sipsDelta={playerDeltas[displayedHandPlayer.id]?.sips || 0}
                 size="sm"
               />
-              <div className="flex items-center gap-1 leading-none">
-                <span className={`text-xs ${SUIT_INFO[displayedHandPlayer.suit].neonText}`}>
-                  {SUIT_INFO[displayedHandPlayer.suit].symbol}
-                </span>
-                <span className="text-xs sm:text-[13px] font-black text-white truncate max-w-[70px] drop-shadow-sm">
-                  {displayedHandPlayer.name}
-                </span>
-              </div>
+              <span className={`text-xs ${SUIT_INFO[displayedHandPlayer.suit].neonText}`}>
+                {SUIT_INFO[displayedHandPlayer.suit].symbol}
+              </span>
+            </div>
+            <span className="text-[10px] font-black text-white truncate max-w-[68px] mt-0.5">
+              {displayedHandPlayer.name}
+            </span>
+
+            {/* Chip Contatori Colorate ad Alto Contrasto */}
+            <div className="flex items-center gap-1 mt-1 text-[9px] font-black w-full justify-center">
+              <span className="px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/40 text-cyan-200">
+                🃏{displayedHandPlayer.hand.length}
+              </span>
+              <span className="px-1 py-0.5 rounded bg-amber-950/80 border border-amber-400/40 text-amber-300">
+                🍺{displayedHandPlayer.sipsDrunk}
+              </span>
             </div>
 
-            {/* Chip Contatori Colorate ad Alto Contrasto con Numeri Grandi */}
-            <div className="flex items-center justify-between gap-1 w-full border-t border-white/15 pt-1">
-              <div
-                className="flex-1 flex items-center justify-center gap-1 py-0.5 px-1 rounded-xl bg-cyan-950/80 border border-cyan-400/60 shadow-sm"
-                title={`${displayedHandPlayer.hand.length} carte in mano`}
-              >
-                <span className="text-xs">🃏</span>
-                <span className="text-xs sm:text-sm font-black text-cyan-200 drop-shadow">
-                  {displayedHandPlayer.hand.length}
-                </span>
-              </div>
-              <div
-                className="flex-1 flex items-center justify-center gap-1 py-0.5 px-1 rounded-xl bg-amber-950/80 border border-amber-400/60 shadow-sm"
-                title={`${displayedHandPlayer.sipsDrunk} sorsi bevuti`}
-              >
-                <span className="text-xs">🍺</span>
-                <span className="text-xs sm:text-sm font-black text-amber-300 drop-shadow">
-                  {displayedHandPlayer.sipsDrunk}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 w-full justify-center pt-0.5">
+            <div className="flex items-center gap-1 w-full justify-center pt-1">
               {bonusCards.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowBonusModal(true)}
-                  className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] uppercase tracking-wider cursor-pointer shadow hover:bg-amber-300 active:scale-95 transition"
+                  className="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[8px] uppercase tracking-wider cursor-pointer shadow hover:bg-amber-300 active:scale-95 transition"
                 >
                   🎯 3🍺
                 </button>
@@ -1250,7 +1178,7 @@ export function ColpoBassoArena({
                 <button
                   type="button"
                   onClick={() => setWrapHandCards((v) => !v)}
-                  className={`px-1.5 py-0.5 rounded-lg border text-[9px] font-bold flex items-center gap-0.5 cursor-pointer ${
+                  className={`px-1 py-0.5 rounded-md border text-[8px] font-bold flex items-center gap-0.5 cursor-pointer ${
                     wrapHandCards
                       ? 'bg-cyan-400 text-slate-950 border-cyan-300 font-black'
                       : 'bg-white/10 border-white/15 text-slate-200'
@@ -1264,10 +1192,10 @@ export function ColpoBassoArena({
             </div>
           </div>
 
-          {/* COLONNA 2 (CENTRO): MANO DI CARTE SOLLEVATA E IN PRIMO PIANO ASSOLUTO */}
+          {/* COLONNA 2 (CENTRO): MANO DI CARTE PULITA E IN PRIMO PIANO */}
           <div
-            className={`flex-1 min-w-0 h-[175px] sm:h-[190px] -mt-8 sm:-mt-10 relative flex items-end overflow-visible ${
-              canLocalUserAct ? 'z-50 drop-shadow-[0_16px_30px_rgba(0,0,0,0.85)]' : 'z-30'
+            className={`flex-1 min-w-0 h-[124px] sm:h-[132px] relative flex items-end overflow-visible ${
+              canLocalUserAct ? 'z-50 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]' : 'z-30'
             }`}
           >
             {hideHandPrivacy ? (
@@ -1367,8 +1295,8 @@ export function ColpoBassoArena({
                       }}
                       className={
                         wrapHandCards
-                          ? 'flex flex-wrap items-end justify-center gap-1.5 pt-8 pb-2 px-1 max-h-[175px] overflow-y-auto w-full'
-                          : 'flex items-end overflow-x-auto scroll-smooth touch-pan-x pt-10 pb-2 px-4 h-full w-full select-none'
+                          ? 'flex flex-wrap items-end justify-center gap-1.5 pt-2 pb-1 px-1 max-h-[125px] overflow-y-auto w-full'
+                          : 'flex items-end overflow-x-auto scroll-smooth touch-pan-x pt-2 pb-1 px-2 h-full w-full select-none'
                       }
                     >
                       {handCards.map(({ card, playability }, cIdx) => {
@@ -1416,7 +1344,7 @@ export function ColpoBassoArena({
           </div>
 
           {/* COLONNA 3 (DX): PULSANTI D'AZIONE ERGONOMICI SOTTO IL POLLICE DESTRO */}
-          <div className="w-[145px] sm:w-[175px] shrink-0 h-[130px] sm:h-[138px] flex flex-col justify-center gap-1.5 select-none self-end mb-1 relative">
+          <div className="w-[115px] sm:w-[130px] shrink-0 h-[124px] sm:h-[132px] flex flex-col justify-end gap-1 select-none self-end mb-0.5 relative">
             {/* Sleek Compact Target Selector Pill Anchored Above Action Column */}
             {needsOpponentPicker && (
               <div className="absolute -top-10 right-0 z-40 flex items-center gap-1 py-1 px-1.5 rounded-xl bg-[#140b2a]/95 border border-purple-400/60 shadow-[0_4px_20px_rgba(168,85,247,0.4)] backdrop-blur-md">

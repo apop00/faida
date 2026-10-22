@@ -28,7 +28,7 @@ export function TurnAlertModal({ alert, onDismiss }: TurnAlertModalProps) {
       const timer = setTimeout(() => {
         setVisible(false);
         onDismiss();
-      }, 1800);
+      }, 1200);
       return () => clearTimeout(timer);
     } else {
       setVisible(false);
@@ -42,22 +42,22 @@ export function TurnAlertModal({ alert, onDismiss }: TurnAlertModalProps) {
   const isSpecial = alert.mode === 'SPECIAL_EVENT';
 
   return (
-    <div className="fixed top-14 left-1/2 -translate-x-1/2 z-40 pointer-events-none select-none animate-fadeIn transition-all duration-300">
+    <div className="fixed top-11 left-1/2 -translate-x-1/2 z-40 pointer-events-none select-none animate-fadeIn transition-all duration-200">
       <div
-        className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl border-2 backdrop-blur-md shadow-2xl ${
+        className={`flex items-center gap-2 px-3 py-1 rounded-full border shadow-xl backdrop-blur-md ${
           isAttackChain
-            ? 'bg-rose-950/90 border-rose-400 text-rose-100 shadow-[0_0_35px_rgba(244,63,94,0.5)]'
+            ? 'bg-rose-950/90 border-rose-400 text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.5)]'
             : isSpecial
-            ? 'bg-purple-950/90 border-purple-400 text-purple-100 shadow-[0_0_35px_rgba(168,85,247,0.5)]'
-            : 'bg-cyan-950/90 border-cyan-400 text-cyan-100 shadow-[0_0_35px_rgba(34,211,238,0.5)]'
+            ? 'bg-purple-950/90 border-purple-400 text-purple-100 shadow-[0_0_20px_rgba(168,85,247,0.5)]'
+            : 'bg-cyan-950/90 border-cyan-400 text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.5)]'
         }`}
       >
         {isAttackChain ? (
-          <ShieldAlert className="w-5 h-5 text-rose-400 animate-bounce shrink-0" />
+          <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
         ) : isSpecial ? (
-          <Zap className="w-5 h-5 text-purple-400 animate-bounce shrink-0" />
+          <Zap className="w-4 h-4 text-purple-400 shrink-0" />
         ) : (
-          <Swords className="w-5 h-5 text-cyan-400 animate-bounce shrink-0" />
+          <Swords className="w-4 h-4 text-cyan-400 shrink-0" />
         )}
 
         <div className="flex flex-col text-left">
