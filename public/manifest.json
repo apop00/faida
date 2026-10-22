@@ -1,0 +1,18 @@
+{
+  "name": "Colpo Basso: Faida di Semi",
+  "short_name": "Colpo Basso",
+  "description": "Il party drinking game di carte a 4 fazioni",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#05020a",
+  "theme_color": "#05020a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
