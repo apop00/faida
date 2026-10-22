@@ -2620,8 +2620,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             participants,
             phase: 'ACTIVE',
             targetCoords: {
-              top: 35 + Math.floor(Math.random() * 30),
-              left: 25 + Math.floor(Math.random() * 50),
+              top: 25 + Math.floor(Math.random() * 45),
+              left: 15 + Math.floor(Math.random() * 70),
             },
           };
 

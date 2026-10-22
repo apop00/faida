@@ -115,98 +115,115 @@ export function ReflexMiniGameModal({
     return 0;
   });
 
+  const targetTop = Math.min(75, Math.max(22, reflex.targetCoords?.top ?? 50));
+  const targetLeft = Math.min(85, Math.max(15, reflex.targetCoords?.left ?? 50));
+
+  // =======================================================================
+  // FASE ATTIVA: Bersaglio piccolo a schermo in posizione random, HUD in alto
+  // =======================================================================
+  if (reflex.phase === 'ACTIVE') {
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-[95] select-none pointer-events-auto overflow-hidden animate-in fade-in duration-150"
+      >
+        {/* Sfondo soft / allarme con bagliore ambrato pulsante */}
+        <div className="absolute inset-0 bg-yellow-950/20 backdrop-blur-[1px] pointer-events-none border-4 border-yellow-400/40 animate-pulse" />
+
+        {/* HUD In Alto: Avviso rapido e barra conto alla rovescia 2.0s */}
+        <div className="absolute top-2 inset-x-0 mx-auto max-w-xs sm:max-w-sm px-3 py-1.5 rounded-2xl bg-gradient-to-r from-yellow-500/95 via-amber-500/95 to-yellow-500/95 border-2 border-white shadow-[0_0_25px_rgba(250,204,21,0.8)] text-slate-950 flex flex-col items-center z-20 pointer-events-none animate-in slide-in-from-top-3 duration-200">
+          <div className="flex items-center justify-between w-full text-[10px] sm:text-[11px] font-black uppercase tracking-wider">
+            <span className="flex items-center gap-1 text-slate-950">
+              <Zap className="w-3.5 h-3.5 fill-slate-950 animate-bounce" />
+              <span>RIFLESSI: TOCCA IL BERSAGLIO!</span>
+            </span>
+            <span className="flex items-center gap-1 font-mono font-black text-rose-950 bg-yellow-300/80 px-1.5 py-0.2 rounded border border-slate-950/20">
+              <Clock className="w-3 h-3" />
+              <span>{(timeLeftMs / 1000).toFixed(2)}s</span>
+            </span>
+          </div>
+          <div className="w-full h-1.5 rounded-full bg-slate-950/40 overflow-hidden mt-1 p-0.5 border border-slate-950/20">
+            <div
+              className="h-full rounded-full transition-all duration-75 bg-gradient-to-r from-emerald-400 via-yellow-200 to-rose-600 shadow"
+              style={{ width: `${(timeLeftMs / 2000) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* BERSAGLIO COMPATTO (Piccolo per richiedere colpo d'occhio e precisione) */}
+        <div
+          style={{
+            top: `${targetTop}%`,
+            left: `${targetLeft}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+          className="absolute z-30 flex flex-col items-center pointer-events-auto"
+        >
+          {/* Anelli pulsanti radar esterni */}
+          {!hasHumanTapped && (
+            <>
+              <div className="absolute -inset-2.5 rounded-full border-2 border-yellow-400/70 animate-ping pointer-events-none" />
+              <div className="absolute -inset-1 rounded-full border border-amber-300/80 animate-pulse pointer-events-none" />
+            </>
+          )}
+
+          {/* Pulsante Bersaglio Compatto */}
+          <button
+            type="button"
+            disabled={hasHumanTapped}
+            onClick={handleHumanTap}
+            className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center shadow-[0_0_25px_rgba(250,204,21,0.9)] transition-all duration-150 transform select-none cursor-pointer border-2 ${
+              hasHumanTapped
+                ? 'bg-emerald-600 border-white scale-95 shadow-[0_0_20px_#10b981]'
+                : 'bg-gradient-to-tr from-yellow-500 via-amber-400 to-rose-500 hover:scale-110 active:scale-90 border-white animate-pulse'
+            }`}
+            title="Tocca il bersaglio!"
+          >
+            {hasHumanTapped ? (
+              <span className="text-xl">✅</span>
+            ) : (
+              <Target className="w-6 h-6 sm:w-7 sm:h-7 text-slate-950 fill-yellow-200 stroke-[2.5]" />
+            )}
+          </button>
+
+          {/* Badge fluttuante sotto al bersaglio */}
+          {hasHumanTapped ? (
+            <span className="mt-1 px-1.5 py-0.2 rounded-md bg-emerald-600/95 text-white text-[9px] font-black uppercase tracking-tight shadow border border-white/40 whitespace-nowrap animate-scaleIn">
+              SALVO! {(humanParticipant?.tapTimeMs || 0)}ms
+            </span>
+          ) : (
+            <span className="mt-1 px-1.5 py-0.2 rounded-md bg-slate-950/85 text-yellow-300 text-[8.5px] font-black uppercase tracking-wider shadow border border-yellow-400/40 whitespace-nowrap animate-bounce">
+              QUI! 🎯
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // =======================================================================
+  // FASE RISOLTA: Podio, penitenza del più lento e classifica tempi
+  // =======================================================================
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 select-none animate-in fade-in duration-200"
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 select-none animate-in fade-in duration-200"
     >
-      {/* Electrified Neon Backdrop Aura */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(234,179,8,0.25)_0%,rgba(0,0,0,0.85)_70%)] pointer-events-none" />
-
-      {/* Main Container */}
-      <div className="relative w-full max-w-sm sm:max-w-md rounded-3xl bg-gradient-to-b from-[#251b04] via-[#150d02] to-[#0a0500] border-2 border-yellow-400 shadow-[0_0_60px_rgba(250,204,21,0.5)] p-4 text-slate-100 flex flex-col items-center overflow-hidden">
+      <div className="relative w-full max-w-sm sm:max-w-md rounded-3xl bg-gradient-to-b from-[#251b04] via-[#150d02] to-[#0a0500] border-2 border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.5)] p-4 text-slate-100 flex flex-col items-center overflow-hidden">
         {/* Warning Stripes Top Accent */}
         <div className="absolute top-0 inset-x-0 h-1.5 bg-[repeating-linear-gradient(45deg,#eab308,#eab308_10px,#000_10px,#000_20px)] opacity-80" />
 
         {/* Header Badge */}
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-lg mb-2 mt-1">
-          <Zap className="w-3.5 h-3.5 fill-slate-950 animate-bounce" />
-          <span>MINI-GIOCO LAMPORIFLESSI</span>
+          <Zap className="w-3.5 h-3.5 fill-slate-950" />
+          <span>MINI-GIOCO RIFLESSI: VERDETTO</span>
         </div>
 
-        <h2 className="text-base sm:text-lg font-black text-yellow-300 uppercase tracking-tight text-center drop-shadow-md flex items-center gap-1.5">
-          <Target className="w-5 h-5 text-yellow-400 animate-spin" />
-          <span>TOCCA IL BERSAGLIO!</span>
-        </h2>
-        <p className="text-[10px] sm:text-xs text-yellow-100/90 text-center font-bold">
-          {reflex.phase === 'ACTIVE'
-            ? "L'ultimo a toccare beve 1 sorso e pesca 1 carta!"
-            : 'Sfida conclusa! Ecco i tempi di reazione:'}
-        </p>
-
-        {/* 2.0s Timer Bar */}
-        {reflex.phase === 'ACTIVE' && (
-          <div className="w-full mt-2.5 mb-2">
-            <div className="flex items-center justify-between text-[10px] font-black uppercase mb-1">
-              <span className="text-yellow-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span>{(timeLeftMs / 1000).toFixed(2)}s</span>
-              </span>
-              <span className="text-amber-300">Tempo Limite: 2.00s</span>
-            </div>
-            <div className="w-full h-2 rounded-full bg-black/60 border border-yellow-400/40 overflow-hidden p-0.5">
-              <div
-                className="h-full rounded-full transition-all duration-75 bg-gradient-to-r from-yellow-400 via-amber-500 to-rose-600 shadow-[0_0_10px_#eab308]"
-                style={{ width: `${(timeLeftMs / 2000) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* TARGET BUTTON (ACTIVE PHASE) */}
-        {reflex.phase === 'ACTIVE' && (
-          <div className="my-4 relative flex items-center justify-center">
-            {/* Outer expanding target pulse rings */}
-            <div className="absolute w-36 h-36 rounded-full border-2 border-yellow-400/40 animate-ping pointer-events-none" />
-            <div className="absolute w-28 h-28 rounded-full border-2 border-amber-400/60 animate-pulse pointer-events-none" />
-
-            {/* Tap Button */}
-            <button
-              type="button"
-              disabled={hasHumanTapped}
-              onClick={handleHumanTap}
-              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex flex-col items-center justify-center gap-1 shadow-2xl transition-all duration-150 transform select-none cursor-pointer border-4 ${
-                hasHumanTapped
-                  ? 'bg-emerald-600 border-emerald-300 scale-95 opacity-90 shadow-[0_0_25px_#10b981]'
-                  : 'bg-gradient-to-tr from-yellow-500 via-amber-400 to-yellow-300 hover:from-yellow-400 hover:to-amber-300 active:scale-90 border-white shadow-[0_0_40px_rgba(250,204,21,0.9)] animate-bounce'
-              }`}
-            >
-              {hasHumanTapped ? (
-                <>
-                  <span className="text-2xl">✅</span>
-                  <span className="text-[10px] font-black text-white uppercase tracking-tight">
-                    SALVO!
-                  </span>
-                  <span className="text-[9px] font-bold text-emerald-100">
-                    {(humanParticipant?.tapTimeMs || 0)}ms
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-slate-950 fill-slate-950" />
-                  <span className="text-[11px] sm:text-xs font-black text-slate-950 uppercase tracking-widest leading-none">
-                    TOCCA!
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* RESULTS PHASE: PODIUM & PENALTY */}
-        {reflex.phase === 'RESOLVED' && loserParticipant && (
-          <div className="w-full my-3 p-3 rounded-2xl bg-black/60 border-2 border-rose-500/80 shadow-[0_0_30px_rgba(244,63,94,0.4)] flex flex-col items-center animate-in zoom-in-95 duration-200">
+        {/* RESULTS: PODIUM & PENALTY */}
+        {loserParticipant && (
+          <div className="w-full my-2 p-3 rounded-2xl bg-black/60 border-2 border-rose-500/80 shadow-[0_0_30px_rgba(244,63,94,0.4)] flex flex-col items-center animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-1 text-rose-400 font-black text-xs uppercase tracking-wider mb-1">
               <Skull className="w-4 h-4 animate-bounce" />
               <span>IL PIÙ LENTO È STATO:</span>
@@ -232,12 +249,12 @@ export function ReflexMiniGameModal({
         {/* LIVE PLAYERS STATUS / SCORES */}
         <div className="w-full mt-2 pt-2 border-t border-white/10 flex flex-col gap-1.5">
           <span className="text-[9px] font-black uppercase tracking-wider text-yellow-300/80 text-center">
-            Classifica Riflessi al Tavolo
+            Classifica Tempi di Reazione
           </span>
           <div className="grid grid-cols-2 gap-1.5">
             {sortedParticipants.map((p, idx) => {
-              const isLoser = reflex.phase === 'RESOLVED' && p.playerIndex === reflex.loserIndex;
-              const isFastest = reflex.phase === 'RESOLVED' && idx === 0 && p.tapped;
+              const isLoser = p.playerIndex === reflex.loserIndex;
+              const isFastest = idx === 0 && p.tapped;
               const isMe = p.playerIndex === clientPlayerIndex;
 
               return (
@@ -262,7 +279,7 @@ export function ReflexMiniGameModal({
                     ) : p.tapped ? (
                       <span className="text-emerald-300">{(p.tapTimeMs || 0)}ms</span>
                     ) : (
-                      <span className="text-yellow-400 animate-pulse">⏳ In attesa</span>
+                      <span className="text-yellow-400 animate-pulse">⏳ Lento</span>
                     )}
                   </span>
                 </div>
@@ -272,15 +289,13 @@ export function ReflexMiniGameModal({
         </div>
 
         {/* Continue Button on Resolved */}
-        {reflex.phase === 'RESOLVED' && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer"
-          >
-            Continua Partita
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer"
+        >
+          Continua Partita
+        </button>
       </div>
     </div>
   );
