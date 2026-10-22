@@ -645,3 +645,47 @@ export function playReflexFailSound() {
   }
 }
 
+/**
+ * Playful cartoon bottle launch / whoosh sound with cork pop
+ */
+export function playBottleLaunchSound() {
+  if (typeof window === 'undefined' || !isSfxEnabled()) return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    // 1. Playful ascending whoosh slide (240 -> 640 Hz)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(640, now + 0.18);
+    osc.frequency.exponentialRampToValueAtTime(420, now + 0.28);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.32);
+
+    // 2. Bubbly cork pop harmonic
+    const pop = ctx.createOscillator();
+    const popGain = ctx.createGain();
+    pop.type = 'triangle';
+    pop.frequency.setValueAtTime(380, now + 0.04);
+    pop.frequency.exponentialRampToValueAtTime(820, now + 0.12);
+    popGain.gain.setValueAtTime(0.12, now + 0.04);
+    popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    pop.connect(popGain);
+    popGain.connect(ctx.destination);
+    pop.start(now + 0.04);
+    pop.stop(now + 0.2);
+  } catch {
+    // Fallback
+  }
+}
+

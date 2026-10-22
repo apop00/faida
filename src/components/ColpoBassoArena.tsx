@@ -1358,6 +1358,12 @@ export function ColpoBassoArena({
 
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      {/* Traiettoria d'Attacco & Lancio Bottiglia di Birra (copre l'intera arena da Nord a Sud) */}
+      <AttackTrajectoryOverlay
+        state={state}
+        controllingPlayerIndex={controllingPlayerIndex}
+      />
+
       {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
       <header className="shrink-0 w-full flex items-center justify-between px-2 pt-1 pb-1 z-30 select-none bg-gradient-to-b from-[#090514]/95 via-[#090514]/80 to-transparent">
         {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
@@ -1440,12 +1446,6 @@ export function ColpoBassoArena({
 
       {/* 2. TAVOLO CENTRALE IN PROSPETTIVA 2.5D (4 LATI, FELTRO INCLINATO) */}
       <section className="relative px-1.5 py-0.5 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-visible perspective-arena">
-        {/* Traiettoria d'Attacco Laser al Neon animata */}
-        <AttackTrajectoryOverlay
-          state={state}
-          controllingPlayerIndex={controllingPlayerIndex}
-        />
-
         {/* LATO SINISTRO: AVVERSARIO 1 (Ovest ♦) */}
         <div className="shrink-0 self-center z-20 flex justify-center">
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}

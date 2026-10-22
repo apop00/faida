@@ -122,6 +122,47 @@ body {
   animation: laserDash 0.8s linear infinite;
 }
 
+@keyframes beerDash {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+
+@keyframes bottleWobble {
+  0% { transform: scale(0.92) rotate(-22deg); }
+  25% { transform: scale(1.1) rotate(12deg); }
+  50% { transform: scale(1.22) rotate(32deg); }
+  75% { transform: scale(1.08) rotate(10deg); }
+  100% { transform: scale(0.92) rotate(-22deg); }
+}
+
+@keyframes comicBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3.5px) scale(1.05); }
+}
+
+@keyframes foamPulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+.animate-beer-dash {
+  animation: beerDash 1.6s linear infinite;
+}
+
+.animate-bottle-spin {
+  animation: bottleWobble 1.6s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.animate-comic-bounce {
+  animation: comicBounce 0.9s ease-in-out infinite;
+}
+
+.animate-foam-pulse {
+  animation: foamPulse 0.8s ease-in-out infinite;
+}
+
 .animate-light-sweep {
   animation: lightSweep 1.8s ease-in-out infinite;
 }
