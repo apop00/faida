@@ -1576,8 +1576,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'DEAL_SIP_PENALTY_CARD': {
-      if (state.mode !== 'NEUTRAL_FLOW') return state;
-      const activeIdx = state.activePlayerIndex;
+      const isNeutral = state.mode === 'NEUTRAL_FLOW';
+      const isAttackDefending = state.mode === 'ATTACK_CHAIN';
+      if (!isNeutral && !isAttackDefending) return state;
+
+      const activeIdx = isAttackDefending
+        ? (state.defenderIndex ?? state.activePlayerIndex)
+        : state.activePlayerIndex;
       const activeP = state.players[activeIdx];
       const threshold = state.deckConfig?.sipRewardThreshold;
       const available = getAvailableSipCards(activeP, threshold);
@@ -1631,9 +1636,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'DRINK_VOLUNTARY_SIP': {
-      if (state.mode !== 'NEUTRAL_FLOW') return state;
+      const isNeutral = state.mode === 'NEUTRAL_FLOW';
+      const isAttackDefending = state.mode === 'ATTACK_CHAIN';
+      if (!isNeutral && !isAttackDefending) return state;
       if (!state.deckConfig?.allowVoluntarySip) return state;
-      const activeIdx = state.activePlayerIndex;
+
+      const activeIdx = isAttackDefending
+        ? (state.defenderIndex ?? state.activePlayerIndex)
+        : state.activePlayerIndex;
       const activeP = state.players[activeIdx];
       const threshold = state.deckConfig?.sipRewardThreshold;
 
@@ -1659,15 +1669,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastActionBanner: {
           title: unlockedNew ? 'Sorso Tattico: SBLOCCO! 🍻' : 'Sorso Tattico! 🍺',
           subtitle: unlockedNew
-            ? `${activeP.name} beve 1 sorso (${nextSipsDrunk}🍺) e sblocca +1 carta da far pescare!`
-            : `${activeP.name} beve volontariamente 1 sorso (${nextSipsDrunk}🍺)`,
+            ? `${activeP.name} ha sbloccato 1 carta penalità da dare (+1🃏)!`
+            : `${activeP.name} beve 1 sorso tattico volontario.`,
           tone: 'drink',
         },
         logs: [
           makeLog(
             unlockedNew
-              ? `🍻 Sorso Tattico! ${activeP.name} beve 1 sorso volontario (${nextSipsDrunk}🍺) e raggiunge la soglia per far pescare 1 carta a un avversario!`
-              : `🍺 Sorso Tattico: ${activeP.name} beve 1 sorso volontario (${nextSipsDrunk}🍺).`,
+              ? `🍻 Sorso Tattico! ${activeP.name} beve 1 sorso (${nextSipsDrunk}🍺 totali) e sblocca una carta da far pescare!`
+              : `🍺 Sorso Tattico! ${activeP.name} beve 1 sorso volontario (${nextSipsDrunk}🍺 totali).`,
             'drink'
           ),
           ...state.logs,
@@ -4122,6 +4132,14 @@ export function computeAIMove(state: GameState): GameAction | null {
 
   // 2. ATTACK_CHAIN (Bot is defending)
   if (state.mode === 'ATTACK_CHAIN' && state.defenderIndex === controllingIdx) {
+    const availableSipCards = getAvailableSipCards(bot, state.deckConfig?.sipRewardThreshold);
+    if (availableSipCards > 0) {
+      return {
+        type: 'DEAL_SIP_PENALTY_CARD',
+        targetPlayerIndex: priorityOpponent.id,
+      };
+    }
+
     const playableDefenses = bot.hand
       .map((card) => ({
         card,

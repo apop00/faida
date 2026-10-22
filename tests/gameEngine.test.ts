@@ -886,7 +886,7 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     expect(getAvailableSipCards(stateAfterVoluntary.players[0], 5)).toBe(1);
     expect(stateAfterVoluntary.lastActionBanner?.title).toContain('SBLOCCO');
 
-    // 4. Intelligenza Artificiale Bot: usa DEAL_SIP_PENALTY_CARD se ha cariche disponibili
+    // 4. Intelligenza Artificiale Bot: usa DEAL_SIP_PENALTY_CARD se ha cariche disponibili in NEUTRAL_FLOW
     const botState = createInitialGameState(['P1', 'Bot1', 'Bot2', 'Bot3'], [false, true, true, true], {
       ...DEFAULT_DECK_CONFIG,
       sipRewardThreshold: 5,
@@ -898,6 +898,26 @@ describe('Colpo Basso: Faida di Semi - Game Engine & Rules', () => {
     const botMove = computeAIMove(botState);
     expect(botMove).toBeDefined();
     expect(botMove?.type).toBe('DEAL_SIP_PENALTY_CARD');
+
+    // 5. Utilizzo durante ATTACK_CHAIN da parte del difensore
+    const attackState = createInitialGameState(['P1', 'P2', 'P3', 'P4'], [false, true, true, true], {
+      ...DEFAULT_DECK_CONFIG,
+      sipRewardThreshold: 5,
+    });
+    attackState.mode = 'ATTACK_CHAIN';
+    attackState.defenderIndex = 0; // P1 sta difendendo
+    attackState.players[0].sipsDrunk = 5; // P1 ha 1 carica
+    attackState.players[0].cardsDealtCount = 0;
+
+    const p2CardsBefore = attackState.players[1].hand.length;
+    const stateAfterAttackDeal = gameReducer(attackState, {
+      type: 'DEAL_SIP_PENALTY_CARD',
+      targetPlayerIndex: 1,
+    });
+
+    expect(stateAfterAttackDeal.mode).toBe('ATTACK_CHAIN');
+    expect(stateAfterAttackDeal.players[0].cardsDealtCount).toBe(1);
+    expect(stateAfterAttackDeal.players[1].hand.length).toBe(p2CardsBefore + 1);
   });
 
   it('Mini-gioco lampo "Riflessi da Tavolo" (TABLE_REFLEX): attivazione, tap, penitenza sorso+carta e regola Colpo Finale', () => {
