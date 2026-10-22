@@ -826,7 +826,9 @@ export function ColpoBassoArena({
       }
 
       const p = state.players[controllingPlayerIndex];
-      if (p) {
+      // Mostra il toast di allerta solo quando sei sotto attacco (ATTACK_CHAIN) o in un evento speciale!
+      // Nel flusso neutro, il bordo verde luminoso sulle carte e l'indicatore sopra il feltro sono già chiari e non invasivi.
+      if (p && (state.mode === 'ATTACK_CHAIN' || state.mode === 'SPECIAL_EVENT')) {
         setTurnAlert({
           playerName: p.name,
           suit: p.suit,
@@ -1495,7 +1497,7 @@ export function ColpoBassoArena({
           )}
 
           {/* Effetto Speciale Grafico Fluttuante (Shockwave + Badge Animato) */}
-          {activeSpecialEffect && (
+          {activeSpecialEffect && !drinkAlert && !activeCheers && !state.activeDuel && !state.activeReflex && (
             <div
               key={activeSpecialEffect.id}
               className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-visible translate-y-2 sm:translate-y-2.5"
@@ -2788,7 +2790,7 @@ export function ColpoBassoArena({
       />
 
       {/* SELETTORE BERSAGLIO CENTRALE AL CENTRO DELLO SCHERMO (Jack Spia, Dare da Bere / Sorsi Diretti, Regina Fardello, Duello 1v1) */}
-      {needsOpponentPicker && selectedCards.length > 0 && (
+      {needsOpponentPicker && selectedCards.length > 0 && !drinkAlert && !state.activeDuel && !state.activeReflex && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 select-none animate-fadeIn pointer-events-auto">
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#220c42] via-[#15072c] to-[#090216] border-2 border-purple-400/90 shadow-[0_0_50px_rgba(168,85,247,0.7)] p-3.5 text-slate-100 flex flex-col items-center gap-2 relative">
             <div className="flex items-center gap-1.5 text-purple-300 font-black text-xs sm:text-sm uppercase tracking-wide">
@@ -2880,7 +2882,7 @@ export function ColpoBassoArena({
       )}
 
       {/* SELETTORE BERSAGLIO CENTRALE PER VENDETTA DEI SORSI (+1🃏) */}
-      {showSipTargetPicker && availableSipCards > 0 && (
+      {showSipTargetPicker && availableSipCards > 0 && !drinkAlert && !state.activeDuel && !state.activeReflex && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 select-none animate-fadeIn pointer-events-auto">
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#241203] via-[#150a01] to-[#080300] border-2 border-amber-400 shadow-[0_0_50px_rgba(245,158,11,0.65)] p-3.5 text-slate-100 flex flex-col items-center gap-2 relative">
             <div className="flex items-center gap-1.5 text-amber-300 font-black text-xs sm:text-sm uppercase tracking-wide">
@@ -3050,9 +3052,9 @@ export function ColpoBassoArena({
           </div>
         )}
 
-      {/* Animazione "Brindisi" (Cheers! 🍻) con boccali clink e schiuma volante al centro del tavolo */}
+      {/* Animazione "Brindisi" (Cheers! 🍻) mostrata sul tavolo solo se non c'è già il popup DrinkAlert del giocatore o un duello */}
       <CheersAnimationOverlay
-        cheers={activeCheers}
+        cheers={drinkAlert || state.activeDuel || state.activeReflex ? null : activeCheers}
         onDismiss={() => setActiveCheers(null)}
       />
 
@@ -3086,7 +3088,8 @@ export function ColpoBassoArena({
         onDismiss={() => setDrinkAlert(null)}
       />
 
-      {!drinkAlert && (
+      {/* TurnAlertModal solo per attacchi ed eventi urgenti, e solo se non ci sono alert o modali a tutto schermo */}
+      {!drinkAlert && !activeCheers && !state.activeDuel && !state.activeReflex && !showQuickGuideModal && (
         <TurnAlertModal
           alert={turnAlert}
           onDismiss={() => setTurnAlert(null)}

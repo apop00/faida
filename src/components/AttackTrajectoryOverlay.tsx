@@ -112,7 +112,14 @@ export function AttackTrajectoryOverlay({
     }
   }, [attackerIdx, defenderIdx, label, projectileKind]);
 
-  if (attackerIdx === null || defenderIdx === null || attackerIdx === defenderIdx) {
+  if (
+    state.activeDuel ||
+    state.activeReflex ||
+    state.mode === 'GAME_OVER' ||
+    attackerIdx === null ||
+    defenderIdx === null ||
+    attackerIdx === defenderIdx
+  ) {
     return null;
   }
 
