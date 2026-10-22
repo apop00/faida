@@ -591,12 +591,25 @@ export function ColpoBassoArena({
             <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
             <span className="text-[11px] font-black text-white truncate max-w-[70px]">{cleanName}</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px] font-black">
-            <span className="px-1.5 py-0.5 rounded-md bg-cyan-950/90 border border-cyan-400/40 text-cyan-200">
-              🃏 {actualCardCount}
+          <div className="flex items-center gap-1.5 text-xs font-black">
+            <span
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border shadow-sm ${
+                actualCardCount === 1
+                  ? 'bg-rose-600/40 border-rose-400 text-white animate-pulse ring-1 ring-rose-400'
+                  : 'bg-cyan-950/90 border-cyan-400/60 text-cyan-200'
+              }`}
+            >
+              <span className="text-xs">🃏</span>
+              <span className="text-xs sm:text-sm font-black text-cyan-300">{actualCardCount}</span>
+              <span className="text-[9px] font-black uppercase text-cyan-200">
+                {actualCardCount === 1 ? 'ULTIMA' : 'carte'}
+              </span>
             </span>
-            <span className="px-1.5 py-0.5 rounded-md bg-amber-950/90 border border-amber-400/40 text-amber-300">
-              🍺 {player.sipsDrunk}
+
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/90 border border-amber-400/50 text-amber-300 shadow-sm">
+              <span className="text-xs">🍺</span>
+              <span className="text-xs sm:text-sm font-black text-amber-300">{player.sipsDrunk}</span>
+              <span className="text-[9px] font-bold uppercase text-amber-200/80">sorsi</span>
             </span>
           </div>
           {isTargetCandidate && (
@@ -615,7 +628,7 @@ export function ColpoBassoArena({
         onClick={() => {
           if (isTargetCandidate) setSelectedTargetOpponent(player.id);
         }}
-        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none w-full max-w-[84px] backdrop-blur-md shadow-lg ${
+        className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl border transition-all select-none w-full max-w-[86px] backdrop-blur-md shadow-lg ${
           isSelectedTarget
             ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
             : isTargetCandidate
@@ -657,19 +670,36 @@ export function ColpoBassoArena({
           size="sm"
         />
 
-        <div className="flex items-center gap-0.5 mt-1 leading-none">
+        <div className="flex items-center gap-0.5 mt-0.5 leading-none">
           <span className={`text-xs ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
-          <span className="text-[10px] font-black text-white truncate max-w-[60px]">{cleanName}</span>
+          <span className="text-[10px] font-black text-white truncate max-w-[62px]">{cleanName}</span>
         </div>
 
-        {/* Counter chips */}
-        <div className="flex items-center gap-1 mt-1 text-[9px] font-black w-full justify-center">
-          <span className="px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/30 text-cyan-200">
-            🃏{actualCardCount}
-          </span>
-          <span className="px-1 py-0.5 rounded bg-amber-950/80 border border-amber-400/30 text-amber-300">
-            🍺{player.sipsDrunk}
-          </span>
+        {/* Counter chips ad altissima visibilità */}
+        <div className="flex flex-col gap-1 mt-1 w-full px-0.5">
+          <div
+            className={`flex items-center justify-center gap-1 py-0.5 rounded-lg border shadow-sm transition-all ${
+              actualCardCount === 1
+                ? 'bg-rose-600/40 border-rose-400 text-white animate-pulse ring-1 ring-rose-400'
+                : 'bg-cyan-950/90 border-cyan-400/60 text-cyan-200'
+            }`}
+            title={`${actualCardCount} carte in mano`}
+          >
+            <span className="text-[11px] leading-none">🃏</span>
+            <span className="text-xs sm:text-sm font-black text-cyan-300 leading-none">{actualCardCount}</span>
+            <span className="text-[8px] font-black uppercase text-cyan-200 tracking-wider">
+              {actualCardCount === 1 ? 'ULTIMA' : 'carte'}
+            </span>
+          </div>
+
+          <div
+            className="flex items-center justify-center gap-1 py-0.5 rounded-lg bg-amber-950/90 border border-amber-400/50 text-amber-200 shadow-sm"
+            title={`${player.sipsDrunk} sorsi bevuti`}
+          >
+            <span className="text-[10px] leading-none">🍺</span>
+            <span className="text-xs sm:text-sm font-black text-amber-300 leading-none">{player.sipsDrunk}</span>
+            <span className="text-[8px] font-bold uppercase text-amber-200/80 tracking-wider">sorsi</span>
+          </div>
         </div>
 
         {/* Status tag */}
@@ -850,188 +880,146 @@ export function ColpoBassoArena({
           {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
         </div>
 
-        {/* ZONA CENTRALE: TAVOLO CENTRALE FELTRO 3D */}
-        <div className="flex-1 min-h-0 h-full flex items-center justify-center z-10 px-1">
-          {/* FELTRO CENTRALE 2.5D: STATO + CARTA SLAM + MAZZO 3D + IN PALIO + FRECCE PROIETTATE */}
-          <div
-            className={`table-3d-plane h-full max-h-[170px] w-full max-w-[460px] rounded-3xl bg-gradient-to-b from-[#140b2e] via-[#0d0620] to-[#080216] border transition-all flex flex-col items-center justify-between py-1 px-3 relative shadow-2xl ${
-              state.mode === 'ATTACK_CHAIN'
-                ? `border-rose-500/70 shadow-[0_0_35px_rgba(244,63,94,0.25),inset_0_0_20px_rgba(244,63,94,0.15)] ${
-                    state.currentSips >= 2 ? 'animate-table-shake' : ''
-                  }`
-                : 'border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.6)]'
-            }`}
-          >
-            {/* SVG Frecce Direzionali del Turno proiettate sul piano del tavolo con Light-Sweep */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-25 overflow-hidden">
-              <svg viewBox="0 0 320 120" className="w-[88%] h-[88%]">
-                <defs>
-                  <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.2" />
-                    <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.95" />
-                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.2" />
-                  </linearGradient>
-                </defs>
-                {state.lastDirection === 'forward' ? (
-                  <path
-                    d="M 50 60 C 50 18, 270 18, 270 60 C 270 102, 50 102, 50 60"
-                    fill="none"
-                    stroke="url(#flowGrad)"
-                    strokeWidth="3.5"
-                    strokeDasharray="14 10"
-                    className="animate-light-sweep"
-                  />
-                ) : (
-                  <path
-                    d="M 270 60 C 270 18, 50 18, 50 60 C 50 102, 270 102, 270 60"
-                    fill="none"
-                    stroke="url(#flowGrad)"
-                    strokeWidth="3.5"
-                    strokeDasharray="14 10"
-                    className="animate-light-sweep"
-                  />
-                )}
-              </svg>
-            </div>
-
-            {/* Riga Superiore del Tavolo: Stato + Ultima Mossa */}
-            <div className="w-full flex items-center justify-between gap-2 text-[10px] z-10">
-              <span
-                className={`px-2 py-0.5 rounded-full font-black uppercase tracking-wider text-[8px] sm:text-[9px] shrink-0 border shadow-sm ${
-                  state.mode === 'ATTACK_CHAIN'
-                    ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-[0_0_8px_rgba(244,63,94,0.2)]'
-                    : state.mode === 'SPECIAL_EVENT'
-                    ? 'bg-purple-500/25 text-purple-300 border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
-                }`}
-              >
-                {state.mode === 'ATTACK_CHAIN'
-                  ? '🔥 Attacco'
+        {/* ZONA CENTRALE: TAVOLO APERTO SENZA IL PESANTE QUADRATO RIGIDO */}
+        <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-between z-10 px-1 py-0.5 relative">
+          {/* Pill Minimale di Stato + Ultima Mossa (Discreta e Fluttuante) */}
+          <div className="w-full max-w-[360px] flex items-center justify-between gap-1.5 px-2.5 py-0.5 rounded-full bg-[#140b2a]/70 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
+            <span
+              className={`px-2 py-0.5 rounded-full font-black uppercase tracking-wider text-[8px] sm:text-[9px] shrink-0 border ${
+                state.mode === 'ATTACK_CHAIN'
+                  ? 'bg-rose-500/25 text-rose-300 border-rose-500/40 shadow-[0_0_8px_rgba(244,63,94,0.2)]'
                   : state.mode === 'SPECIAL_EVENT'
-                  ? '⚡ Evento'
-                  : '🟢 Tregua'}
-              </span>
+                  ? 'bg-purple-500/25 text-purple-300 border-purple-500/40 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
+              }`}
+            >
+              {state.mode === 'ATTACK_CHAIN'
+                ? '🔥 Attacco'
+                : state.mode === 'SPECIAL_EVENT'
+                ? '⚡ Evento'
+                : '🟢 Tregua'}
+            </span>
 
-              <span className="text-slate-300 font-medium truncate text-right text-[10px]">
-                {state.lastActionBanner
-                  ? state.lastActionBanner.subtitle
-                  : 'Inizia la mano'}
+            <span className="text-slate-300 font-medium truncate text-right text-[10px]">
+              {state.lastActionBanner
+                ? state.lastActionBanner.subtitle
+                : 'Inizia la mano'}
+            </span>
+          </div>
+
+          {/* Centro Tavolo Libero e Spazioso: Mazzo Pesca | Pila Scarto (Carta a terra) | Sorsi in Palio */}
+          <div className="w-full max-w-[420px] flex items-center justify-around my-auto py-0.5 z-10 relative">
+            {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
+            {cardAnimation && (
+              <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                {cardAnimation.type === 'PLAY' && (
+                  <div
+                    key={cardAnimation.id}
+                    className={`shrink-0 shadow-2xl ${
+                      cardAnimation.playerIndex === 1
+                        ? 'animate-fly-from-west'
+                        : cardAnimation.playerIndex === 2
+                        ? 'animate-fly-from-north'
+                        : cardAnimation.playerIndex === 3
+                        ? 'animate-fly-from-east'
+                        : 'animate-fly-from-south'
+                    }`}
+                  >
+                    <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
+                  </div>
+                )}
+
+                {cardAnimation.type === 'DRAW' && (
+                  <div
+                    key={cardAnimation.id}
+                    className={`w-[48px] h-[68px] sm:w-[54px] sm:h-[76px] rounded-xl bg-gradient-to-br from-[#27154d] via-[#14082c] to-[#090216] border-2 border-cyan-400 shadow-2xl flex items-center justify-center shrink-0 ${
+                      cardAnimation.playerIndex === 1
+                        ? 'animate-fly-to-west'
+                        : cardAnimation.playerIndex === 2
+                        ? 'animate-fly-to-north'
+                        : cardAnimation.playerIndex === 3
+                        ? 'animate-fly-to-east'
+                        : 'animate-fly-to-south'
+                    }`}
+                  >
+                    <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center">
+                      <span className="text-xs">🍺</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mazzo di Pesca 3D (Pila fisica con ombre stratificate e tilt) */}
+            <button
+              type="button"
+              onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
+              disabled={!canLocalUserAct}
+              className={`flex flex-col items-center group transition active:scale-95 ${
+                canLocalUserAct ? 'cursor-pointer' : 'cursor-default opacity-85'
+              }`}
+              title={canLocalUserAct ? 'Tocca per pescare una carta dal mazzo' : 'Mazzo di pesca'}
+            >
+              <div className="w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-gradient-to-br from-[#27174d] via-[#14082c] to-[#0a0318] border-2 border-cyan-400/50 group-hover:border-cyan-300 deck-3d-shadow flex flex-col items-center justify-center relative overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
+                <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-400/40 mb-0.5">
+                  <span className="text-xs">🍺</span>
+                </div>
+                <span className="text-[8px] font-black uppercase text-cyan-300 tracking-wider">
+                  Pesca
+                </span>
+              </div>
+              <span className="text-[8px] font-bold text-slate-400 mt-1">
+                {state.deck.length} carte
               </span>
+            </button>
+
+            {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
+            <div
+              className="relative flex flex-col items-center cursor-pointer group shrink-0"
+              onClick={() => setInspectedCard({ card: state.topCard, isTopCard: true })}
+              title="Tocca per ingrandire la carta a terra"
+            >
+              {/* Carte fantasma sottostanti per profondità 3D del mazzo di scarto */}
+              <div className="absolute inset-0 w-full h-full rounded-xl bg-[#1b1035] border border-white/10 rotate-[-5deg] scale-[0.97] opacity-60 pointer-events-none shadow-md" />
+              <div className="absolute inset-0 w-full h-full rounded-xl bg-[#231545] border border-white/15 rotate-[4deg] scale-[0.98] opacity-80 pointer-events-none shadow-md" />
+
+              {/* Carta in cima con animazione Slam */}
+              <div key={state.topCard.id} className="relative z-10 animate-card-slam">
+                <PlayingCard
+                  card={state.topCard}
+                  size="sm"
+                  onInspect={(c) => setInspectedCard({ card: c, isTopCard: true })}
+                />
+              </div>
             </div>
 
-            {/* Centro Tavolo: Mazzo 3D + Pila Scarto Realistica + Sorsi in Palio */}
-            <div className="w-full flex items-center justify-around my-auto py-0.5 z-10 relative">
-              {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
-              {cardAnimation && (
-                <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-                  {cardAnimation.type === 'PLAY' && (
-                    <div
-                      key={cardAnimation.id}
-                      className={`shrink-0 shadow-2xl ${
-                        cardAnimation.playerIndex === 1
-                          ? 'animate-fly-from-west'
-                          : cardAnimation.playerIndex === 2
-                          ? 'animate-fly-from-north'
-                          : cardAnimation.playerIndex === 3
-                          ? 'animate-fly-from-east'
-                          : 'animate-fly-from-south'
-                      }`}
-                    >
-                      <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
-                    </div>
-                  )}
-
-                  {cardAnimation.type === 'DRAW' && (
-                    <div
-                      key={cardAnimation.id}
-                      className={`w-[48px] h-[68px] sm:w-[54px] sm:h-[76px] rounded-xl bg-gradient-to-br from-[#27154d] via-[#14082c] to-[#090216] border-2 border-cyan-400 shadow-2xl flex items-center justify-center shrink-0 ${
-                        cardAnimation.playerIndex === 1
-                          ? 'animate-fly-to-west'
-                          : cardAnimation.playerIndex === 2
-                          ? 'animate-fly-to-north'
-                          : cardAnimation.playerIndex === 3
-                          ? 'animate-fly-to-east'
-                          : 'animate-fly-to-south'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center">
-                        <span className="text-xs">🍺</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Mazzo di Pesca 3D (Pila fisica con ombre stratificate e tilt) */}
-              <button
-                type="button"
-                onClick={() => canLocalUserAct && dispatchAction({ type: 'DRAW_AND_PASS' })}
-                disabled={!canLocalUserAct}
-                className={`flex flex-col items-center group transition active:scale-95 ${
-                  canLocalUserAct ? 'cursor-pointer' : 'cursor-default opacity-85'
-                }`}
-                title={canLocalUserAct ? 'Tocca per pescare una carta dal mazzo' : 'Mazzo di pesca'}
-              >
-                <div className="w-[50px] h-[72px] sm:w-[56px] sm:h-[80px] rounded-xl bg-gradient-to-br from-[#27174d] via-[#14082c] to-[#0a0318] border-2 border-cyan-400/50 group-hover:border-cyan-300 deck-3d-shadow flex flex-col items-center justify-center relative overflow-hidden transition-transform duration-200 group-hover:-translate-y-1">
-                  <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-400/40 mb-0.5">
-                    <span className="text-xs">🍺</span>
-                  </div>
-                  <span className="text-[8px] font-black uppercase text-cyan-300 tracking-wider">
-                    Pesca
-                  </span>
-                </div>
-                <span className="text-[8px] font-bold text-slate-400 mt-1">
-                  {state.deck.length} carte
-                </span>
-              </button>
-
-              {/* Pila di Scarto con carte impilate a rotazione sottostante per effetto fisico */}
+            {/* Sorsi in Palio + Indicatore Direzione */}
+            <div className="flex flex-col items-center min-w-[65px] gap-1">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                In Palio
+              </span>
               <div
-                className="relative flex flex-col items-center cursor-pointer group shrink-0"
-                onClick={() => setInspectedCard({ card: state.topCard, isTopCard: true })}
-                title="Tocca per ingrandire la carta a terra"
+                className={`px-2.5 py-1 rounded-full border font-black text-xs sm:text-sm flex items-center gap-1 shadow-sm ${
+                  state.currentSips > 0
+                    ? 'bg-rose-600/30 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse'
+                    : 'bg-white/5 border-white/10 text-slate-400'
+                }`}
               >
-                {/* Carte fantasma sottostanti per profondità 3D del mazzo di scarto */}
-                <div className="absolute inset-0 w-full h-full rounded-xl bg-[#1b1035] border border-white/10 rotate-[-5deg] scale-[0.97] opacity-60 pointer-events-none shadow-md" />
-                <div className="absolute inset-0 w-full h-full rounded-xl bg-[#231545] border border-white/15 rotate-[4deg] scale-[0.98] opacity-80 pointer-events-none shadow-md" />
-
-                {/* Carta in cima con animazione Slam */}
-                <div key={state.topCard.id} className="relative z-10 animate-card-slam">
-                  <PlayingCard
-                    card={state.topCard}
-                    size="sm"
-                    onInspect={(c) => setInspectedCard({ card: c, isTopCard: true })}
-                  />
-                </div>
+                <span>🍺</span>
+                <span>{state.currentSips}</span>
               </div>
-
-              {/* Sorsi in Palio + Indicatore Direzione */}
-              <div className="flex flex-col items-center min-w-[65px] gap-1">
-                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
-                  In Palio
-                </span>
-                <div
-                  className={`px-2.5 py-1 rounded-full border font-black text-xs sm:text-sm flex items-center gap-1 shadow-sm ${
-                    state.currentSips > 0
-                      ? 'bg-rose-600/30 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse'
-                      : 'bg-white/5 border-white/10 text-slate-400'
-                  }`}
-                >
-                  <span>🍺</span>
-                  <span>{state.currentSips}</span>
-                </div>
-                <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1 text-[8px] font-black text-slate-300">
-                  {state.lastDirection === 'forward' ? (
-                    <>
-                      <RotateCw className="w-2.5 h-2.5 text-cyan-400" />
-                      <span>Orario</span>
-                    </>
-                  ) : (
-                    <>
-                      <RotateCcw className="w-2.5 h-2.5 text-amber-400" />
-                      <span>Inverso</span>
-                    </>
-                  )}
-                </div>
+              <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-1 text-[8px] font-black text-slate-300">
+                {state.lastDirection === 'forward' ? (
+                  <>
+                    <RotateCw className="w-2.5 h-2.5 text-cyan-400" />
+                    <span>Orario</span>
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-2.5 h-2.5 text-amber-400" />
+                    <span>Inverso</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1111,7 +1099,7 @@ export function ColpoBassoArena({
       {/* 3. LA TUA MANO + PULSANTI AZIONE (INTEGRATA SUL TAVOLO, ELEVATA IN PRIMO PIANO) */}
       <footer
         className={`relative px-2 sm:px-3 pb-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-transparent shrink-0 select-none transition-all duration-300 ${
-          canLocalUserAct ? 'z-50' : 'z-30'
+          canLocalUserAct ? 'z-50' : 'z-40'
         }`}
       >
         {/* Floating Animated Delta Badges on Local Player */}
@@ -1156,12 +1144,16 @@ export function ColpoBassoArena({
             </span>
 
             {/* Chip Contatori Colorate ad Alto Contrasto */}
-            <div className="flex items-center gap-1 mt-0.5 text-[9px] font-black w-full justify-center">
-              <span className="px-1 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/40 text-cyan-200">
-                🃏{displayedHandPlayer.hand.length}
+            <div className="flex flex-col gap-0.5 mt-0.5 w-full px-0.5">
+              <span className="flex items-center justify-center gap-1 py-0.5 rounded-md bg-cyan-950/90 border border-cyan-400/60 text-cyan-200 text-[10px] font-black">
+                <span className="text-[10px]">🃏</span>
+                <span className="text-xs font-black text-cyan-300">{displayedHandPlayer.hand.length}</span>
+                <span className="text-[8px] font-bold uppercase text-cyan-200/90">carte</span>
               </span>
-              <span className="px-1 py-0.5 rounded bg-amber-950/80 border border-amber-400/40 text-amber-300">
-                🍺{displayedHandPlayer.sipsDrunk}
+              <span className="flex items-center justify-center gap-1 py-0.5 rounded-md bg-amber-950/90 border border-amber-400/50 text-amber-300 text-[10px] font-black">
+                <span className="text-[10px]">🍺</span>
+                <span className="text-xs font-black text-amber-300">{displayedHandPlayer.sipsDrunk}</span>
+                <span className="text-[8px] font-bold uppercase text-amber-200/80">sorsi</span>
               </span>
             </div>
 
@@ -1196,7 +1188,7 @@ export function ColpoBassoArena({
           {/* COLONNA 2 (CENTRO): MANO DI CARTE PULITA E IN PRIMO PIANO */}
           <div
             className={`flex-1 min-w-0 h-[108px] sm:h-[114px] relative flex items-end overflow-visible ${
-              canLocalUserAct ? 'z-50 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]' : 'z-30'
+              canLocalUserAct ? 'z-50 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]' : 'z-40'
             }`}
           >
             {hideHandPrivacy ? (
@@ -1276,14 +1268,15 @@ export function ColpoBassoArena({
                 const handCards = [...playableList, ...unplayableList];
                 const totalCards = handCards.length;
 
+                // Calibrazione overlap: se poche carte nessun overlap, se tante overlap lieve
                 const overlapClass =
                   totalCards > 9
-                    ? '-mr-7 sm:-mr-8'
+                    ? '-mr-5'
                     : totalCards > 6
-                    ? '-mr-5 sm:-mr-6'
-                    : totalCards > 3
-                    ? '-mr-3.5 sm:-mr-4.5'
-                    : '-mr-2';
+                    ? '-mr-2.5'
+                    : totalCards > 4
+                    ? '-mr-1'
+                    : 'mr-1 sm:mr-1.5';
 
                 return (
                   <div className="relative w-full h-full flex items-end overflow-visible">
@@ -1296,32 +1289,32 @@ export function ColpoBassoArena({
                       }}
                       className={
                         wrapHandCards
-                          ? 'flex flex-wrap items-end justify-center gap-1.5 pt-2 pb-1 px-1 max-h-[125px] overflow-y-auto w-full'
-                          : 'flex items-end overflow-x-auto scroll-smooth touch-pan-x pt-2 pb-1 px-2 h-full w-full select-none'
+                          ? 'flex flex-wrap items-end justify-center gap-1 pt-3 pb-1 px-1 max-h-[125px] overflow-y-auto w-full'
+                          : 'flex items-end overflow-x-auto scroll-smooth touch-pan-x pt-4 pb-0.5 px-2 h-full w-full select-none'
                       }
                     >
                       {handCards.map(({ card, playability }, cIdx) => {
                         const isSelected = selectedCardIds.includes(card.id);
                         const mid = (totalCards - 1) / 2;
-                        const baseAngle = totalCards > 1 ? Math.max(-8, Math.min(8, (cIdx - mid) * 1.8)) : 0;
-                        const baseOffsetY = totalCards > 1 ? Math.abs(cIdx - mid) * 1.2 : 0;
+                        const baseAngle = totalCards > 1 ? Math.max(-6, Math.min(6, (cIdx - mid) * 1.5)) : 0;
+                        const baseOffsetY = totalCards > 1 ? Math.abs(cIdx - mid) * 0.8 : 0;
 
                         return (
                           <div
                             key={card.id}
                             style={{
                               transform: isSelected
-                                ? 'translateY(-16px) scale(1.07) rotate(0deg)'
+                                ? 'translateY(-10px) scale(1.06) rotate(0deg)'
                                 : wrapHandCards
                                 ? 'none'
                                 : `rotate(${baseAngle}deg) translateY(${baseOffsetY}px)`,
                               transformOrigin: 'bottom center',
-                              zIndex: isSelected ? 70 : canLocalUserAct ? cIdx + 20 : cIdx + 5,
+                              zIndex: isSelected ? 80 : canLocalUserAct ? cIdx + 30 : cIdx + 10,
                               animationDelay: `${cIdx * 35}ms`,
                             }}
                             className={`shrink-0 transition-all duration-200 cursor-pointer animate-hand-fan ${
                               !wrapHandCards
-                                ? `${overlapClass} last:mr-0 hover:-translate-y-4 hover:scale-105 hover:rotate-0 hover:z-60`
+                                ? `${overlapClass} last:mr-0 hover:-translate-y-2 hover:scale-105 hover:rotate-0 hover:z-70`
                                 : ''
                             }`}
                           >
@@ -1329,7 +1322,7 @@ export function ColpoBassoArena({
                               card={card}
                               playability={playability}
                               selected={isSelected}
-                              size="sm"
+                              size="xs"
                               interactive={canLocalUserAct}
                               onClick={() => handleCardTap(card.id)}
                               onInspect={(c) => setInspectedCard({ card: c, isTopCard: false })}
