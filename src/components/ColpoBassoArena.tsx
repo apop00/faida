@@ -537,6 +537,9 @@ export function ColpoBassoArena({
   };
 
   // Helper to render an Opponent Seat with Pod + Visible 3D Cards on Table (UNO Mobile Style)
+  // Helper to render an Opponent Seat:
+  // - North: Ultra-clean horizontal capsule + horizontal cards in top bar (never cut off at the top!)
+  // - West & East: Avatar Pod on top + Cards fanned in an Arc underneath (UNO Mobile Vez/Angel style)
   const renderOpponentSeat = (player: Player, orientation: 'west' | 'north' | 'east' = 'north') => {
     const idx = player.id;
     const suitMeta = SUIT_INFO[player.suit];
@@ -553,16 +556,145 @@ export function ColpoBassoArena({
     const effectiveTargetId = selectedTargetOpponent ?? (controllingPlayerIndex + 1) % 4;
     const isSelectedTarget = isTargetCandidate && effectiveTargetId === player.id;
 
-    // 1. Clean, readable Avatar Pod
+    // A) NORTH SEAT: SLEEK HORIZONTAL CAPSULE (PERFECT FOR TOP BAR)
+    if (isNorth) {
+      const visibleNorthCards = actualCardCount === 0 ? 0 : Math.min(actualCardCount, 5);
+
+      return (
+        <div
+          key={player.id}
+          className="flex items-center gap-1.5 sm:gap-2 select-none"
+        >
+          {/* Horizontal Pod */}
+          <div
+            onClick={() => {
+              if (isTargetCandidate) setSelectedTargetOpponent(player.id);
+            }}
+            className={`relative flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all select-none backdrop-blur-md shadow-md ${
+              isSelectedTarget
+                ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
+                : isTargetCandidate
+                ? 'bg-[#180f2c]/90 border-purple-400/50 hover:border-purple-300 cursor-pointer'
+                : isDefender
+                ? 'bg-rose-950/90 border-rose-400 ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.6)] animate-pulse'
+                : isAttacker
+                ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.5)]'
+                : isControlling
+                ? 'bg-emerald-950/90 border-emerald-400 ring-1 ring-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                : 'bg-[#120a22]/85 border-white/15'
+            }`}
+            title={isTargetCandidate ? `Tocca per bersagliare ${cleanName}` : player.name}
+          >
+            {/* Delta Floating Badges */}
+            {delta && (delta.sips > 0 || delta.cards > 0) && (
+              <div className="absolute -bottom-3 right-2 z-30 flex items-center gap-0.5 pointer-events-none animate-bounce">
+                {delta.sips > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-600 border border-amber-300 text-white text-[8px] font-black">
+                    +{delta.sips}🍺
+                  </span>
+                )}
+                {delta.cards > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-cyan-500 border border-white text-slate-950 text-[8px] font-black">
+                    +{delta.cards}🃏
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Sorsi a Sinistra 🍺 */}
+            <div
+              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-950/90 border border-amber-400/80 text-amber-300 shadow-sm"
+              title={`${player.sipsDrunk} sorsi bevuti`}
+            >
+              <span className="text-[8px] leading-none">🍺</span>
+              <span className="text-[10px] font-black leading-none">{player.sipsDrunk}</span>
+            </div>
+
+            {/* Avatar */}
+            <PlayerAvatar
+              suit={player.suit}
+              name={player.name}
+              isAI={player.isAI}
+              isAttacker={isAttacker}
+              isDefender={isDefender}
+              isControlling={isControlling}
+              sipsDelta={delta?.sips || 0}
+              size="sm"
+            />
+
+            {/* Nome + Status */}
+            <div className="flex items-center gap-1 leading-none px-0.5">
+              <span className={`text-[10px] ${suitMeta.neonText}`}>{suitMeta.symbol}</span>
+              <span className="text-[10px] font-black text-white truncate max-w-[55px]">{cleanName}</span>
+              {isControlling && <span className="text-[7px] text-emerald-400 font-extrabold uppercase">TURNO</span>}
+              {isDefender && <span className="text-[7px] text-rose-400 font-extrabold uppercase animate-pulse">DIFESA</span>}
+              {isAttacker && <span className="text-[7px] text-amber-400 font-extrabold uppercase">ATTACCO</span>}
+              {isTargetCandidate && (
+                <span className="text-[7px] text-purple-300 font-extrabold uppercase">
+                  {isSelectedTarget ? '🎯' : 'Tocca'}
+                </span>
+              )}
+            </div>
+
+            {/* Conteggio Carte 🃏 */}
+            <div
+              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border shadow-sm ${
+                isSingle
+                  ? 'bg-rose-600/40 border-rose-400 text-white ring-1 ring-rose-400 animate-pulse'
+                  : 'bg-cyan-950/90 border-cyan-400/80 text-cyan-200'
+              }`}
+              title={`${actualCardCount} carte in mano`}
+            >
+              <span className="text-[8px] leading-none">🃏</span>
+              <span className="text-[10px] font-black leading-none">{actualCardCount}</span>
+            </div>
+          </div>
+
+          {/* North Cards fanned horizontally */}
+          {visibleNorthCards > 0 && (
+            <div className="flex items-center -space-x-2.5 select-none filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+              {Array.from({ length: visibleNorthCards }).map((_, cIdx, arr) => {
+                const mid = (arr.length - 1) / 2;
+                const rot = (cIdx - mid) * 5;
+                const offsetY = Math.abs(cIdx - mid) * 1;
+
+                return (
+                  <div
+                    key={cIdx}
+                    style={{
+                      transform: `rotate(${rot}deg) translateY(${offsetY}px)`,
+                      zIndex: cIdx + 1,
+                    }}
+                    className={`relative w-[22px] h-[32px] rounded-md shrink-0 select-none transition-all duration-300 ${
+                      isSingle
+                        ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse'
+                        : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border border-cyan-400/80 shadow-[0_2px_8px_rgba(0,0,0,0.7)]'
+                    }`}
+                  >
+                    <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
+                      <span className={`text-[8px] font-black ${isSingle ? 'text-amber-300' : suitMeta.neonText}`}>
+                        {isSingle ? '⚡' : suitMeta.symbol}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // B) WEST & EAST SEATS: AVATAR POD ON TOP + CARDS IN AN ARC UNDERNEATH (UNO Mobile Vez/Angel style)
+    const visibleCardsCount = actualCardCount === 0 ? 0 : Math.min(actualCardCount, 6);
+
     const podElement = (
       <div
         key={`pod-${player.id}`}
         onClick={() => {
           if (isTargetCandidate) setSelectedTargetOpponent(player.id);
         }}
-        className={`relative flex flex-col items-center justify-between p-1 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg ${
-          isNorth ? 'w-[104px] sm:w-[114px]' : 'w-[82px] sm:w-[88px]'
-        } ${
+        className={`relative flex flex-col items-center justify-between p-1 rounded-2xl border transition-all select-none backdrop-blur-md shadow-lg w-[82px] sm:w-[88px] ${
           isSelectedTarget
             ? 'bg-purple-950/90 border-purple-400 ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)] scale-105 cursor-pointer z-30'
             : isTargetCandidate
@@ -650,33 +782,27 @@ export function ColpoBassoArena({
       </div>
     );
 
-    // 2. Visible 3D Standing Hand of Cards on Table Felt (UNO Mobile Style)
-    const visibleCardsCount = actualCardCount === 0 ? 0 : Math.min(Math.max(actualCardCount, 1), 5);
-
-    const cardsElement = actualCardCount > 0 ? (
+    // Cards fanned in an Arc (Ventaglio ad Arco)
+    const cardsArcElement = actualCardCount > 0 ? (
       <div
         key={`cards-${player.id}`}
-        className={`flex items-center select-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)] ${
-          orientation === 'north'
-            ? '-space-x-3 sm:-space-x-3.5'
-            : '-space-x-3.5 sm:-space-x-4'
-        }`}
+        className="flex items-center -space-x-3.5 select-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] mt-0.5"
         title={`${player.name}: ${actualCardCount} carte sul tavolo`}
       >
         {Array.from({ length: visibleCardsCount }).map((_, cIdx, arr) => {
           const mid = (arr.length - 1) / 2;
+          
+          // Smooth arc calculation:
+          // West curves towards center-right; East curves towards center-left
           let rot = 0;
           let offsetY = 0;
 
           if (orientation === 'west') {
-            rot = -6 + (cIdx * 5);
-            offsetY = Math.abs(cIdx - mid) * 1.5;
-          } else if (orientation === 'east') {
-            rot = 6 - (cIdx * 5);
-            offsetY = Math.abs(cIdx - mid) * 1.5;
+            rot = -10 + (cIdx * 6.5);
+            offsetY = Math.pow(cIdx - mid, 2) * 1.5;
           } else {
-            rot = (cIdx - mid) * 6;
-            offsetY = Math.abs(cIdx - mid) * 1.2;
+            rot = 10 - (cIdx * 6.5);
+            offsetY = Math.pow(cIdx - mid, 2) * 1.5;
           }
 
           return (
@@ -686,16 +812,15 @@ export function ColpoBassoArena({
                 transform: `rotate(${rot}deg) translateY(${offsetY}px)`,
                 zIndex: orientation === 'east' ? arr.length - cIdx : cIdx + 1,
               }}
-              className={`relative w-[28px] h-[40px] sm:w-[32px] sm:h-[46px] rounded-lg shrink-0 select-none transition-all duration-300 ${
+              className={`relative w-[26px] h-[38px] sm:w-[28px] sm:h-[42px] rounded-lg shrink-0 select-none transition-all duration-300 ${
                 isSingle
                   ? 'bg-gradient-to-br from-rose-700 via-rose-950 to-black border-2 border-amber-300 ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.9)] animate-pulse'
                   : 'bg-gradient-to-br from-[#2a1354] via-[#160a2d] to-[#090216] border-2 border-cyan-400/80 shadow-[0_4px_12px_rgba(0,0,0,0.7)]'
               }`}
             >
-              {/* Card Back Internal Frame & Cyber Glyph */}
               <div className="absolute inset-0.5 rounded border border-white/20 flex flex-col items-center justify-center bg-white/5 overflow-hidden">
                 <span
-                  className={`text-[10px] font-black ${
+                  className={`text-[9px] font-black ${
                     isSingle ? 'text-amber-300' : suitMeta.neonText
                   }`}
                 >
@@ -707,8 +832,6 @@ export function ColpoBassoArena({
                   </span>
                 )}
               </div>
-
-              {/* Glossy sheen */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none rounded-lg" />
             </div>
           );
@@ -716,25 +839,14 @@ export function ColpoBassoArena({
       </div>
     ) : null;
 
-    // Return combined seat with cards facing towards the center table
+    // Return vertical stack with pod on top and cards arc underneath
     return (
       <div
         key={player.id}
-        className={`flex items-center gap-1.5 select-none ${
-          orientation === 'west' ? 'flex-row' : orientation === 'east' ? 'flex-row' : 'flex-row sm:gap-2'
-        }`}
+        className="flex flex-col items-center gap-1 select-none"
       >
-        {orientation === 'east' ? (
-          <>
-            {cardsElement}
-            {podElement}
-          </>
-        ) : (
-          <>
-            {podElement}
-            {cardsElement}
-          </>
-        )}
+        {podElement}
+        {cardsArcElement}
       </div>
     );
   };
@@ -750,7 +862,7 @@ export function ColpoBassoArena({
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden">
       {/* 1. TOP BAR UNIFICATA (Menu + Avversario Nord + Seme Attivo) */}
-      <header className="h-[32px] shrink-0 w-full flex items-center justify-between px-2 pt-0.5 z-30 select-none">
+      <header className="h-[38px] sm:h-[42px] shrink-0 w-full flex items-center justify-between px-2 py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
         {/* Bottone Menu a Tendina (In alto a sinistra) */}
         <div className="relative">
           <button
@@ -895,7 +1007,7 @@ export function ColpoBassoArena({
         {/* ZONA CENTRALE: TAVOLO APERTO SENZA IL PESANTE QUADRATO RIGIDO */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-between z-10 px-1 py-0.5 relative">
           {/* Pill Minimale di Stato + Ultima Mossa (Discreta e Fluttuante) */}
-          <div className="w-full max-w-[360px] flex items-center justify-between gap-1.5 px-2.5 py-0.5 rounded-full bg-[#140b2a]/70 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
+          <div className="w-full max-w-[360px] flex items-center justify-between gap-1.5 px-2.5 py-0.5 rounded-full bg-[#140b2a]/70 border border-white/10 backdrop-blur-sm z-10 shadow-sm mt-0.5">
             <span
               className={`px-2 py-0.5 rounded-full font-black uppercase tracking-wider text-[8px] sm:text-[9px] shrink-0 border ${
                 state.mode === 'ATTACK_CHAIN'
