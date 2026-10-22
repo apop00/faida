@@ -53,7 +53,7 @@ export function CardDetailModal({
         </button>
 
         {/* CONTENITORE A 2 COLONNE (ORIZZONTALE / LANDSCAPE FRIENDLY) */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-3 sm:gap-4 flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-3 sm:gap-4 flex-1 min-h-0 overflow-y-auto sm:overflow-hidden no-scrollbar">
           {/* COLONNA SINISTRA: CARTA INGRANDITA + STATO + BOTTONE GIOCA */}
           <div className="w-full sm:w-[170px] shrink-0 flex flex-col items-center justify-between">
             {/* Badge Contesto */}

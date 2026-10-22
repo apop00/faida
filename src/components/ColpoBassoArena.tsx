@@ -2170,25 +2170,25 @@ export function ColpoBassoArena({
       )}
 
       {showLogs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md max-h-[75vh] flex flex-col rounded-3xl bg-[#120b22] border border-white/15 p-5 text-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-black uppercase tracking-wider text-rose-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 select-none">
+          <div className="w-full max-w-md max-h-[85vh] sm:max-h-[320px] flex flex-col rounded-3xl bg-[#120b22] border border-white/15 p-3.5 sm:p-4 text-slate-100 my-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-rose-400">
                 Cronologia Faida ({state.logs.length})
               </h3>
               <button
                 type="button"
                 onClick={() => setShowLogs(false)}
-                className="px-3 py-1 rounded-full bg-white/10 text-xs font-bold cursor-pointer"
+                className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer"
               >
-                Chiudi
+                Chiudi ✕
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
               {state.logs.map((entry) => (
                 <div
                   key={entry.id}
-                  className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200"
+                  className="p-2 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200"
                 >
                   {entry.text}
                 </div>
@@ -2211,7 +2211,7 @@ export function ColpoBassoArena({
         state.specialEvent.attackerIndex === controllingPlayerIndex &&
         !isControllingPlayerAI && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 select-none animate-fadeIn">
-            <div className="w-full max-w-md rounded-2xl bg-gradient-to-b from-[#241040] via-[#150a29] to-[#090314] border-2 border-purple-400/80 shadow-[0_0_50px_rgba(168,85,247,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
+            <div className="w-full max-w-md max-h-[94vh] sm:max-h-[330px] overflow-y-auto no-scrollbar rounded-2xl bg-gradient-to-b from-[#241040] via-[#150a29] to-[#090314] border-2 border-purple-400/80 shadow-[0_0_50px_rgba(168,85,247,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
               {/* Header */}
               <div className="flex items-center justify-between pb-1.5 border-b border-white/10 mb-1">
                 <div className="flex items-center gap-1.5">
@@ -2276,7 +2276,7 @@ export function ColpoBassoArena({
         state.specialEvent.phase === 'SELECTING_REDIRECT_TARGET' &&
         !isControllingPlayerAI && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 select-none animate-fadeIn">
-            <div className="w-full max-w-sm rounded-2xl bg-gradient-to-b from-[#2a1708] via-[#1a0e05] to-[#0c0602] border-2 border-amber-400/80 shadow-[0_0_50px_rgba(245,158,11,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
+            <div className="w-full max-w-sm max-h-[94vh] sm:max-h-[330px] overflow-y-auto no-scrollbar rounded-2xl bg-gradient-to-b from-[#2a1708] via-[#1a0e05] to-[#0c0602] border-2 border-amber-400/80 shadow-[0_0_50px_rgba(245,158,11,0.4)] p-3 text-slate-100 flex flex-col justify-between my-auto">
               <div className="text-center mb-2">
                 <span className="text-xl">🃏</span>
                 <h3 className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wide mt-0.5">
