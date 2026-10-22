@@ -14,11 +14,14 @@ import {
   Sparkles,
   Swords,
   Users,
+  Volume2,
+  VolumeX,
   X,
   Zap,
 } from 'lucide-react';
 import { Card, MatchPreset } from '@/types/game';
 import { SUITS, SUIT_INFO } from '@/lib/gameEngine';
+import { backgroundMusic } from '@/lib/backgroundMusic';
 import { RulesModal } from './RulesModal';
 import { PlayingCard } from './PlayingCard';
 import { CardDetailModal } from './CardDetailModal';
@@ -92,6 +95,13 @@ export function HomeScreen({
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showLocalModal, setShowLocalModal] = useState(false);
   const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
+  const [isMusicOn, setIsMusicOn] = useState(false);
+
+  useEffect(() => {
+    setIsMusicOn(backgroundMusic.isMusicEnabled());
+    const unsub = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
+    return unsub;
+  }, []);
 
   // Local preset configuration state
   const [selectedPreset, setSelectedPreset] = useState<MatchPreset>('1P_3PC');
@@ -192,6 +202,29 @@ export function HomeScreen({
           >
             <BookOpen className="w-3.5 h-3.5 text-purple-300" />
             <span className="hidden sm:inline">Regole</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => backgroundMusic.toggleMusic()}
+            className={`px-2.5 py-1 rounded-full border text-xs font-black flex items-center gap-1 cursor-pointer transition active:scale-95 shrink-0 ${
+              isMusicOn
+                ? 'bg-purple-950/90 border-purple-400/80 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.35)]'
+                : 'bg-white/10 hover:bg-white/20 border-white/15 text-slate-400'
+            }`}
+            title={isMusicOn ? 'Musica: ATTIVA (tocca per silenziare)' : 'Musica: SILENZIATA (tocca per attivare)'}
+          >
+            {isMusicOn ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
+                <span className="hidden sm:inline">Musica</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Muto</span>
+              </>
+            )}
           </button>
         </div>
       </header>

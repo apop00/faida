@@ -32,6 +32,7 @@ import {
   playTurnSound,
   SpecialSoundType,
 } from '@/lib/audioEffects';
+import { backgroundMusic } from '@/lib/backgroundMusic';
 import {
   ArrowLeftRight,
   Beer,
@@ -54,6 +55,8 @@ import {
   Sparkles,
   Swords,
   Users,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
 
@@ -101,7 +104,7 @@ function getSpecialCardEffect(
   if (card.eventKind === 'SKIP_TURN' || titleUpper.includes('SALTA TURNO') || titleUpper.includes('SALTA IL TURNO')) {
     return {
       id: 'effect_' + Date.now(),
-      type: 'STOP',
+      type: 'SKIP',
       icon: '⏭️',
       title: 'SALTA TURNO!',
       subtitle: banner?.subtitle || `${playerName || 'Giocatore'} fa saltare il turno!`,
@@ -369,6 +372,15 @@ export function ColpoBassoArena({
   const [idleTurnReminder, setIdleTurnReminder] = useState(false);
   const [hideHandPrivacy, setHideHandPrivacy] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isMusicOn, setIsMusicOn] = useState(false);
+
+  useEffect(() => {
+    setIsMusicOn(backgroundMusic.isMusicEnabled());
+    const unsub = backgroundMusic.subscribe((enabled) => setIsMusicOn(enabled));
+    backgroundMusic.start();
+    return unsub;
+  }, []);
+
   const [playerDeltas, setPlayerDeltas] = useState<
     Record<number, { sips: number; cards: number }>
   >({});
@@ -1124,99 +1136,152 @@ export function ColpoBassoArena({
 
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-      {/* 1. TOP BAR UNIFICATA (Menu + Avversario Nord + Seme Attivo) */}
+      {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
       <header className="h-[38px] sm:h-[42px] shrink-0 w-full flex items-center justify-between px-2 py-1 z-30 select-none bg-[#090514]/90 backdrop-blur-sm">
-        {/* Bottone Menu a Tendina (In alto a sinistra) */}
-        <div className="relative">
+        {/* Sinistra: Bottone Menu a Tendina + Toggle Rapido Musica */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMenuDropdown((v) => !v)}
+              className="px-2 py-1 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition"
+              title="Menu Opzioni"
+            >
+              <Menu className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
+            </button>
+
+            {/* Menu a Tendina a comparsa */}
+            {showMenuDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+                  onClick={() => setShowMenuDropdown(false)}
+                />
+                <div className="absolute top-9 left-0 z-50 w-52 rounded-2xl bg-[#140b2a] border-2 border-white/20 shadow-2xl p-2 flex flex-col gap-1.5 animate-speech-pop">
+                  {onBackToHome && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenuDropdown(false);
+                        if (
+                          state.mode === 'GAME_OVER' ||
+                          window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
+                        ) {
+                          onBackToHome();
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <Home className="w-4 h-4 text-amber-400" />
+                      <span>Torna alla Home</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      setShowLobbyModal(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <Users className="w-4 h-4 text-rose-400" />
+                    <span>{activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}</span>
+                  </button>
+
+                  {activeLobby && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenuDropdown(false);
+                        setShowQuickQrModal(true);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <QrCode className="w-4 h-4 text-cyan-400" />
+                      <span>Condividi QR Code</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      setShowRulesModal(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-emerald-400" />
+                    <span>Regole del Gioco</span>
+                  </button>
+
+                  {/* Toggle Musica nel Menu */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      backgroundMusic.toggleMusic();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center justify-between transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      {isMusicOn ? (
+                        <Volume2 className="w-4 h-4 text-purple-400" />
+                      ) : (
+                        <VolumeX className="w-4 h-4 text-slate-400" />
+                      )}
+                      <span>Musica di Sottofondo</span>
+                    </div>
+                    <span
+                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        isMusicOn
+                          ? 'bg-purple-500/30 text-purple-200 border border-purple-400/50'
+                          : 'bg-white/10 text-slate-400'
+                      }`}
+                    >
+                      {isMusicOn ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      setShowLogs(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <History className="w-4 h-4 text-purple-400" />
+                    <span>Storico Mosse</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Pulsante Rapido Musica in Header */}
           <button
             type="button"
-            onClick={() => setShowMenuDropdown((v) => !v)}
-            className="px-2 py-1 rounded-xl bg-[#140b2a]/90 hover:bg-[#201340] border border-white/20 text-slate-200 shadow flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition"
-            title="Menu Opzioni"
+            onClick={() => backgroundMusic.toggleMusic()}
+            className={`px-2 py-1 rounded-xl border flex items-center gap-1 cursor-pointer backdrop-blur-md active:scale-95 transition ${
+              isMusicOn
+                ? 'bg-purple-950/85 border-purple-400/70 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.35)]'
+                : 'bg-[#140b2a]/90 hover:bg-[#201340] border-white/20 text-slate-400'
+            }`}
+            title={isMusicOn ? 'Musica: ATTIVA (tocca per silenziare)' : 'Musica: SILENZIATA (tocca per attivare)'}
           >
-            <Menu className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Menu</span>
+            {isMusicOn ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline text-purple-300">Musica</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Muto</span>
+              </>
+            )}
           </button>
-
-          {/* Menu a Tendina a comparsa */}
-          {showMenuDropdown && (
-            <>
-              <div
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-                onClick={() => setShowMenuDropdown(false)}
-              />
-              <div className="absolute top-9 left-0 z-50 w-52 rounded-2xl bg-[#140b2a] border-2 border-white/20 shadow-2xl p-2 flex flex-col gap-1.5 animate-speech-pop">
-                {onBackToHome && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenuDropdown(false);
-                      if (
-                        state.mode === 'GAME_OVER' ||
-                        window.confirm('Vuoi tornare alla Home? La partita in corso andrà persa.')
-                      ) {
-                        onBackToHome();
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-amber-300 flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <Home className="w-4 h-4 text-amber-400" />
-                    <span>Torna alla Home</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenuDropdown(false);
-                    setShowLobbyModal(true);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-white flex items-center gap-2 transition cursor-pointer"
-                >
-                  <Users className="w-4 h-4 text-rose-400" />
-                  <span>{activeLobby ? `Lobby: ${activeLobby.code}` : currentPreset.replace('_', ' vs ')}</span>
-                </button>
-
-                {activeLobby && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenuDropdown(false);
-                      setShowQuickQrModal(true);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-cyan-300 flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4 text-cyan-400" />
-                    <span>Condividi QR Code</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenuDropdown(false);
-                    setShowRulesModal(true);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-                >
-                  <BookOpen className="w-4 h-4 text-emerald-400" />
-                  <span>Regole del Gioco</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenuDropdown(false);
-                    setShowLogs(true);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-left text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer"
-                >
-                  <History className="w-4 h-4 text-purple-400" />
-                  <span>Storico Mosse</span>
-                </button>
-              </div>
-            </>
-          )}
         </div>
 
         {/* AVVERSARIO 2 (Nord ♣ - In alto al centro) */}
