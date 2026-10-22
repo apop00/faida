@@ -17,18 +17,29 @@ body {
 
 /* Custom sleek scrollbar for horizontal card drawer */
 ::-webkit-scrollbar {
-  height: 5px;
-  width: 5px;
+  height: 4px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 9999px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(244, 63, 94, 0.45);
+  background: rgba(244, 63, 94, 0.4);
   border-radius: 9999px;
+}
+
+/* Absolute scrollbar suppression utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Animations for Card Slam, Laser Trajectory, Light Sweep, and Reactions */

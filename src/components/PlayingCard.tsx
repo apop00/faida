@@ -33,21 +33,21 @@ export function PlayingCard({
   const effectiveSize = size;
 
   const sizeClasses = {
-    xs: 'w-[58px] h-[84px] rounded-lg p-1',
+    xs: 'w-[60px] h-[86px] rounded-xl p-1',
     sm: 'w-[66px] h-[96px] sm:w-[70px] sm:h-[102px] rounded-xl p-1 sm:p-1.5',
     md: 'w-[78px] h-[110px] sm:w-[82px] sm:h-[116px] rounded-2xl p-1.5',
     lg: 'w-[96px] h-[136px] rounded-2xl p-2',
   }[effectiveSize];
 
   const centerSymbolSize = {
-    xs: 'text-2xl',
+    xs: 'text-2xl sm:text-[26px]',
     sm: 'text-3xl sm:text-4xl',
     md: 'text-4xl',
     lg: 'text-5xl',
   }[effectiveSize];
 
   const cornerLabelSize = {
-    xs: 'text-xs',
+    xs: 'text-xs sm:text-[13px]',
     sm: 'text-sm sm:text-base',
     md: 'text-base sm:text-lg',
     lg: 'text-lg sm:text-xl',
@@ -217,7 +217,7 @@ export function PlayingCard({
   }[card.suit];
 
   return (
-    <div className="relative select-none touch-pan-x pt-3.5">
+    <div className={`relative select-none touch-pan-x ${effectiveSize === 'xs' ? 'pt-2.5' : 'pt-3.5'}`}>
       {/* Clean Action Pill floating directly above the card */}
       {interactive && isPlayable && playability?.badgeLabel && (
         <div
