@@ -55,11 +55,12 @@ export function TargetBonusModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#1a1030] to-[#090514] border-2 border-amber-400/60 shadow-[0_0_50px_rgba(245,158,11,0.35)] p-5 text-slate-100 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 select-none">
+      <div className="w-full max-w-lg max-h-[92vh] sm:max-h-[340px] overflow-y-auto no-scrollbar rounded-3xl bg-gradient-to-b from-[#1a1030] to-[#090514] border-2 border-amber-400/60 shadow-[0_0_50px_rgba(245,158,11,0.35)] p-3.5 sm:p-4 text-slate-100 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 cursor-pointer"
+          className="absolute top-3 right-3 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white cursor-pointer transition"
+          title="Chiudi"
         >
           <X className="w-4 h-4" />
         </button>

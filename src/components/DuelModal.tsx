@@ -99,7 +99,7 @@ export function DuelModal({ activeDuel, onDismiss }: DuelModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-3 select-none animate-fadeIn">
-      <div className="w-full max-w-md sm:max-w-lg max-h-[96dvh] overflow-y-auto rounded-3xl bg-gradient-to-b from-[#1f1038] via-[#130926] to-[#070311] border-2 border-amber-400/80 shadow-[0_0_60px_rgba(245,158,11,0.35)] p-3 sm:p-4 text-slate-100 flex flex-col items-center text-center my-auto relative">
+      <div className="w-full max-w-md sm:max-w-xl max-h-[94vh] sm:max-h-[340px] overflow-y-auto no-scrollbar rounded-3xl bg-gradient-to-b from-[#1f1038] via-[#130926] to-[#070311] border-2 border-amber-400/80 shadow-[0_0_60px_rgba(245,158,11,0.35)] p-2.5 sm:p-3 text-slate-100 flex flex-col items-center text-center my-auto relative">
         {/* Pulsante Chiudi Rapido (✕) in alto a destra per sicurezza totale */}
         <button
           type="button"

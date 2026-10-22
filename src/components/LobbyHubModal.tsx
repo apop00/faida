@@ -265,8 +265,8 @@ export function LobbyHubModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3.5 overflow-y-auto">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-b from-[#170e2e] to-[#080411] border-2 border-white/15 p-5 text-slate-100 shadow-2xl relative my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-3.5 overflow-y-auto select-none">
+      <div className="w-full max-w-xl max-h-[94vh] sm:max-h-[340px] overflow-y-auto no-scrollbar rounded-3xl bg-gradient-to-b from-[#170e2e] to-[#080411] border-2 border-white/15 p-3.5 sm:p-4 text-slate-100 shadow-2xl relative my-auto">
         <button
           onClick={onClose}
           type="button"

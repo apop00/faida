@@ -51,8 +51,8 @@ export function VictoryModal({ players, winnerIndex, onPlayAgain }: VictoryModal
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-lg p-3 overflow-y-auto">
-      <div className="w-full max-w-md rounded-3xl bg-gradient-to-b from-[#1d1136] to-[#080411] border-2 border-rose-500/60 shadow-[0_0_60px_rgba(244,63,94,0.4)] p-5 text-slate-100 my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-lg p-2 sm:p-3 overflow-y-auto select-none">
+      <div className="w-full max-w-xl max-h-[94vh] sm:max-h-[340px] overflow-y-auto no-scrollbar rounded-3xl bg-gradient-to-b from-[#1d1136] to-[#080411] border-2 border-rose-500/60 shadow-[0_0_60px_rgba(244,63,94,0.4)] p-3.5 sm:p-4 text-slate-100 my-auto">
         {/* Winner Header */}
         <div className="flex flex-col items-center text-center mb-4">
           <div className="relative mb-2">

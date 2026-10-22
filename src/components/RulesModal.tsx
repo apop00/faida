@@ -5,24 +5,25 @@ import { BookOpen, ShieldAlert, Sparkles, Swords, X } from 'lucide-react';
 
 export function RulesModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl bg-[#120b22] border border-white/15 p-5 text-slate-200 relative shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 select-none">
+      <div className="w-full max-w-2xl sm:max-w-3xl max-h-[92vh] sm:max-h-[340px] overflow-y-auto no-scrollbar rounded-3xl bg-[#120b22] border border-white/15 p-3.5 sm:p-4 text-slate-200 relative shadow-2xl">
         <button
           onClick={onClose}
-          className="sticky top-1 float-right p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 cursor-pointer"
+          className="sticky top-0 float-right p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white cursor-pointer z-30 transition"
+          title="Chiudi"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 text-rose-400 font-black text-xs uppercase tracking-widest mb-1">
-          <BookOpen className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-rose-400 font-black text-xs uppercase tracking-widest mb-0.5">
+          <BookOpen className="w-3.5 h-3.5" />
           <span>Regolamento Ufficiale</span>
         </div>
-        <h3 className="text-xl font-black text-white mb-3">
+        <h3 className="text-base sm:text-lg font-black text-white mb-2">
           Colpo Basso: Faida di Semi
         </h3>
 
-        <div className="space-y-3 text-xs leading-relaxed">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs leading-relaxed">
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
             <h4 className="font-black text-amber-400 uppercase mb-1">
               🃏 Setup Iniziale &amp; Colpo Finale
