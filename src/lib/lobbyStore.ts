@@ -182,6 +182,25 @@ class LobbyStore {
     if (existingSlot) {
       existingSlot.name = params.playerName.trim() || existingSlot.name;
       existingSlot.isAI = false;
+
+      // Allow switching to preferredSlot if open during waiting room phase
+      if (
+        params.preferredSlot !== undefined &&
+        params.preferredSlot !== existingSlot.slotIndex &&
+        room.slots[params.preferredSlot] &&
+        !room.slots[params.preferredSlot].clientPlayerId &&
+        room.status === 'waiting'
+      ) {
+        existingSlot.clientPlayerId = null;
+        existingSlot.name = `Attesa ${SUIT_INFO[existingSlot.suit].name}...`;
+        existingSlot.isAI = false;
+
+        const newSlot = room.slots[params.preferredSlot];
+        newSlot.clientPlayerId = params.clientPlayerId;
+        newSlot.name = params.playerName.trim() || `Giocatore ${newSlot.slotIndex + 1}`;
+        newSlot.isAI = false;
+      }
+
       room.updatedAt = new Date().toISOString();
       this.saveToDisk();
       return room;
@@ -220,6 +239,42 @@ class LobbyStore {
 
     room.updatedAt = new Date().toISOString();
     this.saveToDisk();
+    return room;
+  }
+
+  public leaveRoom(params: { code: string; clientPlayerId: string }): LobbyRoom {
+    this.loadFromDisk();
+    const code = params.code.trim().toUpperCase();
+    const room = this.rooms.get(code);
+    if (!room) throw new Error('Lobby non trovata.');
+
+    const slot = room.slots.find((s) => s.clientPlayerId === params.clientPlayerId);
+    if (slot) {
+      if (slot.isHost) {
+        // If host leaves before game starts, look for another human to promote or delete if empty
+        const otherHuman = room.slots.find(
+          (s) => s.clientPlayerId && s.clientPlayerId !== params.clientPlayerId
+        );
+        if (otherHuman) {
+          otherHuman.isHost = true;
+          room.hostClientId = otherHuman.clientPlayerId!;
+          slot.isHost = false;
+          slot.clientPlayerId = null;
+          slot.name = `Attesa ${SUIT_INFO[slot.suit].name}...`;
+        } else {
+          // If no other humans left, remove the room
+          this.rooms.delete(code);
+          this.saveToDisk();
+          return room;
+        }
+      } else {
+        slot.clientPlayerId = null;
+        slot.name = `Attesa ${SUIT_INFO[slot.suit].name}...`;
+        slot.isAI = false;
+      }
+      room.updatedAt = new Date().toISOString();
+      this.saveToDisk();
+    }
     return room;
   }
 

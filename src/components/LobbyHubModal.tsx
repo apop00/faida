@@ -8,7 +8,9 @@ import { QrScannerModal } from './QrScannerModal';
 import { DeckSettingsModal } from './DeckSettingsModal';
 import {
   Bot,
+  Check,
   ChevronRight,
+  Copy,
   Flame,
   Globe,
   KeyRound,
@@ -17,6 +19,7 @@ import {
   QrCode,
   RefreshCw,
   ScanLine,
+  Search,
   SlidersHorizontal,
   User,
   Users,
@@ -105,6 +108,9 @@ export function LobbyHubModal({
   const [isPublic, setIsPublic] = useState<boolean>(true);
   const [joinCodeInput, setJoinCodeInput] = useState<string>('');
   const [publicRooms, setPublicRooms] = useState<LobbyRoom[]>([]);
+  const [roomFilter, setRoomFilter] = useState<string>('');
+  const [lanIp, setLanIp] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -135,6 +141,9 @@ export function LobbyHubModal({
       if (data.rooms) {
         setPublicRooms(data.rooms);
       }
+      if (data.lanIp) {
+        setLanIp(data.lanIp);
+      }
     } catch {
       // Ignore
     }
@@ -142,9 +151,9 @@ export function LobbyHubModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    fetchPublicRooms();
     if (tab === 'join') {
-      fetchPublicRooms();
-      const interval = setInterval(fetchPublicRooms, 3000);
+      const interval = setInterval(fetchPublicRooms, 2500);
       return () => clearInterval(interval);
     }
   }, [isOpen, tab]);
@@ -304,6 +313,59 @@ export function LobbyHubModal({
     } catch {
       // Ignore
     }
+  };
+
+  const handleToggleLobbyPublic = async () => {
+    if (!activeLobby || activeLobby.hostClientId !== clientPlayerId) return;
+    try {
+      const res = await fetch(`/api/lobbies/${activeLobby.code}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'configure',
+          isPublic: !activeLobby.isPublic,
+        }),
+      });
+      const data = await res.json();
+      if (data.room) onLobbyJoinedOrUpdated(data.room);
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleCopyInviteLink = () => {
+    if (!activeLobby) return;
+    const isLocal =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const port = typeof window !== 'undefined' ? window.location.port || '3001' : '3001';
+    const url =
+      isLocal && lanIp && lanIp !== 'localhost'
+        ? `http://${lanIp}:${port}/?lobby=${activeLobby.code}`
+        : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}/?lobby=${activeLobby.code}`;
+
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleLeaveLobby = async () => {
+    if (activeLobby) {
+      try {
+        await fetch('/api/lobbies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'leave',
+            code: activeLobby.code,
+            clientPlayerId,
+          }),
+        });
+      } catch {
+        // Ignore
+      }
+    }
+    onLeaveLobby();
   };
 
   const handleStartLobbyMatch = async () => {
@@ -666,11 +728,35 @@ export function LobbyHubModal({
               /* ACTIVE LOBBY WAITING ROOM */
               <div className="space-y-3">
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/20 to-purple-600/20 border border-rose-400/50 flex items-center justify-between">
-                  <div>
+                  <div className="space-y-0.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-rose-300">
-                        {activeLobby.isPublic ? '🌐 Lobby Pubblica' : '🔒 Lobby Privata'}
-                      </span>
+                      {activeLobby.hostClientId === clientPlayerId ? (
+                        <button
+                          type="button"
+                          onClick={handleToggleLobbyPublic}
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1 cursor-pointer transition ${
+                            activeLobby.isPublic
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40 hover:bg-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-400/40 hover:bg-amber-500/30'
+                          }`}
+                          title="Clicca per cambiare la visibilità pubblica o privata della stanza"
+                        >
+                          {activeLobby.isPublic ? (
+                            <Globe className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Lock className="w-3 h-3 text-amber-400" />
+                          )}
+                          <span>
+                            {activeLobby.isPublic
+                              ? '🌐 Pubblica (Tocca: Rendi Privata)'
+                              : '🔒 Privata (Tocca: Rendi Pubblica)'}
+                          </span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-300 flex items-center gap-1">
+                          {activeLobby.isPublic ? '🌐 Lobby Pubblica' : '🔒 Lobby Privata'}
+                        </span>
+                      )}
                     </div>
                     <div className="text-2xl font-black tracking-widest text-amber-400">
                       {activeLobby.code}
@@ -680,32 +766,51 @@ export function LobbyHubModal({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowQrModal(true)}
-                    className="px-3 py-2.5 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    <span>Mostra QR</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleCopyInviteLink}
+                      className="px-2.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-black text-xs flex items-center gap-1 cursor-pointer transition"
+                      title="Copia link per invitare amici via WhatsApp o browser"
+                    >
+                      {copiedLink ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                      <span>{copiedLink ? 'Copiato!' : 'Link'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowQrModal(true)}
+                      className="px-3 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg cursor-pointer transition"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      <span>QR</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Quick Preset Switcher inside Lobby */}
+                {/* Quick Preset Switcher inside Lobby (only host can change) */}
                 <div className="grid grid-cols-4 gap-1">
-                  {PRESET_CARDS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handleChangeLobbyPreset(p.id)}
-                      className={`py-1.5 px-1 rounded-xl text-[9px] font-black border cursor-pointer ${
-                        activeLobby.preset === p.id
-                          ? 'bg-rose-600 text-white border-rose-300'
-                          : 'bg-white/5 text-slate-400 border-white/10'
-                      }`}
-                    >
-                      {p.id.replace('_', ' + ')}
-                    </button>
-                  ))}
+                  {PRESET_CARDS.map((p) => {
+                    const isHost = activeLobby.hostClientId === clientPlayerId;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={!isHost}
+                        onClick={() => isHost && handleChangeLobbyPreset(p.id)}
+                        className={`py-1.5 px-1 rounded-xl text-[9px] font-black border transition ${
+                          activeLobby.preset === p.id
+                            ? 'bg-rose-600 text-white border-rose-300 shadow'
+                            : 'bg-white/5 text-slate-400 border-white/10'
+                        } ${isHost ? 'cursor-pointer hover:border-white/30' : 'cursor-default opacity-80'}`}
+                      >
+                        {p.id.replace('_', ' + ')}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* 4 Slots in Lobby */}
@@ -713,12 +818,15 @@ export function LobbyHubModal({
                   {activeLobby.slots.map((slot) => {
                     const sMeta = SUIT_INFO[slot.suit];
                     const isMe = slot.clientPlayerId === clientPlayerId;
+                    const isHost = activeLobby.hostClientId === clientPlayerId;
+                    const isEmpty = !slot.clientPlayerId;
+
                     return (
                       <div
                         key={slot.slotIndex}
                         className={`flex items-center justify-between p-2.5 rounded-2xl border ${
                           isMe
-                            ? 'bg-rose-950/50 border-rose-400/60'
+                            ? 'bg-rose-950/50 border-rose-400/60 shadow-md'
                             : 'bg-white/5 border-white/10'
                         }`}
                       >
@@ -731,6 +839,11 @@ export function LobbyHubModal({
                           <div>
                             <div className="text-xs font-black text-white flex items-center gap-1.5">
                               <span>{slot.name}</span>
+                              {slot.isHost && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[8px] uppercase">
+                                  Host 👑
+                                </span>
+                              )}
                               {isMe && (
                                 <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[8px] uppercase">
                                   Tu
@@ -742,26 +855,41 @@ export function LobbyHubModal({
                                 ? 'Controllato dal PC (Bot IA)'
                                 : slot.clientPlayerId
                                 ? 'Giocatore Connesso ✓'
-                                : 'In attesa di un giocatore (Codice/QR)...'}
+                                : 'Posto libero in attesa di un giocatore...'}
                             </div>
                           </div>
                         </div>
 
-                        {!isMe && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleToggleLobbySlotAI(slot.slotIndex, !slot.isAI)
-                            }
-                            className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase border cursor-pointer ${
-                              slot.isAI
-                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40'
-                                : 'bg-amber-500/20 text-amber-300 border-amber-400/40'
-                            }`}
-                          >
-                            {slot.isAI ? '🤖 Bot PC' : '👤 Umano'}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {/* Allow any player to take this slot if it's empty and not already theirs */}
+                          {!isMe && isEmpty && (
+                            <button
+                              type="button"
+                              onClick={() => handleJoinByCode(activeLobby.code, slot.slotIndex)}
+                              className="px-2 py-1 rounded-xl text-[9px] font-black uppercase border border-rose-400/50 bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 cursor-pointer transition"
+                              title="Spostati in questo seme"
+                            >
+                              Scegli Seme
+                            </button>
+                          )}
+
+                          {/* Host can toggle Bot PC vs Human */}
+                          {isHost && !isMe && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleToggleLobbySlotAI(slot.slotIndex, !slot.isAI)
+                              }
+                              className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase border cursor-pointer transition ${
+                                slot.isAI
+                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40 hover:bg-cyan-500/30'
+                                  : 'bg-amber-500/20 text-amber-300 border-amber-400/40 hover:bg-amber-500/30'
+                              }`}
+                            >
+                              {slot.isAI ? '🤖 Bot PC' : '👤 Umano'}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -792,19 +920,23 @@ export function LobbyHubModal({
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={onLeaveLobby}
-                    className="px-3 py-3 rounded-2xl bg-white/10 text-xs font-bold text-slate-300 cursor-pointer"
+                    onClick={handleLeaveLobby}
+                    className="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-xs font-bold text-slate-300 cursor-pointer transition"
                   >
                     Esci Lobby
                   </button>
                   <button
                     type="button"
-                    disabled={loading}
+                    disabled={loading || activeLobby.hostClientId !== clientPlayerId}
                     onClick={handleStartLobbyMatch}
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition"
                   >
                     <Play className="w-4 h-4 fill-current" />
-                    <span>Avvia Tavolo Lobby</span>
+                    <span>
+                      {activeLobby.hostClientId === clientPlayerId
+                        ? 'Avvia Tavolo Lobby'
+                        : "In attesa dell'Host..."}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -873,50 +1005,142 @@ export function LobbyHubModal({
                 <button
                   type="button"
                   onClick={fetchPublicRooms}
-                  className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                  className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition"
                 >
                   <RefreshCw className="w-3 h-3" /> Aggiorna
                 </button>
               </div>
 
-              {publicRooms.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-dashed border-white/10 text-center text-xs text-slate-400">
-                  Nessuna lobby pubblica attiva in questo momento. Creane una nel tab &ldquo;Crea Lobby&rdquo;!
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {publicRooms.map((r) => {
-                    const humanCount = r.slots.filter((s) => !s.isAI && s.clientPlayerId).length;
-                    const botCount = r.slots.filter((s) => s.isAI).length;
-                    return (
-                      <div
-                        key={r.code}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10"
-                      >
-                        <div>
-                          <div className="text-xs font-black text-white flex items-center gap-1.5">
-                            <span>{r.roomName}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[9px] font-mono">
-                              {r.code}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
-                            👤 {humanCount} Umani • 🤖 {botCount} Bot PC •{' '}
-                            {r.status === 'playing' ? 'In Partita' : 'In Attesa'}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleJoinByCode(r.code)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs uppercase cursor-pointer"
-                        >
-                          Unisciti
-                        </button>
-                      </div>
-                    );
-                  })}
+              {publicRooms.length > 0 && (
+                <div className="relative mb-2.5">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={roomFilter}
+                    onChange={(e) => setRoomFilter(e.target.value)}
+                    placeholder="Cerca per nome tavolo o codice..."
+                    className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400/60"
+                  />
                 </div>
               )}
+
+              {(() => {
+                const filteredRooms = publicRooms.filter((r) => {
+                  if (!roomFilter.trim()) return true;
+                  const q = roomFilter.toLowerCase();
+                  return (
+                    r.roomName.toLowerCase().includes(q) ||
+                    r.code.toLowerCase().includes(q)
+                  );
+                });
+
+                if (publicRooms.length === 0) {
+                  return (
+                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-dashed border-white/10 text-center text-xs text-slate-400">
+                      Nessuna lobby pubblica attiva in questo momento.
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        Crea un tavolo pubblico o entra in uno privato tramite codice o QR in alto!
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (filteredRooms.length === 0) {
+                  return (
+                    <div className="p-3 rounded-2xl bg-white/[0.03] border border-dashed border-white/10 text-center text-xs text-slate-400">
+                      Nessuna lobby corrisponde alla ricerca &ldquo;{roomFilter}&rdquo;.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {filteredRooms.map((r) => {
+                      const humanCount = r.slots.filter(
+                        (s) => !s.isAI && s.clientPlayerId
+                      ).length;
+                      const botCount = r.slots.filter((s) => s.isAI).length;
+                      const openSlots = r.slots.filter(
+                        (s) => !s.isAI && !s.clientPlayerId
+                      ).length;
+                      const isFull = openSlots === 0;
+                      const isPlaying = r.status === 'playing';
+                      const alreadyInRoom = r.slots.some(
+                        (s) => s.clientPlayerId === clientPlayerId
+                      );
+
+                      return (
+                        <div
+                          key={r.code}
+                          className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition"
+                        >
+                          <div>
+                            <div className="text-xs font-black text-white flex items-center gap-1.5">
+                              <span>{r.roomName}</span>
+                              <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[9px] font-mono">
+                                {r.code}
+                              </span>
+                              {alreadyInRoom && (
+                                <span className="px-1 py-0.5 rounded bg-rose-500/30 text-rose-300 border border-rose-400/40 text-[8px] font-black uppercase">
+                                  Tuo Tavolo
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                              <span>👤 {humanCount}/4 Umani</span>
+                              <span>🤖 {botCount} Bot</span>
+                              <span>•</span>
+                              <span
+                                className={`font-bold ${
+                                  isPlaying
+                                    ? 'text-cyan-400'
+                                    : isFull
+                                    ? 'text-rose-400'
+                                    : 'text-emerald-400'
+                                }`}
+                              >
+                                {isPlaying
+                                  ? '🎮 In Partita'
+                                  : isFull
+                                  ? '🔴 Completo'
+                                  : `🟢 ${openSlots} posti liberi`}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={loading || (isFull && !alreadyInRoom) || isPlaying}
+                            onClick={() => handleJoinByCode(r.code)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition cursor-pointer ${
+                              alreadyInRoom
+                                ? 'bg-rose-500 text-white'
+                                : isFull || isPlaying
+                                ? 'bg-white/10 text-slate-400 cursor-not-allowed opacity-50'
+                                : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+                            }`}
+                          >
+                            {alreadyInRoom
+                              ? 'Rientra'
+                              : isPlaying
+                              ? 'Iniziata'
+                              : isFull
+                              ? 'Piena'
+                              : 'Unisciti'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/20 text-[10px] text-amber-200/80 flex items-center gap-2 mt-2">
+                <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>
+                  <strong>Stanze Private:</strong> Non appaiono nell&apos;elenco pubblico. Per partecipare, inserisci il codice a 6 caratteri o scansiona il QR code inviato dall&apos;host.
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -929,6 +1153,7 @@ export function LobbyHubModal({
           onClose={() => setShowQrModal(false)}
           roomCode={activeLobby.code}
           roomName={activeLobby.roomName}
+          lanIp={lanIp}
         />
       )}
 

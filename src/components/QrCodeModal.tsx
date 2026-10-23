@@ -9,19 +9,37 @@ export function QrCodeModal({
   onClose,
   roomCode,
   roomName,
+  lanIp,
 }: {
   isOpen: boolean;
   onClose: () => void;
   roomCode: string;
   roomName?: string;
+  lanIp?: string | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [mode, setMode] = useState<'wifi' | 'local'>('wifi');
 
-  const inviteUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/?lobby=${roomCode}`
-      : `http://localhost:3001/?lobby=${roomCode}`;
+  const isLocalHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  const port = typeof window !== 'undefined' ? window.location.port || '3001' : '3001';
+
+  let inviteUrl = '';
+  if (typeof window !== 'undefined') {
+    if (isLocalHost && lanIp && lanIp !== 'localhost') {
+      inviteUrl =
+        mode === 'wifi'
+          ? `http://${lanIp}:${port}/?lobby=${roomCode}`
+          : `http://localhost:${port}/?lobby=${roomCode}`;
+    } else {
+      inviteUrl = `${window.location.origin}/?lobby=${roomCode}`;
+    }
+  } else {
+    inviteUrl = `http://localhost:3001/?lobby=${roomCode}`;
+  }
 
   useEffect(() => {
     if (isOpen && canvasRef.current) {
@@ -87,6 +105,37 @@ export function QrCodeModal({
 
         <div className="flex justify-center p-2 bg-white rounded-2xl shadow-inner mx-auto w-fit">
           <canvas ref={canvasRef} />
+        </div>
+
+        {isLocalHost && lanIp && lanIp !== 'localhost' && (
+          <div className="flex items-center justify-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold">
+            <button
+              type="button"
+              onClick={() => setMode('wifi')}
+              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                mode === 'wifi'
+                  ? 'bg-rose-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              📱 Wi-Fi ({lanIp})
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('local')}
+              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                mode === 'local'
+                  ? 'bg-rose-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              💻 Localhost
+            </button>
+          </div>
+        )}
+
+        <div className="text-[10px] text-slate-400 font-mono truncate px-1 opacity-80">
+          {inviteUrl}
         </div>
 
         <div className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">

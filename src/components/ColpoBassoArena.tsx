@@ -373,6 +373,7 @@ export function ColpoBassoArena({
   const [aiFlags, setAiFlags] = useState<boolean[]>(initialAiFlags);
   const [clientPlayerId, setClientPlayerId] = useState<string>('local_player');
   const [activeLobby, setActiveLobby] = useState<LobbyRoom | null>(initialLobbyRoom);
+  const [lanIp, setLanIp] = useState<string | null>(null);
   const [deckConfig, setDeckConfig] = useState<CustomDeckConfig | undefined>(
     initialDeckConfig || initialLobbyRoom?.deckConfig
   );
@@ -646,6 +647,14 @@ export function ColpoBassoArena({
       window.localStorage.setItem('cb_client_id', savedId);
     }
     setClientPlayerId(savedId);
+
+    // Fetch LAN IP for mobile QR code sharing
+    fetch('/api/lobbies')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.lanIp) setLanIp(data.lanIp);
+      })
+      .catch(() => {});
 
     const params = new URLSearchParams(window.location.search);
     const lobbyCode = params.get('lobby') || params.get('code');
@@ -2768,7 +2777,22 @@ export function ColpoBassoArena({
             dispatchLocal({ type: 'SYNC_STATE', nextState: room.gameState });
           }
         }}
-        onLeaveLobby={() => {
+        onLeaveLobby={async () => {
+          if (activeLobby) {
+            try {
+              await fetch('/api/lobbies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'leave',
+                  code: activeLobby.code,
+                  clientPlayerId,
+                }),
+              });
+            } catch {
+              // Ignore network hiccups on leave
+            }
+          }
           setActiveLobby(null);
         }}
       />
@@ -2779,6 +2803,7 @@ export function ColpoBassoArena({
           onClose={() => setShowQuickQrModal(false)}
           roomCode={activeLobby.code}
           roomName={activeLobby.roomName}
+          lanIp={lanIp}
         />
       )}
 
