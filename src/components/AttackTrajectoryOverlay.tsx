@@ -7,11 +7,13 @@ import { playBottleLaunchSound } from '@/lib/audioEffects';
 interface AttackTrajectoryOverlayProps {
   state: GameState;
   controllingPlayerIndex: number;
+  localPlayerIndex?: number;
 }
 
 export function AttackTrajectoryOverlay({
   state,
   controllingPlayerIndex,
+  localPlayerIndex = 0,
 }: AttackTrajectoryOverlayProps) {
   // 1. Determine if there is an active targeted attack or special event
   let attackerIdx: number | null = null;
@@ -124,10 +126,11 @@ export function AttackTrajectoryOverlay({
   }
 
   // Seat coordinates in SVG viewbox (1000 x 1000 spanning the entire full arena)
-  // Opponents: 1 (West - Left), 2 (North - Top Center in header), 3 (East - Right).
-  // Local/Bottom player: 0 (South - Bottom hand/seat)
+  // Rotated relative to local player's 1st person perspective:
+  // 0: South (Local player), 1: West (Left), 2: North (Top Center), 3: East (Right)
   const getSeatCoords = (idx: number): { x: number; y: number } => {
-    switch (idx) {
+    const rel = (idx - localPlayerIndex + 4) % 4;
+    switch (rel) {
       case 1:
         return { x: 105, y: 440 }; // West (Left) opponent
       case 2:

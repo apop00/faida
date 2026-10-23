@@ -675,6 +675,9 @@ export function ColpoBassoArena({
     }
   }, []);
 
+  // Track last room update timestamp to avoid duplicate re-renders
+  const lastSyncTimeRef = useRef<string | null>(null);
+
   // Unified dispatcher: dispatches locally AND syncs to lobby server if in a room
   const dispatchAction = useCallback(
     async (action: GameAction) => {
@@ -691,6 +694,7 @@ export function ColpoBassoArena({
           });
           const data = await res.json();
           if (data.room?.gameState) {
+            lastSyncTimeRef.current = data.room.updatedAt;
             setActiveLobby(data.room);
             dispatchLocal({ type: 'SYNC_STATE', nextState: data.room.gameState });
           }
@@ -699,28 +703,31 @@ export function ColpoBassoArena({
         }
       }
     },
-    [activeLobby]
+    [activeLobby?.code, activeLobby?.status]
   );
 
-  // Poll lobby state when connected to a multiplayer room
+  // Poll lobby state when connected to a multiplayer room (fast 600ms polling for real-time play)
   useEffect(() => {
-    if (!activeLobby) return;
+    if (!activeLobby?.code) return;
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/lobbies/${activeLobby.code}`);
         const data = await res.json();
         if (data.room) {
-          setActiveLobby(data.room);
-          if (data.room.gameState) {
-            dispatchLocal({ type: 'SYNC_STATE', nextState: data.room.gameState });
+          if (data.room.updatedAt !== lastSyncTimeRef.current) {
+            lastSyncTimeRef.current = data.room.updatedAt;
+            setActiveLobby(data.room);
+            if (data.room.gameState) {
+              dispatchLocal({ type: 'SYNC_STATE', nextState: data.room.gameState });
+            }
           }
         }
       } catch {
         // Ignore network hiccup
       }
-    }, 1200);
+    }, 600);
     return () => clearInterval(interval);
-  }, [activeLobby]);
+  }, [activeLobby?.code]);
 
   const controllingPlayerIndex = getControllingPlayerIndex(state);
   const controllingPlayer = state.players[controllingPlayerIndex];
@@ -739,6 +746,12 @@ export function ColpoBassoArena({
       : firstHumanIndex >= 0
       ? firstHumanIndex
       : 0;
+
+  // 1st Person Perspective: rotate table seats so local player is always South
+  const localSeatIndex = displayedHandIndex;
+  const westSeatIndex = (localSeatIndex + 1) % 4;
+  const northSeatIndex = (localSeatIndex + 2) % 4;
+  const eastSeatIndex = (localSeatIndex + 3) % 4;
 
   const displayedHandPlayer = state.players[displayedHandIndex] || controllingPlayer;
   const canLocalUserAct =
@@ -1360,10 +1373,11 @@ export function ColpoBassoArena({
 
   return (
     <div className="h-full w-full flex flex-col justify-between bg-[#090514] text-slate-100 select-none relative overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-      {/* Traiettoria d'Attacco & Lancio Bottiglia di Birra (copre l'intera arena da Nord a Sud) */}
+      {/* Traiettoria d'Attacco & Lancio Bottiglia di Birra (copre l'intera arena da Nord a Sud con prospettiva locale) */}
       <AttackTrajectoryOverlay
         state={state}
         controllingPlayerIndex={controllingPlayerIndex}
+        localPlayerIndex={localSeatIndex}
       />
 
       {/* 1. TOP BAR UNIFICATA (Menu + Musica + Avversario Nord + Seme Attivo) */}
@@ -1429,72 +1443,93 @@ export function ColpoBassoArena({
           </button>
         </div>
 
-        {/* AVVERSARIO 2 (Nord ♣ - In alto al centro) */}
+        {/* AVVERSARIO NORD (In alto al centro, calcolato con prospettiva 1a persona) */}
         <div className="flex items-center justify-center translate-y-1.5 sm:translate-y-2">
-          {state.players[2] && renderOpponentSeat(state.players[2], 'north')}
+          {state.players[northSeatIndex] && renderOpponentSeat(state.players[northSeatIndex], 'north')}
         </div>
 
-        {/* Seme Attivo a Terra (In alto a destra, compatto e discreto) */}
-        <div
-          className={`px-2 py-0.5 rounded-full bg-[#140b2a]/90 border border-white/20 text-[10px] font-black flex items-center gap-1 shadow backdrop-blur-md ${
-            SUIT_INFO[state.topCard.suit].neonText
-          }`}
-          title={`Seme attivo a terra: ${SUIT_INFO[state.topCard.suit].name}`}
-        >
-          <span className="text-xs leading-none">{SUIT_INFO[state.topCard.suit].symbol}</span>
-          <span className="text-[10px] font-black">{SUIT_INFO[state.topCard.suit].name}</span>
+        {/* Seme Attivo & Pillola Lobby Online in alto a destra */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {activeLobby && (
+            <button
+              type="button"
+              onClick={() => setShowQuickQrModal(true)}
+              className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-purple-400/60 hover:border-purple-300 text-purple-200 text-[10px] font-black flex items-center gap-1 shadow-[0_0_12px_rgba(168,85,247,0.4)] backdrop-blur-md active:scale-95 transition cursor-pointer"
+              title="Tocca per vedere il QR Code e link d'invito della stanza"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              <span className="font-extrabold uppercase tracking-wide">
+                {activeLobby.code}
+              </span>
+              <span className="text-xs">📲</span>
+            </button>
+          )}
+
+          {/* Seme Attivo a Terra (In alto a destra, compatto e discreto) */}
+          <div
+            className={`px-2 py-0.5 rounded-full bg-[#140b2a]/90 border border-white/20 text-[10px] font-black flex items-center gap-1 shadow backdrop-blur-md ${
+              SUIT_INFO[state.topCard.suit].neonText
+            }`}
+            title={`Seme attivo a terra: ${SUIT_INFO[state.topCard.suit].name}`}
+          >
+            <span className="text-xs leading-none">{SUIT_INFO[state.topCard.suit].symbol}</span>
+            <span className="text-[10px] font-black">{SUIT_INFO[state.topCard.suit].name}</span>
+          </div>
         </div>
       </header>
 
       {/* 2. TAVOLO CENTRALE IN PROSPETTIVA 2.5D (4 LATI, FELTRO INCLINATO) */}
       <section className="relative px-1.5 py-0.5 flex-1 min-h-0 flex items-center justify-between gap-1 sm:gap-2 z-10 overflow-visible perspective-arena">
-        {/* LATO SINISTRO: AVVERSARIO 1 (Ovest ♦) */}
+        {/* LATO SINISTRO: AVVERSARIO OVEST (Calcolato con prospettiva 1a persona) */}
         <div className="shrink-0 self-center z-20 flex justify-center">
-          {state.players[1] && renderOpponentSeat(state.players[1], 'west')}
+          {state.players[westSeatIndex] && renderOpponentSeat(state.players[westSeatIndex], 'west')}
         </div>
 
         {/* ZONA CENTRALE: TAVOLO CON FELTRO INCLINATO 3D */}
         <div className="flex-1 min-h-0 h-full flex flex-col items-center justify-center z-10 px-1 py-0.5 relative">
-          {/* Animazione di Volo Carta (Lancio a terra o Pescata) */}
-          {cardAnimation && (
-            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center translate-y-2 sm:translate-y-2.5">
-              {cardAnimation.type === 'PLAY' && (
-                <div
-                  key={cardAnimation.id}
-                  className={`shrink-0 shadow-2xl ${
-                    cardAnimation.playerIndex === 1
-                      ? 'animate-fly-from-west'
-                      : cardAnimation.playerIndex === 2
-                      ? 'animate-fly-from-north'
-                      : cardAnimation.playerIndex === 3
-                      ? 'animate-fly-from-east'
-                      : 'animate-fly-from-south'
-                  }`}
-                >
-                  <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
-                </div>
-              )}
-
-              {cardAnimation.type === 'DRAW' && (
-                <div
-                  key={cardAnimation.id}
-                  className={`w-[52px] h-[74px] sm:w-[58px] sm:h-[82px] rounded-xl bg-white p-[2px] shadow-2xl shrink-0 z-30 ${
-                    cardAnimation.playerIndex === 1
-                      ? 'animate-fly-to-west'
-                      : cardAnimation.playerIndex === 2
-                      ? 'animate-fly-to-north'
-                      : cardAnimation.playerIndex === 3
-                      ? 'animate-fly-to-east'
-                      : 'animate-fly-to-south'
-                  }`}
-                >
-                  <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400 flex flex-col items-center justify-center">
-                    <span className="text-xs">⚔️</span>
+          {/* Animazione di Volo Carta (Lancio a terra o Pescata orientata alla postazione corretta) */}
+          {cardAnimation && (() => {
+            const relAnimPos = (cardAnimation.playerIndex - localSeatIndex + 4) % 4;
+            return (
+              <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center translate-y-2 sm:translate-y-2.5">
+                {cardAnimation.type === 'PLAY' && (
+                  <div
+                    key={cardAnimation.id}
+                    className={`shrink-0 shadow-2xl ${
+                      relAnimPos === 1
+                        ? 'animate-fly-from-west'
+                        : relAnimPos === 2
+                        ? 'animate-fly-from-north'
+                        : relAnimPos === 3
+                        ? 'animate-fly-from-east'
+                        : 'animate-fly-from-south'
+                    }`}
+                  >
+                    <PlayingCard card={cardAnimation.card || state.topCard} size="sm" />
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+
+                {cardAnimation.type === 'DRAW' && (
+                  <div
+                    key={cardAnimation.id}
+                    className={`w-[52px] h-[74px] sm:w-[58px] sm:h-[82px] rounded-xl bg-white p-[2px] shadow-2xl shrink-0 z-30 ${
+                      relAnimPos === 1
+                        ? 'animate-fly-to-west'
+                        : relAnimPos === 2
+                        ? 'animate-fly-to-north'
+                        : relAnimPos === 3
+                        ? 'animate-fly-to-east'
+                        : 'animate-fly-to-south'
+                    }`}
+                  >
+                    <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-[#1a0e38] via-[#100624] to-[#070212] border border-cyan-400 flex flex-col items-center justify-center">
+                      <span className="text-xs">⚔️</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Effetto Speciale Grafico Fluttuante (Shockwave + Badge Animato) */}
           {activeSpecialEffect && !drinkAlert && !activeCheers && !state.activeDuel && !state.activeReflex && (
@@ -1712,9 +1747,9 @@ export function ColpoBassoArena({
           </div>
         </div>
 
-        {/* LATO DESTRO: AVVERSARIO 3 (Est ♠) */}
+        {/* LATO DESTRO: AVVERSARIO EST (Calcolato con prospettiva 1a persona) */}
         <div className="shrink-0 self-center z-20 flex justify-center">
-          {state.players[3] && renderOpponentSeat(state.players[3], 'east')}
+          {state.players[eastSeatIndex] && renderOpponentSeat(state.players[eastSeatIndex], 'east')}
         </div>
       </section>
 

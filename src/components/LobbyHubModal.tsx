@@ -149,6 +149,29 @@ export function LobbyHubModal({
     }
   }, [isOpen, tab]);
 
+  // Real-time polling while in an active lobby room (waiting or configuring)
+  useEffect(() => {
+    if (!isOpen || !activeLobby) return;
+    const pollRoom = async () => {
+      try {
+        const res = await fetch(`/api/lobbies/${activeLobby.code}`);
+        const data = await res.json();
+        if (data.room) {
+          onLobbyJoinedOrUpdated(data.room);
+          // If match was started by host, automatically close modal for all clients!
+          if (data.room.status === 'playing') {
+            onClose();
+          }
+        }
+      } catch {
+        // Ignore hiccup
+      }
+    };
+
+    const interval = setInterval(pollRoom, 800);
+    return () => clearInterval(interval);
+  }, [isOpen, activeLobby?.code, onClose, onLobbyJoinedOrUpdated]);
+
   if (!isOpen) return null;
 
   const applyPresetSelection = (presetId: MatchPreset) => {
