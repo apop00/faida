@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { code } = await context.params;
-    const room = lobbyStore.getRoom(code);
+    const room = await lobbyStore.getRoom(code);
     if (!room) {
       return NextResponse.json({ error: 'Lobby non trovata' }, { status: 404 });
     }
@@ -27,7 +27,7 @@ export async function POST(
     const body = await req.json();
 
     if (body.operation === 'configure') {
-      const room = lobbyStore.configureSlot({
+      const room = await lobbyStore.configureSlot({
         code,
         slotIndex: body.slotIndex ?? 0,
         isAI: body.isAI,
@@ -40,12 +40,12 @@ export async function POST(
     }
 
     if (body.operation === 'start') {
-      const room = lobbyStore.startRoomGame(code);
+      const room = await lobbyStore.startRoomGame(code);
       return NextResponse.json({ room });
     }
 
     if (body.operation === 'dispatch' && body.gameAction) {
-      const room = lobbyStore.dispatchGameAction(code, body.gameAction);
+      const room = await lobbyStore.dispatchGameAction(code, body.gameAction);
       return NextResponse.json({ room });
     }
 

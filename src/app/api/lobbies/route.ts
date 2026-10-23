@@ -21,7 +21,7 @@ function getLanIp(): string {
 
 export async function GET() {
   try {
-    const rooms = lobbyStore.getPublicRooms();
+    const rooms = await lobbyStore.getPublicRooms();
     const lanIp = getLanIp();
     return NextResponse.json({ rooms, lanIp });
   } catch (err: unknown) {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     if (body.action === 'leave') {
-      const room = lobbyStore.leaveRoom({
+      const room = await lobbyStore.leaveRoom({
         code: body.code,
         clientPlayerId: body.clientPlayerId,
       });
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     if (body.action === 'join') {
-      const room = lobbyStore.joinRoom({
+      const room = await lobbyStore.joinRoom({
         code: body.code,
         playerName: body.playerName || 'Giocatore',
         clientPlayerId: body.clientPlayerId,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ room });
     }
 
-    const room = lobbyStore.createRoom({
+    const room = await lobbyStore.createRoom({
       roomName: body.roomName || 'Tavolo Colpo Basso',
       hostName: body.hostName || 'Giocatore 1',
       hostClientId: body.hostClientId,

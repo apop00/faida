@@ -37,6 +37,57 @@ class LobbyStore {
     this.loadFromDisk();
   }
 
+  private getRedisConfig(): { url: string; token: string } | null {
+    const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+    if (url && token) {
+      return { url: url.replace(/\/+$/, ''), token };
+    }
+    return null;
+  }
+
+  private async syncFromStore(): Promise<void> {
+    const redis = this.getRedisConfig();
+    if (redis) {
+      try {
+        const res = await fetch(`${redis.url}/get/colpo_basso_lobbies`, {
+          headers: { Authorization: `Bearer ${redis.token}` },
+          cache: 'no-store',
+        });
+        const data = await res.json();
+        if (data && data.result) {
+          const parsed: [string, LobbyRoom][] =
+            typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+          this.rooms = new Map(parsed);
+          return;
+        }
+      } catch {
+        // Fallback to local disk
+      }
+    }
+    this.loadFromDisk();
+  }
+
+  private async syncToStore(): Promise<void> {
+    this.saveToDisk();
+    const redis = this.getRedisConfig();
+    if (redis) {
+      try {
+        const entries = Array.from(this.rooms.entries());
+        await fetch(`${redis.url}/set/colpo_basso_lobbies`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${redis.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(JSON.stringify(entries)),
+        });
+      } catch {
+        // Ignore
+      }
+    }
+  }
+
   private getFilePath(): string {
     const baseDir = process.env.VERCEL ? '/tmp' : process.cwd();
     const dir = path.join(baseDir, '.data');
@@ -82,8 +133,8 @@ class LobbyStore {
     }
   }
 
-  public getPublicRooms(): LobbyRoom[] {
-    this.loadFromDisk();
+  public async getPublicRooms(): Promise<LobbyRoom[]> {
+    await this.syncFromStore();
     const now = Date.now();
     const list: LobbyRoom[] = [];
     for (const room of this.rooms.values()) {
@@ -98,20 +149,20 @@ class LobbyStore {
     );
   }
 
-  public getRoom(code: string): LobbyRoom | null {
-    this.loadFromDisk();
+  public async getRoom(code: string): Promise<LobbyRoom | null> {
+    await this.syncFromStore();
     return this.rooms.get(code.trim().toUpperCase()) || null;
   }
 
-  public createRoom(params: {
+  public async createRoom(params: {
     roomName: string;
     hostName: string;
     hostClientId: string;
     isPublic: boolean;
     preset: MatchPreset;
     deckConfig?: CustomDeckConfig;
-  }): LobbyRoom {
-    this.loadFromDisk();
+  }): Promise<LobbyRoom> {
+    await this.syncFromStore();
     let code = generateCode();
     while (this.rooms.has(code)) {
       code = generateCode();
@@ -158,17 +209,17 @@ class LobbyStore {
     };
 
     this.rooms.set(code, room);
-    this.saveToDisk();
+    await this.syncToStore();
     return room;
   }
 
-  public joinRoom(params: {
+  public async joinRoom(params: {
     code: string;
     playerName: string;
     clientPlayerId: string;
     preferredSlot?: number;
-  }): LobbyRoom {
-    this.loadFromDisk();
+  }): Promise<LobbyRoom> {
+    await this.syncFromStore();
     const code = params.code.trim().toUpperCase();
     const room = this.rooms.get(code);
     if (!room) {
@@ -202,7 +253,7 @@ class LobbyStore {
       }
 
       room.updatedAt = new Date().toISOString();
-      this.saveToDisk();
+      await this.syncToStore();
       return room;
     }
 
@@ -238,12 +289,12 @@ class LobbyStore {
     }
 
     room.updatedAt = new Date().toISOString();
-    this.saveToDisk();
+    await this.syncToStore();
     return room;
   }
 
-  public leaveRoom(params: { code: string; clientPlayerId: string }): LobbyRoom {
-    this.loadFromDisk();
+  public async leaveRoom(params: { code: string; clientPlayerId: string }): Promise<LobbyRoom> {
+    await this.syncFromStore();
     const code = params.code.trim().toUpperCase();
     const room = this.rooms.get(code);
     if (!room) throw new Error('Lobby non trovata.');
@@ -264,7 +315,7 @@ class LobbyStore {
         } else {
           // If no other humans left, remove the room
           this.rooms.delete(code);
-          this.saveToDisk();
+          await this.syncToStore();
           return room;
         }
       } else {
@@ -273,12 +324,12 @@ class LobbyStore {
         slot.isAI = false;
       }
       room.updatedAt = new Date().toISOString();
-      this.saveToDisk();
+      await this.syncToStore();
     }
     return room;
   }
 
-  public configureSlot(params: {
+  public async configureSlot(params: {
     code: string;
     slotIndex: number;
     isAI?: boolean;
@@ -286,8 +337,8 @@ class LobbyStore {
     preset?: MatchPreset;
     isPublic?: boolean;
     deckConfig?: CustomDeckConfig;
-  }): LobbyRoom {
-    this.loadFromDisk();
+  }): Promise<LobbyRoom> {
+    await this.syncFromStore();
     const room = this.rooms.get(params.code.trim().toUpperCase());
     if (!room) throw new Error('Lobby non trovata.');
 
@@ -332,12 +383,12 @@ class LobbyStore {
     }
 
     room.updatedAt = new Date().toISOString();
-    this.saveToDisk();
+    await this.syncToStore();
     return room;
   }
 
-  public startRoomGame(code: string): LobbyRoom {
-    this.loadFromDisk();
+  public async startRoomGame(code: string): Promise<LobbyRoom> {
+    await this.syncFromStore();
     const room = this.rooms.get(code.trim().toUpperCase());
     if (!room) throw new Error('Lobby non trovata.');
 
@@ -359,12 +410,12 @@ class LobbyStore {
     room.status = 'playing';
     room.gameState = initial;
     room.updatedAt = new Date().toISOString();
-    this.saveToDisk();
+    await this.syncToStore();
     return room;
   }
 
-  public dispatchGameAction(code: string, action: GameAction): LobbyRoom {
-    this.loadFromDisk();
+  public async dispatchGameAction(code: string, action: GameAction): Promise<LobbyRoom> {
+    await this.syncFromStore();
     const room = this.rooms.get(code.trim().toUpperCase());
     if (!room || !room.gameState) {
       throw new Error('Partita non attiva per questa lobby.');
@@ -372,7 +423,7 @@ class LobbyStore {
 
     room.gameState = gameReducer(room.gameState, action);
     room.updatedAt = new Date().toISOString();
-    this.saveToDisk();
+    await this.syncToStore();
     return room;
   }
 }
